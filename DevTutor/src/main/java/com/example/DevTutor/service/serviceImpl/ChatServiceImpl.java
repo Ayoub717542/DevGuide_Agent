@@ -13,6 +13,7 @@ import com.example.DevTutor.repository.MessageRepository;
 import com.example.DevTutor.repository.LearnerNoteRepository;
 import com.example.DevTutor.dto.ReviewResponse;
 import com.example.DevTutor.service.ReviewScheduler;
+import com.example.DevTutor.service.TrelloMcpService;
 import java.util.stream.Collectors;
 import com.example.DevTutor.repository.QuizResultRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,6 +60,7 @@ public class ChatServiceImpl implements ChatService {
     private final QuizResultRepository quizResultRepository;
     private final LearnerNoteRepository learnerNoteRepository;
     private final ReviewScheduler reviewScheduler;
+    private final TrelloMcpService trelloMcpService;
     private final String guide;
 
     private static final String HINT_MODE = """
@@ -90,13 +92,15 @@ public class ChatServiceImpl implements ChatService {
             GeneratedDocumentRepository generatedDocumentRepository,
             QuizResultRepository quizResultRepository,
             LearnerNoteRepository learnerNoteRepository,
-            ReviewScheduler reviewScheduler
+            ReviewScheduler reviewScheduler,
+            TrelloMcpService trelloMcpService
     ) throws IOException {
 
         this.generatedDocumentRepository = generatedDocumentRepository;
         this.quizResultRepository = quizResultRepository;
         this.learnerNoteRepository = learnerNoteRepository;
         this.reviewScheduler = reviewScheduler;
+        this.trelloMcpService = trelloMcpService;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.messageMapper = messageMapper;
@@ -192,6 +196,7 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
+                .toolCallbacks(trelloMcpService.toolsFor(currentUserEmail()))
                 // Lets DocumentTools save documents to this conversation.
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),

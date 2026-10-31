@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -19,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -83,17 +85,12 @@ public class TrelloOAuthService {
 
         Map<String, Object> tokens;
         try {
-            tokens = restClient.post()
-                    .uri(TOKEN_URL)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of(
-                            "grant_type", "authorization_code",
-                            "client_id", clientId,
-                            "code", code,
-                            "redirect_uri", redirectUri,
-                            "code_verifier", login.verifier()))
-                    .retrieve()
-                    .body(Map.class);
+            tokens = postToken(Map.of(
+                    "grant_type", "authorization_code",
+                    "client_id", clientId,
+                    "code", code,
+                    "redirect_uri", redirectUri,
+                    "code_verifier", login.verifier()));
         } catch (RestClientException e) {
             return false;
         }
@@ -105,22 +102,71 @@ public class TrelloOAuthService {
         if (user == null) {
             return false;
         }
-        long expiresIn = ((Number) tokens.getOrDefault("expires_in", 3600)).longValue();
-        user.setTrelloAccessToken((String) tokens.get("access_token"));
-        user.setTrelloRefreshToken((String) tokens.get("refresh_token"));
-        user.setTrelloTokenExpiresAt(Instant.now().plusSeconds(expiresIn));
-        userRepository.save(user);
+        saveTokens(user, tokens);
         return true;
+    }
+
+    public synchronized Optional<String> validAccessToken(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null || user.getTrelloAccessToken() == null) {
+            return Optional.empty();
+        }
+        Instant expiresAt = user.getTrelloTokenExpiresAt();
+        if (expiresAt != null && expiresAt.isAfter(Instant.now().plusSeconds(60))) {
+            return Optional.of(user.getTrelloAccessToken());
+        }
+        if (user.getTrelloRefreshToken() == null) {
+            return Optional.empty();
+        }
+
+        Map<String, Object> tokens;
+        try {
+            tokens = postToken(Map.of(
+                    "grant_type", "refresh_token",
+                    "client_id", clientId,
+                    "refresh_token", user.getTrelloRefreshToken()));
+        } catch (HttpClientErrorException e) {
+            clearTokens(user);
+            return Optional.empty();
+        } catch (RestClientException e) {
+            return Optional.empty();
+        }
+        if (tokens == null || tokens.get("access_token") == null) {
+            return Optional.empty();
+        }
+        saveTokens(user, tokens);
+        return Optional.of(user.getTrelloAccessToken());
     }
 
     public void disconnect(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
             revoke(user.getTrelloRefreshToken());
-            user.setTrelloAccessToken(null);
-            user.setTrelloRefreshToken(null);
-            user.setTrelloTokenExpiresAt(null);
-            userRepository.save(user);
+            clearTokens(user);
         });
+    }
+
+    private Map<String, Object> postToken(Map<String, String> body) {
+        return restClient.post()
+                .uri(TOKEN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .body(Map.class);
+    }
+
+    private void saveTokens(User user, Map<String, Object> tokens) {
+        long expiresIn = ((Number) tokens.getOrDefault("expires_in", 3600)).longValue();
+        user.setTrelloAccessToken((String) tokens.get("access_token"));
+        user.setTrelloRefreshToken((String) tokens.get("refresh_token"));
+        user.setTrelloTokenExpiresAt(Instant.now().plusSeconds(expiresIn));
+        userRepository.save(user);
+    }
+
+    private void clearTokens(User user) {
+        user.setTrelloAccessToken(null);
+        user.setTrelloRefreshToken(null);
+        user.setTrelloTokenExpiresAt(null);
+        userRepository.save(user);
     }
 
     private void revoke(String refreshToken) {

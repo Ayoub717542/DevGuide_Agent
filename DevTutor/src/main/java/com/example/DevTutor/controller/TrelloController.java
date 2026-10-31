@@ -1,5 +1,6 @@
 package com.example.DevTutor.controller;
 
+import com.example.DevTutor.service.TrelloMcpService;
 import com.example.DevTutor.service.TrelloOAuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,6 +20,7 @@ import java.util.Map;
 public class TrelloController {
 
     private final TrelloOAuthService trelloOAuthService;
+    private final TrelloMcpService trelloMcpService;
 
     @Value("${app.trello.done-url}")
     private String doneUrl;
@@ -36,10 +39,19 @@ public class TrelloController {
         response.sendRedirect(doneUrl + (connected ? "#trello=connected" : "#trello=error"));
     }
 
+    @GetMapping("/tools")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public List<String> tools(Authentication authentication) {
+        return trelloMcpService.toolsFor(authentication.getName()).stream()
+                .map(tool -> tool.getToolDefinition().name())
+                .toList();
+    }
+
     @DeleteMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void disconnect(Authentication authentication) {
+        trelloMcpService.forget(authentication.getName());
         trelloOAuthService.disconnect(authentication.getName());
     }
 }
