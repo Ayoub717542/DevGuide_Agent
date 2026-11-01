@@ -1,6 +1,8 @@
 package com.example.DevTutor.service.serviceImpl;
 
-import com.example.DevTutor.dto.*;
+import com.example.DevTutor.dto.chat.*;
+import com.example.DevTutor.dto.document.*;
+import com.example.DevTutor.dto.quiz.*;
 import com.example.DevTutor.entity.Conversation;
 import com.example.DevTutor.entity.Message;
 import com.example.DevTutor.entity.LearnerNote;
@@ -11,7 +13,7 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 import com.example.DevTutor.repository.MessageRepository;
 import com.example.DevTutor.repository.LearnerNoteRepository;
-import com.example.DevTutor.dto.ReviewResponse;
+import com.example.DevTutor.dto.quiz.ReviewResponse;
 import com.example.DevTutor.service.ReviewScheduler;
 import com.example.DevTutor.service.TrelloMcpService;
 import java.util.stream.Collectors;

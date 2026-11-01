@@ -1,6 +1,6 @@
 package com.example.DevTutor.service;
 
-import com.example.DevTutor.dto.ReviewResponse;
+import com.example.DevTutor.dto.quiz.ReviewResponse;
 import com.example.DevTutor.entity.QuizResult;
 import org.springframework.stereotype.Component;
 

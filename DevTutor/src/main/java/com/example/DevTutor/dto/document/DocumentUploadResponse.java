@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,9 +9,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SourceResponse {
-
+public class DocumentUploadResponse {
+    private String documentId;
     private String filename;
-    private Integer startPage;
-    private Integer endPage;
+    private int chunksStored;
+
 }

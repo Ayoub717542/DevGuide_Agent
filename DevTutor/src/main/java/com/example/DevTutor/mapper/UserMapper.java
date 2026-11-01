@@ -1,6 +1,6 @@
 package com.example.DevTutor.mapper;
 
-import com.example.DevTutor.dto.UserResponse;
+import com.example.DevTutor.dto.user.UserResponse;
 import com.example.DevTutor.entity.User;
 import org.mapstruct.Mapper;
 

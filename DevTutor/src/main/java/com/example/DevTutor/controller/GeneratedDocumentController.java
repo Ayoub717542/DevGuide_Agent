@@ -1,6 +1,6 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.GeneratedDocumentResponse;
+import com.example.DevTutor.dto.document.GeneratedDocumentResponse;
 import com.example.DevTutor.entity.GeneratedDocument;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 

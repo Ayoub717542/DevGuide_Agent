@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.user;
 import com.example.DevTutor.enums.Roles;
 import lombok.*;
 import java.time.LocalDateTime;

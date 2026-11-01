@@ -1,6 +1,6 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.*;
+import com.example.DevTutor.dto.chat.*;
 import com.example.DevTutor.service.serviceInterface.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

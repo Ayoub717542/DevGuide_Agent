@@ -1,7 +1,7 @@
 package com.example.DevTutor.mapper;
 
-import com.example.DevTutor.dto.ConversationResponse;
-import com.example.DevTutor.dto.CreateConversationRequest;
+import com.example.DevTutor.dto.chat.ConversationResponse;
+import com.example.DevTutor.dto.chat.CreateConversationRequest;
 import com.example.DevTutor.entity.Conversation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

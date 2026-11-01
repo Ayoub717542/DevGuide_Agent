@@ -1,10 +1,10 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.LearnerNoteResponse;
-import com.example.DevTutor.dto.QuizResultResponse;
-import com.example.DevTutor.dto.ReviewResponse;
-import com.example.DevTutor.dto.UpdateUserRequest;
-import com.example.DevTutor.dto.UserResponse;
+import com.example.DevTutor.dto.user.LearnerNoteResponse;
+import com.example.DevTutor.dto.quiz.QuizResultResponse;
+import com.example.DevTutor.dto.quiz.ReviewResponse;
+import com.example.DevTutor.dto.user.UpdateUserRequest;
+import com.example.DevTutor.dto.user.UserResponse;
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.mapper.UserMapper;
 import com.example.DevTutor.repository.LearnerNoteRepository;

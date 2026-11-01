@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.chat;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,9 +9,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentUploadResponse {
-    private String documentId;
-    private String filename;
-    private int chunksStored;
-
+public class CreateConversationRequest {
+    private String title;
 }

@@ -1,8 +1,8 @@
 package com.example.DevTutor.service.serviceImpl;
 
-import com.example.DevTutor.dto.ConversationResponse;
-import com.example.DevTutor.dto.CreateConversationRequest;
-import com.example.DevTutor.dto.UpdateConversationRequest;
+import com.example.DevTutor.dto.chat.ConversationResponse;
+import com.example.DevTutor.dto.chat.CreateConversationRequest;
+import com.example.DevTutor.dto.chat.UpdateConversationRequest;
 import com.example.DevTutor.entity.Conversation;
 import com.example.DevTutor.entity.Message;
 import com.example.DevTutor.mapper.ConversationMapper;

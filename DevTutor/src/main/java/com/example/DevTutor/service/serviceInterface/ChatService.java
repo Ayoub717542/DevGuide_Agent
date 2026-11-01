@@ -1,9 +1,9 @@
 package com.example.DevTutor.service.serviceInterface;
 
-import com.example.DevTutor.dto.ConversationResponse;
-import com.example.DevTutor.dto.CreateConversationRequest;
-import com.example.DevTutor.dto.MessageRequest;
-import com.example.DevTutor.dto.MessageResponse;
+import com.example.DevTutor.dto.chat.ConversationResponse;
+import com.example.DevTutor.dto.chat.CreateConversationRequest;
+import com.example.DevTutor.dto.chat.MessageRequest;
+import com.example.DevTutor.dto.chat.MessageResponse;
 import com.example.DevTutor.entity.Conversation;
 import org.springframework.web.multipart.MultipartFile;
 

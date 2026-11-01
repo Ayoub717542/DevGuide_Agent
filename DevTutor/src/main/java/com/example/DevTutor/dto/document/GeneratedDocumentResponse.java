@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.document;
 
 import com.example.DevTutor.entity.GeneratedDocument;
 

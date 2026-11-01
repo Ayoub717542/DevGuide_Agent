@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.chat;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

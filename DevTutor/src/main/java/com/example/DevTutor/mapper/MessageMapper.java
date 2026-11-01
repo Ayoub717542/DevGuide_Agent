@@ -1,6 +1,6 @@
 package com.example.DevTutor.mapper;
-import com.example.DevTutor.dto.MessageRequest;
-import com.example.DevTutor.dto.MessageResponse;
+import com.example.DevTutor.dto.chat.MessageRequest;
+import com.example.DevTutor.dto.chat.MessageResponse;
 import com.example.DevTutor.entity.Message;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
