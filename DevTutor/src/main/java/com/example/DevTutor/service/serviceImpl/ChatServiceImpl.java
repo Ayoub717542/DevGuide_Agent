@@ -4,11 +4,13 @@ import com.example.DevTutor.dto.chat.*;
 import com.example.DevTutor.dto.document.*;
 import com.example.DevTutor.dto.quiz.*;
 import com.example.DevTutor.entity.Conversation;
+import com.example.DevTutor.entity.ConversationCheckpoint;
 import com.example.DevTutor.entity.Message;
 import com.example.DevTutor.entity.LearnerNote;
 import com.example.DevTutor.entity.QuizResult;
 import com.example.DevTutor.enums.MessageRole;
 import com.example.DevTutor.mapper.MessageMapper;
+import com.example.DevTutor.repository.ConversationCheckpointRepository;
 import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 import com.example.DevTutor.repository.MessageRepository;
@@ -49,11 +51,29 @@ import java.util.List;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class ChatServiceImpl implements ChatService {
 
+    private static final int CHECKPOINT_EVERY = 10;
+
+    private static final String CHECKPOINT_PROMPT = """
+            You keep a short summary of a tutoring chat so the tutor remembers it later.
+            You get the old summary and the new messages.
+            Write one updated summary, under 150 words, with:
+            - the topic
+            - what the learner understood
+            - what is still unclear
+            - open tasks or next steps
+            Keep facts from the old summary unless the new messages change them.
+            Write only the summary.
+            """;
+
     private final ChatClient chatClient;
+    private final ChatClient summaryClient;
+    private final ConversationCheckpointRepository checkpointRepository;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final MessageMapper messageMapper;
@@ -95,8 +115,12 @@ public class ChatServiceImpl implements ChatService {
             QuizResultRepository quizResultRepository,
             LearnerNoteRepository learnerNoteRepository,
             ReviewScheduler reviewScheduler,
-            TrelloMcpService trelloMcpService
+            TrelloMcpService trelloMcpService,
+            ConversationCheckpointRepository checkpointRepository
     ) throws IOException {
+
+        this.checkpointRepository = checkpointRepository;
+        this.summaryClient = builder.clone().build();
 
         this.generatedDocumentRepository = generatedDocumentRepository;
         this.quizResultRepository = quizResultRepository;
@@ -150,7 +174,6 @@ public class ChatServiceImpl implements ChatService {
                     HttpStatus.BAD_REQUEST,
                     "Conversation ID and content are required");
         }
-        // Only the creator can use a conversation (admins included).
         Conversation conversation = conversationRepository
                 .findByIdAndCreatedByEmail(request.getConversationId(), currentUserEmail())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -162,7 +185,7 @@ public class ChatServiceImpl implements ChatService {
         Message userMessage = messageMapper.toEntity(request);
         userMessage.setRole(MessageRole.USER);
         userMessage.setConversation(conversation);
-// Upload the image only if one was attached.
+
         if (media != null) {
             Map<?, ?> uploaded = uploadImage(file);
 
@@ -179,7 +202,8 @@ public class ChatServiceImpl implements ChatService {
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
 
         ChatClientResponse aiResponse = chatClient.prompt()
-                .system(guide + quizScores() + learnerNotes() + (firstMessage ? dueReviews() : "")
+                .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
+                        + (firstMessage ? dueReviews() : "")
                         + (request.isHintMode() ? HINT_MODE : "")
                         + (request.isDevMode() ? DEV_MODE : ""))
                 .user(u -> {
@@ -199,7 +223,6 @@ public class ChatServiceImpl implements ChatService {
                         )
                 )
                 .toolCallbacks(trelloMcpService.toolsFor(currentUserEmail()))
-                // Lets DocumentTools save documents to this conversation.
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
                         "userEmail", currentUserEmail()))
@@ -226,6 +249,12 @@ public class ChatServiceImpl implements ChatService {
 
         Message savedAnswer = messageRepository.save(assistantMessage);
 
+        try {
+            updateCheckpoint(conversation.getId());
+        } catch (RuntimeException e) {
+            log.warn("Could not update checkpoint for conversation {}", conversation.getId(), e);
+        }
+
         MessageResponse response = messageMapper.toResponse(savedAnswer);
         response.setSources(sources);
         response.setImageUrl(userMessage.getImageUrl());
@@ -236,6 +265,48 @@ public class ChatServiceImpl implements ChatService {
                 .map(GeneratedDocumentResponse::from)
                 .toList());
         return response;
+    }
+
+    private String checkpoint(Long conversationId) {
+        return checkpointRepository.findByConversationId(conversationId)
+                .map(c -> "\n\nSummary of this conversation so far "
+                        + "(older messages may not be in the chat history):\n"
+                        + c.getSummary()
+                        + "\nUse it to stay consistent with what was already discussed.")
+                .orElse("");
+    }
+
+    private void updateCheckpoint(Long conversationId) {
+        long count = messageRepository.countByConversationId(conversationId);
+        ConversationCheckpoint checkpoint = checkpointRepository
+                .findByConversationId(conversationId)
+                .orElseGet(ConversationCheckpoint::new);
+        if (count - checkpoint.getMessageCount() < CHECKPOINT_EVERY) {
+            return;
+        }
+
+        String newMessages = messageRepository
+                .findByConversationIdOrderByCreatedAtAscIdAsc(conversationId)
+                .stream()
+                .skip(checkpoint.getMessageCount())
+                .map(m -> m.getRole() + ": " + m.getContent())
+                .collect(Collectors.joining("\n\n"));
+
+        String oldSummary = checkpoint.getSummary() == null ? "none" : checkpoint.getSummary();
+        String summary = summaryClient.prompt()
+                .system(CHECKPOINT_PROMPT)
+                .user("Old summary:\n" + oldSummary + "\n\nNew messages:\n" + newMessages)
+                .call()
+                .content();
+        if (summary == null || summary.isBlank()) {
+            return;
+        }
+
+        checkpoint.setConversationId(conversationId);
+        checkpoint.setSummary(summary);
+        checkpoint.setMessageCount(count);
+        checkpointRepository.save(checkpoint);
+        log.info("Checkpoint saved for conversation {} at {} messages", conversationId, count);
     }
 
     private String dueReviews() {
