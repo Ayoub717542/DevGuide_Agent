@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.challenge;
 
 public record ChallengeDraft(
         String title,

@@ -1,11 +1,11 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.ChallengeResponse;
-import com.example.DevTutor.dto.ConversationResponse;
-import com.example.DevTutor.dto.CreateConversationRequest;
-import com.example.DevTutor.dto.QuizResponse;
-import com.example.DevTutor.dto.QuizResultRequest;
-import com.example.DevTutor.dto.UpdateConversationRequest;
+import com.example.DevTutor.dto.challenge.ChallengeResponse;
+import com.example.DevTutor.dto.chat.ConversationResponse;
+import com.example.DevTutor.dto.chat.CreateConversationRequest;
+import com.example.DevTutor.dto.quiz.QuizResponse;
+import com.example.DevTutor.dto.quiz.QuizResultRequest;
+import com.example.DevTutor.dto.chat.UpdateConversationRequest;
 import com.example.DevTutor.service.serviceInterface.ConversationService;
 import com.example.DevTutor.service.serviceInterface.QuizService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.example.DevTutor.exception;
 
-import com.example.DevTutor.dto.ApiError;
+import com.example.DevTutor.dto.common.ApiError;
 import com.google.genai.errors.ClientException;
 import com.google.genai.errors.GenAiIOException;
 import com.google.genai.errors.ServerException;

@@ -1,11 +1,11 @@
 package com.example.DevTutor.service.serviceImpl;
 
-import com.example.DevTutor.dto.ChallengeDraft;
-import com.example.DevTutor.dto.ChallengeResponse;
-import com.example.DevTutor.dto.ChallengeResult;
+import com.example.DevTutor.dto.challenge.ChallengeDraft;
+import com.example.DevTutor.dto.challenge.ChallengeResponse;
+import com.example.DevTutor.dto.challenge.ChallengeResult;
 import lombok.extern.slf4j.Slf4j;
-import com.example.DevTutor.dto.QuizResponse;
-import com.example.DevTutor.dto.QuizResultRequest;
+import com.example.DevTutor.dto.quiz.QuizResponse;
+import com.example.DevTutor.dto.quiz.QuizResultRequest;
 import com.example.DevTutor.entity.Challenge;
 import com.example.DevTutor.entity.QuizResult;
 import com.example.DevTutor.repository.ChallengeRepository;

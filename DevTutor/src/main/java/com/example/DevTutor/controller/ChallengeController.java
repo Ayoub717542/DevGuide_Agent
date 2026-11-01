@@ -1,7 +1,7 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.ChallengeResult;
-import com.example.DevTutor.dto.ChallengeSubmitRequest;
+import com.example.DevTutor.dto.challenge.ChallengeResult;
+import com.example.DevTutor.dto.challenge.ChallengeSubmitRequest;
 import com.example.DevTutor.service.serviceInterface.QuizService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -13,7 +13,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.example.DevTutor.dto.DocumentUploadResponse;
+import com.example.DevTutor.dto.document.DocumentUploadResponse;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 

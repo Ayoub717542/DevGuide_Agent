@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -39,6 +40,16 @@ public class User implements UserDetails {
 
     @Convert(converter = GitHubTokenConverter.class)
     private String githubToken;
+
+    @Convert(converter = GitHubTokenConverter.class)
+    @Column(columnDefinition = "TEXT")
+    private String trelloAccessToken;
+
+    @Convert(converter = GitHubTokenConverter.class)
+    @Column(columnDefinition = "TEXT")
+    private String trelloRefreshToken;
+
+    private Instant trelloTokenExpiresAt;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

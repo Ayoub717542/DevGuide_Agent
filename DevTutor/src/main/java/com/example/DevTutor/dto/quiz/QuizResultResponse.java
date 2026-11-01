@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.quiz;
 
 import com.example.DevTutor.entity.QuizResult;
 

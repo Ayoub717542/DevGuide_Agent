@@ -1,4 +1,6 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.chat;
+
+import com.example.DevTutor.dto.document.GeneratedDocumentResponse;
 
 import com.example.DevTutor.enums.MessageRole;
 import lombok.AllArgsConstructor;

@@ -26,6 +26,7 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/**",
+            "/api/trello/callback",
             "/v3/api-docs",
             "/v3/api-docs/**",
             "/swagger-ui.html",

@@ -1,6 +1,6 @@
 package com.example.DevTutor.auth;
 
-import com.example.DevTutor.dto.UserResponse;
+import com.example.DevTutor.dto.user.UserResponse;
 import com.example.DevTutor.dto.auth.AuthenticationRequestDTO;
 import com.example.DevTutor.dto.auth.AuthenticationResponceDTO;
 import com.example.DevTutor.dto.auth.RegisterRequoestDTO;

@@ -1,6 +1,6 @@
 package com.example.DevTutor.service;
 
-import com.example.DevTutor.dto.ChallengeResult;
+import com.example.DevTutor.dto.challenge.ChallengeResult;
 import com.example.DevTutor.tools.CodeRunnerTools;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.example.DevTutor.dto;
+package com.example.DevTutor.dto.challenge;
 
 import com.example.DevTutor.entity.Challenge;
 

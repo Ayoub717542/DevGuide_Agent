@@ -45,6 +45,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .getTokenValue();
 
         String email = profile.getAttribute("email");
+        if ("google".equals(provider) && !Boolean.TRUE.equals(profile.getAttribute("email_verified"))) {
+            email = null;
+        }
         if (email == null && "github".equals(provider)) {
             email = primaryGitHubEmail(accessToken);
         }

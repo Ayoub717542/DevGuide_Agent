@@ -1,6 +1,6 @@
 package com.example.DevTutor.controller;
 
-import com.example.DevTutor.dto.DocumentUploadResponse;
+import com.example.DevTutor.dto.document.DocumentUploadResponse;
 import com.example.DevTutor.service.serviceInterface.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
