@@ -6,6 +6,7 @@ import com.example.DevTutor.dto.chat.UpdateConversationRequest;
 import com.example.DevTutor.entity.Conversation;
 import com.example.DevTutor.entity.Message;
 import com.example.DevTutor.mapper.ConversationMapper;
+import com.example.DevTutor.repository.ConversationCheckpointRepository;
 import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 import com.example.DevTutor.repository.MessageRepository;
@@ -37,6 +38,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final MessageRepository messageRepository;
     private final UploadedDocumentRepository uploadedDocumentRepository;
     private final GeneratedDocumentRepository generatedDocumentRepository;
+    private final ConversationCheckpointRepository checkpointRepository;
     private final VectorStore vectorStore;
     private final ChatMemory chatMemory;
     private final Cloudinary cloudinary;
@@ -105,6 +107,7 @@ public class ConversationServiceImpl implements ConversationService {
 
         uploadedDocumentRepository.deleteByConversationId(id);
         generatedDocumentRepository.deleteByConversationId(id);
+        checkpointRepository.deleteByConversationId(id);
         messageRepository.deleteAll(messages);
         conversationRepository.delete(conversation);
     }
