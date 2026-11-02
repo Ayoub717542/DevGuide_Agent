@@ -7,6 +7,8 @@ import com.example.DevTutor.entity.Conversation;
 import com.example.DevTutor.entity.ConversationCheckpoint;
 import com.example.DevTutor.entity.Message;
 import com.example.DevTutor.entity.LearnerNote;
+import com.example.DevTutor.entity.LearnerPreferences;
+import java.util.ArrayList;
 import com.example.DevTutor.entity.QuizResult;
 import com.example.DevTutor.enums.MessageRole;
 import com.example.DevTutor.mapper.MessageMapper;
@@ -81,6 +83,7 @@ public class ChatServiceImpl implements ChatService {
             - explanationStyle: STEP_BY_STEP, EXAMPLES_FIRST, ANALOGIES or DIRECT
             - responseLength: SHORT, MEDIUM or DETAILED
             - codePreference: SMALL_EXAMPLES, FULL_CODE or LITTLE_CODE
+            - tone: NEUTRAL, FRIENDLY, HUMOROUS or ENCOURAGING
             Rules:
             - Return null when you are not sure. Null keeps the current value.
             - Only return a lasting preference: stated as a habit ("I always want...", "I'm new to Java")
@@ -89,6 +92,10 @@ public class ChatServiceImpl implements ChatService {
             - Never change a preference because of a single weak signal.
             - Set experienceLevel only when the learner describes their own experience,
               or a clear pattern repeats. Never infer it from how hard the topic is.
+            - Set tone from how the learner writes across several messages:
+              HUMOROUS only if they joke or laugh ("haha", "lol") several times,
+              FRIENDLY for a casual, warm style, ENCOURAGING if they often doubt themselves,
+              NEUTRAL for a plain, serious style. One "haha" or one frustrated message is not enough.
             """;
 
     private final ChatClient chatClient;
@@ -232,6 +239,7 @@ public class ChatServiceImpl implements ChatService {
 
         ChatClientResponse aiResponse = chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
+                        + preferences()
                         + (firstMessage ? dueReviews() : "")
                         + (request.isHintMode() ? HINT_MODE : "")
                         + (request.isDevMode() ? DEV_MODE : ""))
@@ -340,7 +348,7 @@ public class ChatServiceImpl implements ChatService {
         checkpoint.setMessageCount(count);
         checkpoint.setPendingPreferences(jsonMapper.writeValueAsString(new CheckpointResult(null,
                 result.experienceLevel(), result.explanationStyle(),
-                result.responseLength(), result.codePreference())));
+                result.responseLength(), result.codePreference(), result.tone())));
         checkpoint = checkpointRepository.save(checkpoint);
         log.info("Checkpoint saved for conversation {} at {} messages", conversationId, count);
 
@@ -368,7 +376,8 @@ public class ChatServiceImpl implements ChatService {
                 .map(p -> "experienceLevel: " + p.getExperienceLevel()
                         + ", explanationStyle: " + p.getExplanationStyle()
                         + ", responseLength: " + p.getResponseLength()
-                        + ", codePreference: " + p.getCodePreference())
+                        + ", codePreference: " + p.getCodePreference()
+                        + ", tone: " + p.getTone())
                 .orElse("none");
     }
 
@@ -386,6 +395,61 @@ public class ChatServiceImpl implements ChatService {
         return "\n\nConcepts due for review: " + due + ".\n"
                 + "At the end of your answer, offer a short review quiz on them in one sentence.\n"
                 + "Do not ask the quiz questions yourself.";
+    }
+
+    private String preferences() {
+        LearnerPreferences p = learnerPreferencesRepository
+                .findByUserEmail(currentUserEmail())
+                .orElse(null);
+        if (p == null) {
+            return "";
+        }
+
+        List<String> lines = new ArrayList<>();
+        if (p.getExperienceLevel() != null) {
+            lines.add(switch (p.getExperienceLevel()) {
+                case BEGINNER -> "The learner is a beginner: explain every technical term in simple words.";
+                case INTERMEDIATE -> "The learner knows the basics: skip very basic explanations.";
+                case ADVANCED -> "The learner is advanced: be precise and technical.";
+            });
+        }
+        if (p.getExplanationStyle() != null) {
+            lines.add(switch (p.getExplanationStyle()) {
+                case STEP_BY_STEP -> "Explain step by step.";
+                case EXAMPLES_FIRST -> "Start with an example, then explain.";
+                case ANALOGIES -> "Use simple analogies to explain new ideas.";
+                case DIRECT -> "Go straight to the point.";
+            });
+        }
+        if (p.getResponseLength() != null) {
+            lines.add(switch (p.getResponseLength()) {
+                case SHORT -> "Keep answers short.";
+                case MEDIUM -> "Keep answers to a medium length.";
+                case DETAILED -> "Give detailed answers.";
+            });
+        }
+        if (p.getCodePreference() != null) {
+            lines.add(switch (p.getCodePreference()) {
+                case SMALL_EXAMPLES -> "Use small code examples.";
+                case FULL_CODE -> "Show complete, runnable code.";
+                case LITTLE_CODE -> "Use code only when it is really needed.";
+            });
+        }
+        if (p.getTone() != null) {
+            lines.add(switch (p.getTone()) {
+                case NEUTRAL -> "Use a neutral, professional tone.";
+                case FRIENDLY -> "Use a warm, friendly tone.";
+                case HUMOROUS -> "Add light humor, but keep explanations correct and clear.";
+                case ENCOURAGING -> "Be encouraging and patient.";
+            });
+        }
+        if (lines.isEmpty()) {
+            return "";
+        }
+
+        return "\n\nLearner preferences:\n- " + String.join("\n- ", lines)
+                + "\nThese are the learner's usual preferences. If the current message asks for something different,"
+                + " or hint mode or dev mode is on, follow that instead.";
     }
 
     private String learnerNotes() {

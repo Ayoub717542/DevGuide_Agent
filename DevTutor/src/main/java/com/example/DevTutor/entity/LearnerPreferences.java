@@ -4,6 +4,7 @@ import com.example.DevTutor.enums.CodePreference;
 import com.example.DevTutor.enums.ExperienceLevel;
 import com.example.DevTutor.enums.ExplanationStyle;
 import com.example.DevTutor.enums.ResponseLength;
+import com.example.DevTutor.enums.Tone;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,9 @@ public class LearnerPreferences {
 
     @Enumerated(EnumType.STRING)
     private CodePreference codePreference;
+
+    @Enumerated(EnumType.STRING)
+    private Tone tone;
 
     private LocalDateTime updatedAt;
 

@@ -6,6 +6,7 @@ import com.example.DevTutor.enums.CodePreference;
 import com.example.DevTutor.enums.ExperienceLevel;
 import com.example.DevTutor.enums.ExplanationStyle;
 import com.example.DevTutor.enums.ResponseLength;
+import com.example.DevTutor.enums.Tone;
 import com.example.DevTutor.repository.LearnerPreferencesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class LearnerPreferencesService {
         set(parse(ExplanationStyle.class, detected.explanationStyle()), preferences::setExplanationStyle);
         set(parse(ResponseLength.class, detected.responseLength()), preferences::setResponseLength);
         set(parse(CodePreference.class, detected.codePreference()), preferences::setCodePreference);
+        set(parse(Tone.class, detected.tone()), preferences::setTone);
 
         learnerPreferencesRepository.saveAndFlush(preferences);
     }

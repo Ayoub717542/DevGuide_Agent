@@ -5,5 +5,6 @@ public record CheckpointResult(
         String experienceLevel,
         String explanationStyle,
         String responseLength,
-        String codePreference) {
+        String codePreference,
+        String tone) {
 }
