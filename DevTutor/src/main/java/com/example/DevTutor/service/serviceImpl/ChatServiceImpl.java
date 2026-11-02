@@ -52,6 +52,11 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import lombok.extern.slf4j.Slf4j;
+import com.example.DevTutor.repository.LearnerPreferencesRepository;
+import com.example.DevTutor.service.LearnerPreferencesService;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -60,20 +65,38 @@ public class ChatServiceImpl implements ChatService {
     private static final int CHECKPOINT_EVERY = 10;
 
     private static final String CHECKPOINT_PROMPT = """
-            You keep a short summary of a tutoring chat so the tutor remembers it later.
-            You get the old summary and the new messages.
-            Write one updated summary, under 150 words, with:
+            You keep a short summary of a tutoring chat so the tutor remembers it later,
+            and you learn how the learner likes to be taught.
+            You get the old summary, the learner's current preferences and the new messages.
+
+            summary: one updated summary, under 150 words, with:
             - the topic
             - what the learner understood
             - what is still unclear
             - open tasks or next steps
             Keep facts from the old summary unless the new messages change them.
-            Write only the summary.
+
+            Preferences. Use only these values, or null:
+            - experienceLevel: BEGINNER, INTERMEDIATE or ADVANCED
+            - explanationStyle: STEP_BY_STEP, EXAMPLES_FIRST, ANALOGIES or DIRECT
+            - responseLength: SHORT, MEDIUM or DETAILED
+            - codePreference: SMALL_EXAMPLES, FULL_CODE or LITTLE_CODE
+            Rules:
+            - Return null when you are not sure. Null keeps the current value.
+            - Only return a lasting preference: stated as a habit ("I always want...", "I'm new to Java")
+              or shown several times in the new messages.
+            - A request about one answer ("explain this one in detail") is not a preference: return null.
+            - Never change a preference because of a single weak signal.
+            - Set experienceLevel only when the learner describes their own experience,
+              or a clear pattern repeats. Never infer it from how hard the topic is.
             """;
 
     private final ChatClient chatClient;
     private final ChatClient summaryClient;
     private final ConversationCheckpointRepository checkpointRepository;
+    private final LearnerPreferencesRepository learnerPreferencesRepository;
+    private final LearnerPreferencesService learnerPreferencesService;
+    private final JsonMapper jsonMapper;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final MessageMapper messageMapper;
@@ -116,10 +139,16 @@ public class ChatServiceImpl implements ChatService {
             LearnerNoteRepository learnerNoteRepository,
             ReviewScheduler reviewScheduler,
             TrelloMcpService trelloMcpService,
-            ConversationCheckpointRepository checkpointRepository
+            ConversationCheckpointRepository checkpointRepository,
+            LearnerPreferencesRepository learnerPreferencesRepository,
+            LearnerPreferencesService learnerPreferencesService,
+            JsonMapper jsonMapper
     ) throws IOException {
 
         this.checkpointRepository = checkpointRepository;
+        this.learnerPreferencesRepository = learnerPreferencesRepository;
+        this.learnerPreferencesService = learnerPreferencesService;
+        this.jsonMapper = jsonMapper;
         this.summaryClient = builder.clone().build();
 
         this.generatedDocumentRepository = generatedDocumentRepository;
@@ -277,10 +306,12 @@ public class ChatServiceImpl implements ChatService {
     }
 
     private void updateCheckpoint(Long conversationId) {
+        String userEmail = currentUserEmail();
         long count = messageRepository.countByConversationId(conversationId);
         ConversationCheckpoint checkpoint = checkpointRepository
                 .findByConversationId(conversationId)
                 .orElseGet(ConversationCheckpoint::new);
+        checkpoint = savePendingPreferences(checkpoint, userEmail);
         if (count - checkpoint.getMessageCount() < CHECKPOINT_EVERY) {
             return;
         }
@@ -293,20 +324,52 @@ public class ChatServiceImpl implements ChatService {
                 .collect(Collectors.joining("\n\n"));
 
         String oldSummary = checkpoint.getSummary() == null ? "none" : checkpoint.getSummary();
-        String summary = summaryClient.prompt()
+        CheckpointResult result = summaryClient.prompt()
                 .system(CHECKPOINT_PROMPT)
-                .user("Old summary:\n" + oldSummary + "\n\nNew messages:\n" + newMessages)
+                .user("Old summary:\n" + oldSummary
+                        + "\n\nCurrent preferences:\n" + currentPreferences(userEmail)
+                        + "\n\nNew messages:\n" + newMessages)
                 .call()
-                .content();
-        if (summary == null || summary.isBlank()) {
+                .entity(CheckpointResult.class);
+        if (result == null || result.summary() == null || result.summary().isBlank()) {
             return;
         }
 
         checkpoint.setConversationId(conversationId);
-        checkpoint.setSummary(summary);
+        checkpoint.setSummary(result.summary());
         checkpoint.setMessageCount(count);
-        checkpointRepository.save(checkpoint);
+        checkpoint.setPendingPreferences(jsonMapper.writeValueAsString(new CheckpointResult(null,
+                result.experienceLevel(), result.explanationStyle(),
+                result.responseLength(), result.codePreference())));
+        checkpoint = checkpointRepository.save(checkpoint);
         log.info("Checkpoint saved for conversation {} at {} messages", conversationId, count);
+
+        savePendingPreferences(checkpoint, userEmail);
+    }
+
+    private ConversationCheckpoint savePendingPreferences(ConversationCheckpoint checkpoint, String userEmail) {
+        if (checkpoint.getPendingPreferences() == null) {
+            return checkpoint;
+        }
+        CheckpointResult detected = jsonMapper.readValue(
+                checkpoint.getPendingPreferences(), CheckpointResult.class);
+        try {
+            learnerPreferencesService.merge(userEmail, detected);
+        } catch (DataIntegrityViolationException | ConcurrencyFailureException e) {
+            learnerPreferencesService.merge(userEmail, detected);
+        }
+        checkpoint.setPendingPreferences(null);
+        log.info("Preferences updated from conversation {}", checkpoint.getConversationId());
+        return checkpointRepository.save(checkpoint);
+    }
+
+    private String currentPreferences(String userEmail) {
+        return learnerPreferencesRepository.findByUserEmail(userEmail)
+                .map(p -> "experienceLevel: " + p.getExperienceLevel()
+                        + ", explanationStyle: " + p.getExplanationStyle()
+                        + ", responseLength: " + p.getResponseLength()
+                        + ", codePreference: " + p.getCodePreference())
+                .orElse("none");
     }
 
     private String dueReviews() {

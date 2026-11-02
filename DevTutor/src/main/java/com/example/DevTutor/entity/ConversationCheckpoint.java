@@ -25,6 +25,9 @@ public class ConversationCheckpoint {
 
     private long messageCount;
 
+    @Column(columnDefinition = "TEXT")
+    private String pendingPreferences;
+
     private LocalDateTime updatedAt;
 
     @PrePersist
