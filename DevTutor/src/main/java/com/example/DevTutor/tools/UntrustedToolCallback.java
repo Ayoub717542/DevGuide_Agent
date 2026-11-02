@@ -5,9 +5,11 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
+import org.springframework.ai.util.json.JsonParser;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public record UntrustedToolCallback(ToolCallback tool) implements ToolCallback {
 
@@ -44,6 +46,6 @@ public record UntrustedToolCallback(ToolCallback tool) implements ToolCallback {
     }
 
     private String box(String result) {
-        return "<untrusted_tool_output>\n" + clean(result) + "\n</untrusted_tool_output>";
+        return JsonParser.toJson(Map.of("untrusted_tool_output", clean(result)));
     }
 }

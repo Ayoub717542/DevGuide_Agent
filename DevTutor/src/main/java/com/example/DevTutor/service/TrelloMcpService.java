@@ -9,7 +9,13 @@ import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Service;
 
+import com.example.DevTutor.tools.ApprovalToolCallback;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +27,32 @@ public class TrelloMcpService {
     private final TrelloOAuthService trelloOAuthService;
     private final Map<String, SyncMcpToolCallbackProvider> userTools = new ConcurrentHashMap<>();
     private final Map<String, McpSyncClient> userClients = new ConcurrentHashMap<>();
+    private final Map<String, PendingAction> pending = new ConcurrentHashMap<>();
+
+    public record PendingAction(String id, @JsonIgnore String email, String toolName, String input,
+                                @JsonIgnore ToolCallback tool) {
+    }
+
+    public List<PendingAction> pendingFor(String email) {
+        return pending.values().stream().filter(action -> action.email().equals(email)).toList();
+    }
+
+    public String approve(String id, String email) {
+        PendingAction action = take(id, email);
+        return action.tool().call(action.input());
+    }
+
+    public void reject(String id, String email) {
+        take(id, email);
+    }
+
+    private PendingAction take(String id, String email) {
+        PendingAction action = pending.get(id);
+        if (action == null || !action.email().equals(email) || !pending.remove(id, action)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pending action not found");
+        }
+        return action;
+    }
 
     public List<ToolCallback> toolsFor(String email) {
         if (trelloOAuthService.validAccessToken(email).isEmpty()) {
@@ -28,7 +60,9 @@ public class TrelloMcpService {
             return List.of();
         }
         try {
-            return List.of(userTools.computeIfAbsent(email, this::connect).getToolCallbacks());
+            return Arrays.stream(userTools.computeIfAbsent(email, this::connect).getToolCallbacks())
+                    .map(tool -> isRead(tool) ? tool : new ApprovalToolCallback(tool, email, pending))
+                    .toList();
         } catch (RuntimeException e) {
             forget(email);
             return List.of();
@@ -41,6 +75,11 @@ public class TrelloMcpService {
         if (client != null) {
             client.closeGracefully();
         }
+    }
+
+    private boolean isRead(ToolCallback tool) {
+        String name = tool.getToolDefinition().name();
+        return name.startsWith("trelloRead") || name.equals("trelloSearch");
     }
 
     private SyncMcpToolCallbackProvider connect(String email) {
