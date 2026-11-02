@@ -5,6 +5,7 @@ import com.example.DevTutor.entity.UploadedDocument;
 import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.UploadedDocumentRepository;
 import com.example.DevTutor.service.serviceInterface.DocumentService;
+import com.example.DevTutor.tools.UntrustedToolCallback;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
@@ -49,6 +50,10 @@ public class DocumentServiceImpl implements DocumentService {
             throw new IllegalArgumentException(
                     "Could not read this PDF. Make sure it is a valid, unencrypted PDF.");
         }
+
+        pages = pages.stream()
+                .map(p -> p.mutate().text(UntrustedToolCallback.clean(p.getText())).build())
+                .toList();
 
         TokenTextSplitter splitter = //uses token counts to limit passage sizes.
                 TokenTextSplitter.builder().build(); //Divides that text into smaller passages, called chunks

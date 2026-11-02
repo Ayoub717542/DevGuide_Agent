@@ -47,6 +47,25 @@ public class TrelloController {
                 .toList();
     }
 
+    @GetMapping("/pending")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public List<TrelloMcpService.PendingAction> pending(Authentication authentication) {
+        return trelloMcpService.pendingFor(authentication.getName());
+    }
+
+    @PostMapping("/pending/{id}/approve")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Map<String, String> approve(@PathVariable String id, Authentication authentication) {
+        return Map.of("result", trelloMcpService.approve(id, authentication.getName()));
+    }
+
+    @DeleteMapping("/pending/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reject(@PathVariable String id, Authentication authentication) {
+        trelloMcpService.reject(id, authentication.getName());
+    }
+
     @DeleteMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
