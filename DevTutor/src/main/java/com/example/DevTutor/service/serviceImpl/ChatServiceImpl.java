@@ -20,6 +20,7 @@ import com.example.DevTutor.repository.LearnerNoteRepository;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
 import com.example.DevTutor.service.ReviewScheduler;
 import com.example.DevTutor.service.TrelloMcpService;
+import com.example.DevTutor.tools.UntrustedToolCallback;
 import java.util.stream.Collectors;
 import com.example.DevTutor.repository.QuizResultRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -173,7 +174,7 @@ public class ChatServiceImpl implements ChatService {
 
         this.chatClient = builder
                 .defaultSystem(guide)
-                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools).defaultTools(mcpTools)
+                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools).defaultToolCallbacks(UntrustedToolCallback.wrap(mcpTools))
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor.builder(chatMemory).build(),
 
@@ -259,7 +260,7 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
-                .toolCallbacks(trelloMcpService.toolsFor(currentUserEmail()))
+                .toolCallbacks(UntrustedToolCallback.wrap(trelloMcpService.toolsFor(currentUserEmail())))
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
                         "userEmail", currentUserEmail()))
