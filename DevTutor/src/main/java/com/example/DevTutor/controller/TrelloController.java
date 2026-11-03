@@ -28,7 +28,10 @@ public class TrelloController {
     @GetMapping("/connect")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Map<String, String> connect(Authentication authentication) {
-        return Map.of("url", trelloOAuthService.authorizeUrl(authentication.getName()));
+        return Map.of(
+                "url", trelloOAuthService.authorizeUrl(authentication.getName()),
+                "help", "You need a Trello workspace first. New to Trello? Open https://trello.com, "
+                        + "create a workspace, then connect again.");
     }
 
     @GetMapping("/callback")

@@ -12,6 +12,8 @@ public interface UploadedDocumentRepository extends JpaRepository<UploadedDocume
 
     List<UploadedDocument> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
 
+    boolean existsByConversationId(Long conversationId);
+
     Optional<UploadedDocument> findByDocumentIdAndConversationCreatedByEmail(
             String documentId, String email);
 
