@@ -29,6 +29,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -238,6 +241,7 @@ public class ChatServiceImpl implements ChatService {
         messageRepository.save(userMessage);
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
 
+        long aiStart = System.nanoTime();
         ChatClientResponse aiResponse = chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
                         + preferences()
@@ -266,6 +270,7 @@ public class ChatServiceImpl implements ChatService {
                         "userEmail", currentUserEmail()))
                 .call()
                 .chatClientResponse();
+        long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
 
         String answer = aiResponse.chatResponse() == null
                 ? null
@@ -279,6 +284,8 @@ public class ChatServiceImpl implements ChatService {
                     HttpStatus.BAD_GATEWAY,
                     "The AI returned an empty answer. Please try again.");
         }
+
+        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs);
 
         Message assistantMessage = new Message();
         assistantMessage.setContent(answer);
@@ -303,6 +310,22 @@ public class ChatServiceImpl implements ChatService {
                 .map(GeneratedDocumentResponse::from)
                 .toList());
         return response;
+    }
+
+    private void logAiUsage(Long conversationId, ChatResponse chatResponse, long timeMs) {
+        try {
+            ChatResponseMetadata metadata = chatResponse.getMetadata();
+            Usage usage = metadata.getUsage();
+            log.info("AI reply: conversation={}, model={}, tokensIn={}, tokensOut={}, tokensTotal={}, timeMs={}",
+                    conversationId,
+                    metadata.getModel(),
+                    usage == null ? null : usage.getPromptTokens(),
+                    usage == null ? null : usage.getCompletionTokens(),
+                    usage == null ? null : usage.getTotalTokens(),
+                    timeMs);
+        } catch (RuntimeException e) {
+            log.warn("Could not log AI usage for conversation {}", conversationId);
+        }
     }
 
     private String checkpoint(Long conversationId) {
