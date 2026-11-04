@@ -22,6 +22,7 @@ import org.springframework.ai.chat.client.advisor.api.Advisor;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
 import com.example.DevTutor.service.ReviewScheduler;
 import com.example.DevTutor.service.TrelloMcpService;
+import com.example.DevTutor.tools.ToolRouter;
 import com.example.DevTutor.tools.UntrustedToolCallback;
 import java.util.stream.Collectors;
 import com.example.DevTutor.repository.QuizResultRepository;
@@ -130,10 +131,10 @@ public class ChatServiceImpl implements ChatService {
     private final LearnerNoteRepository learnerNoteRepository;
     private final ReviewScheduler reviewScheduler;
     private final TrelloMcpService trelloMcpService;
+    private final ToolCallbackProvider mcpTools;
     private final String guide;
 
     private static final Set<String> LOCAL_TOOLS = Set.of("runCode", "createDocument", "saveLearnerNote");
-    private static final Set<String> CONTEXT7_TOOLS = Set.of("resolve-library-id", "query-docs");
 
     private final CallAdvisor contextSizeLogger = new CallAdvisor() {
         @Override
@@ -167,6 +168,22 @@ public class ChatServiceImpl implements ChatService {
             Dev mode is on: the user is an experienced developer.
             Answer directly and show the code first. Skip beginner explanations and step-by-step teaching.
             Any language or framework is fine, not only Java.
+            """;
+
+    private static final String GITHUB_NOT_ATTACHED = """
+
+
+            GitHub tools are not attached to this message. This does not mean GitHub is unavailable.
+            If the student needs GitHub data, do not guess and never claim you checked GitHub.
+            Ask them to mention GitHub or the owner/repo name in their message.
+            """;
+
+    private static final String TRELLO_NOT_ATTACHED = """
+
+
+            Trello tools are not attached to this message. This does not mean Trello is disconnected.
+            If the student needs Trello, do not guess and never claim a Trello action happened.
+            Ask them to mention Trello in their message.
             """;
 
     public ChatServiceImpl(
@@ -204,6 +221,7 @@ public class ChatServiceImpl implements ChatService {
         this.learnerNoteRepository = learnerNoteRepository;
         this.reviewScheduler = reviewScheduler;
         this.trelloMcpService = trelloMcpService;
+        this.mcpTools = mcpTools;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.messageMapper = messageMapper;
@@ -236,7 +254,7 @@ public class ChatServiceImpl implements ChatService {
 
         this.chatClient = builder
                 .defaultSystem(guide)
-                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools).defaultToolCallbacks(UntrustedToolCallback.wrap(mcpTools))
+                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
@@ -279,6 +297,7 @@ public class ChatServiceImpl implements ChatService {
         List<Advisor> requestAdvisors = uploadedDocumentRepository.existsByConversationId(conversation.getId())
                 ? List.of(contextSizeLogger, questionAnswerAdvisor)
                 : List.of(contextSizeLogger);
+        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
 
         long aiStart = System.nanoTime();
         ChatClientResponse aiResponse = chatClient.prompt()
@@ -286,7 +305,9 @@ public class ChatServiceImpl implements ChatService {
                         + preferences()
                         + (firstMessage ? dueReviews() : "")
                         + (request.isHintMode() ? HINT_MODE : "")
-                        + (request.isDevMode() ? DEV_MODE : ""))
+                        + (request.isDevMode() ? DEV_MODE : "")
+                        + (toolGroups.contains(ToolRouter.Group.GITHUB) ? "" : GITHUB_NOT_ATTACHED)
+                        + (toolGroups.contains(ToolRouter.Group.TRELLO) ? "" : TRELLO_NOT_ATTACHED))
                 .user(u -> {
                     u.text(request.getContent());
                     if (media != null) {
@@ -304,7 +325,7 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
-                .toolCallbacks(UntrustedToolCallback.wrap(trelloMcpService.toolsFor(currentUserEmail())))
+                .toolCallbacks(UntrustedToolCallback.wrap(routedTools(toolGroups)))
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
                         "userEmail", currentUserEmail()))
@@ -350,6 +371,27 @@ public class ChatServiceImpl implements ChatService {
                 .map(GeneratedDocumentResponse::from)
                 .toList());
         return response;
+    }
+
+    private List<String> userMessages(Long conversationId) {
+        return messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
+                .filter(message -> message.getRole() == MessageRole.USER)
+                .map(Message::getContent)
+                .toList();
+    }
+
+    private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {
+        List<ToolCallback> tools = new ArrayList<>();
+        for (ToolCallback tool : mcpTools.getToolCallbacks()) {
+            if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())
+                    || groups.contains(ToolRouter.Group.GITHUB)) {
+                tools.add(tool);
+            }
+        }
+        if (groups.contains(ToolRouter.Group.TRELLO)) {
+            tools.addAll(trelloMcpService.toolsFor(currentUserEmail()));
+        }
+        return tools;
     }
 
     private void logAiUsage(Long conversationId, ChatResponse chatResponse, long timeMs) {
@@ -423,7 +465,7 @@ public class ChatServiceImpl implements ChatService {
                     var definition = tool.getToolDefinition();
                     String name = definition.name();
                     String group = name.startsWith("trello") ? "trello"
-                            : CONTEXT7_TOOLS.contains(name) ? "context7"
+                            : ToolRouter.isContext7Tool(name) ? "context7"
                             : LOCAL_TOOLS.contains(name) ? "local"
                             : "github";
                     int[] counts = toolDefs.get(group);
