@@ -30,14 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.DevTutor.service.serviceInterface.ChatService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
-import org.springframework.ai.chat.client.ChatClientRequest;
-import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
-import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
-import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.chat.messages.ToolResponseMessage;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.core.Ordered;
 import java.util.Set;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -133,27 +126,6 @@ public class ChatServiceImpl implements ChatService {
     private final TrelloMcpService trelloMcpService;
     private final ToolCallbackProvider mcpTools;
     private final String guide;
-
-    private static final Set<String> LOCAL_TOOLS = Set.of("runCode", "createDocument", "saveLearnerNote");
-
-    private final CallAdvisor contextSizeLogger = new CallAdvisor() {
-        @Override
-        public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
-            ChatClientResponse response = chain.nextCall(request);
-            logContextSize(request, response);
-            return response;
-        }
-
-        @Override
-        public String getName() {
-            return "ContextSizeLogger";
-        }
-
-        @Override
-        public int getOrder() {
-            return Ordered.LOWEST_PRECEDENCE - 1000;
-        }
-    };
 
     private static final String HINT_MODE = """
 
@@ -295,8 +267,8 @@ public class ChatServiceImpl implements ChatService {
         messageRepository.save(userMessage);
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
         List<Advisor> requestAdvisors = uploadedDocumentRepository.existsByConversationId(conversation.getId())
-                ? List.of(contextSizeLogger, questionAnswerAdvisor)
-                : List.of(contextSizeLogger);
+                ? List.of(questionAnswerAdvisor)
+                : List.of();
         Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
 
         long aiStart = System.nanoTime();
@@ -346,7 +318,7 @@ public class ChatServiceImpl implements ChatService {
                     "The AI returned an empty answer. Please try again.");
         }
 
-        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs);
+        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs, toolGroups);
 
         Message assistantMessage = new Message();
         assistantMessage.setContent(answer);
@@ -394,105 +366,22 @@ public class ChatServiceImpl implements ChatService {
         return tools;
     }
 
-    private void logAiUsage(Long conversationId, ChatResponse chatResponse, long timeMs) {
+    private void logAiUsage(Long conversationId, ChatResponse chatResponse, long timeMs,
+                            Set<ToolRouter.Group> toolGroups) {
         try {
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
-            log.info("AI reply: conversation={}, model={}, tokensIn={}, tokensOut={}, tokensTotal={}, timeMs={}",
+            log.info("AI reply: conversation={}, model={}, tokensIn={}, tokensOut={}, tokensTotal={}, timeMs={}, tools={}",
                     conversationId,
                     metadata.getModel(),
                     usage == null ? null : usage.getPromptTokens(),
                     usage == null ? null : usage.getCompletionTokens(),
                     usage == null ? null : usage.getTotalTokens(),
-                    timeMs);
+                    timeMs,
+                    toolGroups);
         } catch (RuntimeException e) {
             log.warn("Could not log AI usage for conversation {}", conversationId);
         }
-    }
-
-    private void logContextSize(ChatClientRequest request, ChatClientResponse response) {
-        try {
-            var messages = request.prompt().getInstructions();
-            int lastUser = -1;
-            for (int i = 0; i < messages.size(); i++) {
-                if (messages.get(i).getMessageType() == MessageType.USER) {
-                    lastUser = i;
-                }
-            }
-
-            int systemChars = 0;
-            int historyMsgs = 0;
-            int historyChars = 0;
-            int userChars = 0;
-            int toolRounds = 0;
-            int toolResultChars = 0;
-            for (int i = 0; i < messages.size(); i++) {
-                var message = messages.get(i);
-                if (message.getMessageType() == MessageType.SYSTEM) {
-                    systemChars += length(message.getText());
-                } else if (message instanceof ToolResponseMessage toolMessage) {
-                    if (i > lastUser) {
-                        toolRounds++;
-                    }
-                    for (ToolResponseMessage.ToolResponse toolResponse : toolMessage.getResponses()) {
-                        toolResultChars += length(toolResponse.responseData());
-                    }
-                } else if (i == lastUser) {
-                    userChars = length(message.getText());
-                } else if (i < lastUser) {
-                    historyMsgs++;
-                    historyChars += length(message.getText());
-                }
-            }
-
-            int ragChunks = 0;
-            int ragChars = 0;
-            if (request.context().get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS) instanceof List<?> documents) {
-                for (Object document : documents) {
-                    if (document instanceof Document doc) {
-                        ragChunks++;
-                        ragChars += length(doc.getText());
-                    }
-                }
-            }
-
-            Map<String, int[]> toolDefs = new LinkedHashMap<>();
-            for (String group : List.of("github", "trello", "context7", "local")) {
-                toolDefs.put(group, new int[2]);
-            }
-            if (request.prompt().getOptions() instanceof ToolCallingChatOptions options) {
-                for (ToolCallback tool : options.getToolCallbacks()) {
-                    var definition = tool.getToolDefinition();
-                    String name = definition.name();
-                    String group = name.startsWith("trello") ? "trello"
-                            : ToolRouter.isContext7Tool(name) ? "context7"
-                            : LOCAL_TOOLS.contains(name) ? "local"
-                            : "github";
-                    int[] counts = toolDefs.get(group);
-                    counts[0]++;
-                    counts[1] += length(name) + length(definition.description()) + length(definition.inputSchema());
-                }
-            }
-            String toolDefsText = toolDefs.entrySet().stream()
-                    .map(e -> e.getKey() + "=" + e.getValue()[0] + "/" + e.getValue()[1])
-                    .collect(Collectors.joining(" "));
-
-            Usage usage = response.chatResponse() == null ? null : response.chatResponse().getMetadata().getUsage();
-
-            log.info("AI context: conversation={}, round={}, tokensIn={}, systemChars={}, historyMsgs={}, historyChars={}, "
-                            + "userChars={}, ragChunks={}, ragChars={}, toolResultChars={}, toolDefs {}",
-                    request.context().get(ChatMemory.CONVERSATION_ID),
-                    toolRounds + 1,
-                    usage == null ? null : usage.getPromptTokens(),
-                    systemChars, historyMsgs, historyChars, userChars, ragChunks, ragChars, toolResultChars,
-                    toolDefsText);
-        } catch (RuntimeException e) {
-            log.warn("Could not log AI context size");
-        }
-    }
-
-    private static int length(String text) {
-        return text == null ? 0 : text.length();
     }
 
     private String checkpoint(Long conversationId) {
