@@ -34,6 +34,8 @@ import org.springframework.ai.tool.ToolCallback;
 import java.util.Set;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -125,6 +127,7 @@ public class ChatServiceImpl implements ChatService {
     private final ReviewScheduler reviewScheduler;
     private final TrelloMcpService trelloMcpService;
     private final ToolCallbackProvider mcpTools;
+    private final JdbcChatMemoryRepository chatMemoryRepository;
     private final String guide;
 
     private static final String HINT_MODE = """
@@ -178,10 +181,12 @@ public class ChatServiceImpl implements ChatService {
             LearnerPreferencesRepository learnerPreferencesRepository,
             LearnerPreferencesService learnerPreferencesService,
             JsonMapper jsonMapper,
-            UploadedDocumentRepository uploadedDocumentRepository
+            UploadedDocumentRepository uploadedDocumentRepository,
+            JdbcChatMemoryRepository chatMemoryRepository
     ) throws IOException {
 
         this.uploadedDocumentRepository = uploadedDocumentRepository;
+        this.chatMemoryRepository = chatMemoryRepository;
         this.checkpointRepository = checkpointRepository;
         this.learnerPreferencesRepository = learnerPreferencesRepository;
         this.learnerPreferencesService = learnerPreferencesService;
@@ -272,7 +277,9 @@ public class ChatServiceImpl implements ChatService {
         Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
 
         long aiStart = System.nanoTime();
-        ChatClientResponse aiResponse = chatClient.prompt()
+        ChatClientResponse aiResponse;
+        try {
+            aiResponse = chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
                         + preferences()
                         + (firstMessage ? dueReviews() : "")
@@ -303,6 +310,10 @@ public class ChatServiceImpl implements ChatService {
                         "userEmail", currentUserEmail()))
                 .call()
                 .chatClientResponse();
+        } catch (RuntimeException e) {
+            removeUnansweredQuestion(conversation.getId(), userMessage);
+            throw e;
+        }
         long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
 
         String answer = aiResponse.chatResponse() == null
@@ -343,6 +354,20 @@ public class ChatServiceImpl implements ChatService {
                 .map(GeneratedDocumentResponse::from)
                 .toList());
         return response;
+    }
+
+    private void removeUnansweredQuestion(Long conversationId, Message userMessage) {
+        try {
+            messageRepository.delete(userMessage);
+            String id = conversationId.toString();
+            var memory = new ArrayList<>(chatMemoryRepository.findByConversationId(id));
+            if (!memory.isEmpty() && memory.getLast().getMessageType() == MessageType.USER) {
+                memory.removeLast();
+                chatMemoryRepository.saveAll(id, memory);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Could not remove unanswered question for conversation {}", conversationId, e);
+        }
     }
 
     private List<String> userMessages(Long conversationId) {
