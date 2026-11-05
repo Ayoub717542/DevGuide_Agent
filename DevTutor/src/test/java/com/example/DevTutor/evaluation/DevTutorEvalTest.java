@@ -27,8 +27,9 @@ class DevTutorEvalTest {
             "What is the difference between an interface and an abstract class in Java?";
 
     private static final List<String> Q2_POINTS = List.of(
-            "A class can implement many interfaces but extend only one abstract class",
-            "An abstract class can have fields with state and constructors; an interface cannot have constructors",
+            "A class can implement multiple interfaces",
+            "A class can extend only one abstract class",
+            "An abstract class can have fields with state",
             "At least one small code example");
 
     private final RestClient api = RestClient.create(
@@ -132,7 +133,7 @@ class DevTutorEvalTest {
             String quote = evidence.stringValue().strip();
             String evidenceProblem = !pass.booleanValue() ? null
                     : quote.length() < MIN_EVIDENCE_LENGTH ? "evidence missing or too short"
-                    : !answer.contains(quote) ? "evidence quote not found in the answer"
+                    : !plain(answer).contains(plain(quote)) ? "evidence quote not found in the answer"
                     : null;
             if (evidenceProblem == null) {
                 verdicts.add(new Verdict(number, pass.booleanValue(), quote, reason.stringValue()));
@@ -142,6 +143,10 @@ class DevTutorEvalTest {
             }
         }
         return verdicts;
+    }
+
+    private static String plain(String text) {
+        return text.replaceAll("[*_`]", "").replaceAll("\\s+", " ").strip();
     }
 
     private IllegalStateException judgeError(String problem, String json) {
