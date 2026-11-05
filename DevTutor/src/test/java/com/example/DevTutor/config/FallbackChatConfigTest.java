@@ -9,6 +9,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.google.genai.GoogleGenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 import java.util.List;
 
@@ -24,7 +26,8 @@ import static org.mockito.Mockito.when;
 class FallbackChatConfigTest {
 
     private final GoogleGenAiChatModel gemini = mock(GoogleGenAiChatModel.class);
-    private final ChatModel chatModel = new FallbackChatConfig().fallbackChatModel(gemini, "backup-model");
+    private final OpenAiChatModel groq = mock(OpenAiChatModel.class);
+    private final ChatModel chatModel = new FallbackChatConfig().fallbackChatModel(gemini, groq, "backup-model");
     private final Prompt prompt = new Prompt("Hi", ChatOptions.builder().model("main-model").build());
 
     @Test
@@ -53,5 +56,22 @@ class FallbackChatConfigTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(gemini, times(2)).call(prompts.capture());
         assertEquals("backup-model", prompts.getAllValues().get(1).getOptions().getModel());
+    }
+
+    @Test
+    void bothGeminiOutOfTokensUsesGroq() {
+        ChatResponse groqAnswer = new ChatResponse(List.of());
+        when(gemini.call(any(Prompt.class))).thenThrow(new RuntimeException("Failed to generate content",
+                new ClientException(429, "RESOURCE_EXHAUSTED", "quota exceeded")));
+        when(groq.getOptions()).thenReturn(OpenAiChatOptions.builder().model("groq-model").build());
+        when(groq.call(any(Prompt.class))).thenReturn(groqAnswer);
+
+        ChatResponse answer = chatModel.call(prompt);
+
+        assertSame(groqAnswer, answer);
+        verify(gemini, times(2)).call(any(Prompt.class));
+        ArgumentCaptor<Prompt> groqPrompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(groq).call(groqPrompt.capture());
+        assertEquals("groq-model", groqPrompt.getValue().getOptions().getModel());
     }
 }
