@@ -379,11 +379,16 @@ public class ChatServiceImpl implements ChatService {
 
     private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {
         List<ToolCallback> tools = new ArrayList<>();
-        for (ToolCallback tool : mcpTools.getToolCallbacks()) {
-            if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())
-                    || groups.contains(ToolRouter.Group.GITHUB)) {
-                tools.add(tool);
+        try {
+            for (ToolCallback tool : mcpTools.getToolCallbacks()) {
+                if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())
+                        || groups.contains(ToolRouter.Group.GITHUB)) {
+                    tools.add(tool);
+                }
             }
+        } catch (RuntimeException e) {
+            log.warn("MCP tools unavailable, answering without GitHub/Context7 tools: {}", e.getMessage());
+            tools.clear();
         }
         if (groups.contains(ToolRouter.Group.TRELLO)) {
             tools.addAll(trelloMcpService.toolsFor(currentUserEmail()));
