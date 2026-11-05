@@ -21,13 +21,15 @@ public class AiStepTimer implements ObservationHandler<Observation.Context> {
     private static final String KEY = AiStepTimer.class.getName();
 
     private static final class Step {
-        private final String label;
+        private final String name;
+        private volatile String label;
         private final long start = System.nanoTime();
         private volatile long end;
         private final Queue<Step> children = new ConcurrentLinkedQueue<>();
 
-        private Step(String label) {
-            this.label = label;
+        private Step(String name) {
+            this.name = name;
+            this.label = name;
         }
 
         private long duration() {
@@ -48,9 +50,7 @@ public class AiStepTimer implements ObservationHandler<Observation.Context> {
             if (isChatRequest(context)) {
                 context.put(KEY, new Step("/api/chat"));
             } else if (isAiStep(context)) {
-                String contextual = context.getContextualName();
-                context.put(KEY, new Step(context.getName()
-                        + (contextual == null || contextual.isBlank() ? "" : " (" + contextual + ")")));
+                context.put(KEY, new Step(context.getName()));
             }
         } catch (RuntimeException e) {
             log.debug("AiStepTimer start failed", e);
@@ -65,6 +65,10 @@ public class AiStepTimer implements ObservationHandler<Observation.Context> {
                 return;
             }
             step.end = System.nanoTime();
+            String contextual = context.getContextualName();
+            if (contextual != null && !contextual.isBlank()) {
+                step.label = step.name + " (" + contextual + ")";
+            }
             context.remove(KEY);
             if (isChatRequest(context)) {
                 log.info(report(step));
