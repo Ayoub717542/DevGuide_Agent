@@ -1,32 +1,17 @@
 package com.example.DevTutor.config;
 
-import com.google.genai.Client;
-import com.google.genai.types.HttpOptions;
-import com.google.genai.types.HttpRetryOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.mcp.ToolContextToMcpMetaConverter;
 import org.springframework.ai.tool.execution.ToolExecutionExceptionProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration
 public class AiConfig {
-    @Bean
-    public Client googleGenAiClient(@Value("${spring.ai.google.genai.api-key}") String apiKey) {
-        return Client.builder()
-                .apiKey(apiKey)
-                .httpOptions(HttpOptions.builder()
-                        .timeout(30_000)
-                        .retryOptions(HttpRetryOptions.builder().attempts(1).build())
-                        .build())
-                .build();
-    }
-
     @Bean
     public ChatMemory chatMemory(
             JdbcChatMemoryRepository chatMemoryRepository) {
