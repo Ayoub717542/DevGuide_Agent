@@ -4,6 +4,8 @@ import com.example.DevTutor.dto.common.ApiError;
 import com.google.genai.errors.ClientException;
 import com.google.genai.errors.GenAiIOException;
 import com.google.genai.errors.ServerException;
+import com.openai.errors.OpenAIIoException;
+import com.openai.errors.OpenAIServiceException;
 import io.grpc.StatusRuntimeException;
 import io.qdrant.client.QdrantException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -142,9 +144,32 @@ public class GlobalExceptionHandler {
         if (geminiIo.isPresent()) {
             return handleGeminiUnreachable(geminiIo.get(), request);
         }
+        Optional<OpenAIServiceException> groq = findCause(ex, OpenAIServiceException.class);
+        if (groq.isPresent()) {
+            return handleGroq(groq.get(), request);
+        }
+        if (findCause(ex, OpenAIIoException.class).isPresent()) {
+            log.error("Cannot reach Groq", ex);
+            return build(HttpStatus.BAD_GATEWAY,
+                    "Cannot reach the AI service. Please try again later.", request);
+        }
         log.error("Unhandled exception on {}", request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred.", request);
+    }
+
+    private ResponseEntity<ApiError> handleGroq(
+            OpenAIServiceException ex, HttpServletRequest request) {
+        int code = ex.statusCode();
+        if (code == 429) {
+            log.warn("Groq rate limit: {}", ex.getMessage());
+            return build(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is busy. Please try again shortly.", request);
+        }
+        log.error("Groq failed (code {}): {}", code, ex.getMessage(), ex);
+        return build(HttpStatus.BAD_GATEWAY, code >= 500
+                ? "The AI service is currently unavailable. Please try again."
+                : "The AI service rejected the request.", request);
     }
 
     private ResponseEntity<ApiError> build(
