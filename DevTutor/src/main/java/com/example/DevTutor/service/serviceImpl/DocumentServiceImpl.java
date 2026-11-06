@@ -107,6 +107,15 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<DocumentUploadResponse> getAllUploads() {
+        return uploadedDocumentRepository
+                .findByConversationCreatedByEmailOrderByCreatedAtDesc(currentUserEmail())
+                .stream()
+                .map(DocumentServiceImpl::toResponse)
+                .toList();
+    }
+
+    @Override
     public void deleteUpload(String documentId) {
         UploadedDocument upload = uploadedDocumentRepository
                 .findByDocumentIdAndConversationCreatedByEmail(documentId, currentUserEmail())
@@ -130,7 +139,10 @@ public class DocumentServiceImpl implements DocumentService {
         return new DocumentUploadResponse(
                 upload.getDocumentId(),
                 upload.getFilename(),
-                upload.getChunksStored()
+                upload.getChunksStored(),
+                upload.getConversation().getId(),
+                upload.getConversation().getTitle(),
+                upload.getCreatedAt()
         );
     }
 
