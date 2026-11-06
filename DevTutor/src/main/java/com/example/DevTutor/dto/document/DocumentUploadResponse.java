@@ -18,4 +18,5 @@ public class DocumentUploadResponse {
     private Long conversationId;
     private String conversationTitle;
     private LocalDateTime createdAt;
+    private String fileUrl;
 }

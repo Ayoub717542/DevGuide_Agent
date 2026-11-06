@@ -13,6 +13,7 @@ import com.example.DevTutor.repository.MessageRepository;
 import com.example.DevTutor.repository.UploadedDocumentRepository;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.service.serviceInterface.ConversationService;
+import com.example.DevTutor.service.serviceInterface.DocumentService;
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final VectorStore vectorStore;
     private final ChatMemory chatMemory;
     private final Cloudinary cloudinary;
+    private final DocumentService documentService;
 
     @Override
     public ConversationResponse createConversation(
@@ -105,6 +107,8 @@ public class ConversationServiceImpl implements ConversationService {
             }
         }
 
+        uploadedDocumentRepository.findByConversationIdOrderByCreatedAtAsc(id)
+                .forEach(documentService::deleteOriginal);
         uploadedDocumentRepository.deleteByConversationId(id);
         generatedDocumentRepository.deleteByConversationId(id);
         checkpointRepository.deleteByConversationId(id);

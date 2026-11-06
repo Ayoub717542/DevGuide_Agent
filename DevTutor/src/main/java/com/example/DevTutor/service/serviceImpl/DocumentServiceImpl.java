@@ -6,7 +6,9 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.UploadedDocumentRepository;
 import com.example.DevTutor.service.serviceInterface.DocumentService;
 import com.example.DevTutor.tools.UntrustedToolCallback;
+import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -19,8 +21,10 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
@@ -28,6 +32,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final VectorStore vectorStore;
     private final ConversationRepository conversationRepository;
     private final UploadedDocumentRepository uploadedDocumentRepository;
+    private final Cloudinary cloudinary;
 
     @Override
     public DocumentUploadResponse uploadPdf(Long conversationId, MultipartFile file){
@@ -89,6 +94,7 @@ public class DocumentServiceImpl implements DocumentService {
         upload.setFilename(file.getOriginalFilename());
         upload.setChunksStored(chunks.size());
         upload.setConversation(conversation);
+        saveOriginal(file, upload);
         uploadedDocumentRepository.save(upload);
 
         return toResponse(upload);
@@ -124,7 +130,32 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Remove the PDF's chunks first, so a Qdrant failure keeps the record.
         vectorStore.delete("documentId == '" + upload.getDocumentId() + "'");
+        deleteOriginal(upload);
         uploadedDocumentRepository.delete(upload);
+    }
+
+    private void saveOriginal(MultipartFile file, UploadedDocument upload) {
+        try {
+            Map<?, ?> saved = cloudinary.uploader().upload(file.getBytes(), Map.of(
+                    "resource_type", "raw",
+                    "public_id", "documents/" + upload.getDocumentId() + ".pdf"));
+            upload.setFileUrl(saved.get("secure_url").toString());
+            upload.setFilePublicId(saved.get("public_id").toString());
+        } catch (Exception e) {
+            log.warn("Could not save PDF {} to Cloudinary", upload.getFilename(), e);
+        }
+    }
+
+    @Override
+    public void deleteOriginal(UploadedDocument upload) {
+        if (upload.getFilePublicId() == null) {
+            return;
+        }
+        try {
+            cloudinary.uploader().destroy(upload.getFilePublicId(), Map.of("resource_type", "raw"));
+        } catch (Exception e) {
+            log.warn("Could not delete PDF {} from Cloudinary", upload.getFilePublicId(), e);
+        }
     }
 
     // Only the creator can use a conversation (admins included).
@@ -142,7 +173,8 @@ public class DocumentServiceImpl implements DocumentService {
                 upload.getChunksStored(),
                 upload.getConversation().getId(),
                 upload.getConversation().getTitle(),
-                upload.getCreatedAt()
+                upload.getCreatedAt(),
+                upload.getFileUrl()
         );
     }
 

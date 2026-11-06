@@ -26,6 +26,11 @@ public class UploadedDocument {
 
     private int chunksStored;
 
+    @Column(length = 500)
+    private String fileUrl;
+
+    private String filePublicId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "conversation_id", nullable = false)
     private Conversation conversation;
