@@ -1,9 +1,10 @@
 import axios from "axios";
 
 export const TOKEN_KEY = "token";
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
 
 const axiosApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8081",
+  baseURL: API_URL,
 });
 
 // Add the JWT to every request.
