@@ -31,11 +31,14 @@ public class GitHubMcpConfig {
                 builder.requestBuilder(
                                 HttpRequest.newBuilder()
                                         .header("X-MCP-Readonly", "true")
-                                        .header("X-MCP-Toolsets", "repos,issues,pull_requests"))
+                                        .header("X-MCP-Toolsets", "repos,issues,pull_requests,context"))
                         .httpRequestCustomizer((request, method, uri, body, context) -> {
                             Object userToken = context == null ? null : context.get("githubToken");
                             request.setHeader("Authorization",
                                     "Bearer " + (userToken != null ? userToken : token));
+                            if (userToken == null && body != null && body.contains("\"tools/call\"")) {
+                                request.setHeader("X-MCP-Toolsets", "repos,issues,pull_requests");
+                            }
                         });
             }
         };
