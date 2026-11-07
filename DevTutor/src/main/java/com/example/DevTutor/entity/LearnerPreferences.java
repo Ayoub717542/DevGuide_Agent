@@ -40,6 +40,16 @@ public class LearnerPreferences {
     @Enumerated(EnumType.STRING)
     private Tone tone;
 
+    private boolean experienceLevelManual;
+
+    private boolean explanationStyleManual;
+
+    private boolean responseLengthManual;
+
+    private boolean codePreferenceManual;
+
+    private boolean toneManual;
+
     private LocalDateTime updatedAt;
 
     @PrePersist

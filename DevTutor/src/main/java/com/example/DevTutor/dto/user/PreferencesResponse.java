@@ -16,10 +16,10 @@ public record PreferencesResponse(
 
     public static PreferencesResponse from(LearnerPreferences preferences) {
         return new PreferencesResponse(
-                preferences.getExperienceLevel(),
-                preferences.getExplanationStyle(),
-                preferences.getResponseLength(),
-                preferences.getCodePreference(),
-                preferences.getTone());
+                preferences.isExperienceLevelManual() ? preferences.getExperienceLevel() : null,
+                preferences.isExplanationStyleManual() ? preferences.getExplanationStyle() : null,
+                preferences.isResponseLengthManual() ? preferences.getResponseLength() : null,
+                preferences.isCodePreferenceManual() ? preferences.getCodePreference() : null,
+                preferences.isToneManual() ? preferences.getTone() : null);
     }
 }

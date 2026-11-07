@@ -1,7 +1,9 @@
 package com.example.DevTutor.controller;
 
 import com.example.DevTutor.dto.user.LearnerNoteResponse;
+import com.example.DevTutor.dto.user.PreferencesRequest;
 import com.example.DevTutor.dto.user.PreferencesResponse;
+import com.example.DevTutor.service.LearnerPreferencesService;
 import com.example.DevTutor.repository.LearnerPreferencesRepository;
 import com.example.DevTutor.dto.quiz.QuizResultResponse;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
@@ -35,6 +37,7 @@ public class UserController {
     private final LearnerNoteRepository learnerNoteRepository;
     private final ReviewScheduler reviewScheduler;
     private final LearnerPreferencesRepository learnerPreferencesRepository;
+    private final LearnerPreferencesService learnerPreferencesService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -85,6 +88,14 @@ public class UserController {
         return learnerPreferencesRepository.findByUserEmail(authentication.getName())
                 .map(PreferencesResponse::from)
                 .orElse(new PreferencesResponse(null, null, null, null, null));
+    }
+
+    @PutMapping("/me/preferences")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public PreferencesResponse updatePreferences(Authentication authentication,
+                                                 @RequestBody PreferencesRequest request) {
+        return PreferencesResponse.from(
+                learnerPreferencesService.update(authentication.getName(), request));
     }
 
     @DeleteMapping("/me/notes/{id}")
