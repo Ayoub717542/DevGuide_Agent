@@ -282,7 +282,7 @@ public class ChatServiceImpl implements ChatService {
             aiResponse = chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
                         + preferences()
-                        + (firstMessage ? dueReviews() : "")
+                        + (firstMessage ? dueReviews(request.getContent()) : "")
                         + (request.isHintMode() ? HINT_MODE : "")
                         + (request.isDevMode() ? DEV_MODE : "")
                         + (toolGroups.contains(ToolRouter.Group.GITHUB) ? "" : GITHUB_NOT_ATTACHED)
@@ -491,19 +491,22 @@ public class ChatServiceImpl implements ChatService {
                 .orElse("none");
     }
 
-    private String dueReviews() {
+    private String dueReviews(String message) {
+        String text = message.toLowerCase();
         String due = reviewScheduler.schedule(
                         quizResultRepository.findByUserEmailOrderByCreatedAtDesc(currentUserEmail()))
                 .stream()
                 .filter(ReviewResponse::due)
                 .map(ReviewResponse::concept)
+                .filter(concept -> concept != null && text.contains(concept.toLowerCase()))
                 .collect(Collectors.joining(", "));
         if (due.isEmpty()) {
             return "";
         }
 
         return "\n\nConcepts due for review: " + due + ".\n"
-                + "At the end of your answer, offer a short review quiz on them in one sentence.\n"
+                + "If one of them relates to the current question, offer a short review quiz on it in one sentence."
+                + " Otherwise do not mention them.\n"
                 + "Do not ask the quiz questions yourself.";
     }
 
