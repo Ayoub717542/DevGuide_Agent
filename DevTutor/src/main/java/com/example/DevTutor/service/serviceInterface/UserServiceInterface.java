@@ -2,6 +2,7 @@ package com.example.DevTutor.service.serviceInterface;
 
 import com.example.DevTutor.dto.quiz.QuizResultResponse;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
+import com.example.DevTutor.dto.user.ChangePasswordRequest;
 import com.example.DevTutor.dto.user.LearnerNoteResponse;
 import com.example.DevTutor.dto.user.PreferencesRequest;
 import com.example.DevTutor.dto.user.PreferencesResponse;
@@ -18,6 +19,8 @@ public interface UserServiceInterface {
     UserResponse getMe(String email);
 
     UserResponse updateMyName(String email, UpdateNameRequest updateNameRequest);
+
+    void changePassword(String email, ChangePasswordRequest request);
 
     List<ReviewResponse> getReviews(String email);
 

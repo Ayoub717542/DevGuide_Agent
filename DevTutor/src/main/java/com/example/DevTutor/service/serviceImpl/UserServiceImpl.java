@@ -2,6 +2,7 @@ package com.example.DevTutor.service.serviceImpl;
 
 import com.example.DevTutor.dto.quiz.QuizResultResponse;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
+import com.example.DevTutor.dto.user.ChangePasswordRequest;
 import com.example.DevTutor.dto.user.LearnerNoteResponse;
 import com.example.DevTutor.dto.user.PreferencesRequest;
 import com.example.DevTutor.dto.user.PreferencesResponse;
@@ -20,6 +21,7 @@ import com.example.DevTutor.service.serviceInterface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserServiceInterface {
     private final ReviewScheduler reviewScheduler;
     private final LearnerPreferencesRepository learnerPreferencesRepository;
     private final LearnerPreferencesService learnerPreferencesService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -54,6 +57,16 @@ public class UserServiceImpl implements UserServiceInterface {
         User user = findUser(email);
         user.setName(updateNameRequest.name().trim());
         return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Override
+    public void changePassword(String email, ChangePasswordRequest request) {
+        User user = findUser(email);
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is wrong");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
     @Override

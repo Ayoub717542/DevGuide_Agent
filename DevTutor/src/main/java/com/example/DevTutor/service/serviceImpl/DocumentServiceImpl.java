@@ -56,7 +56,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .toList();
 
         TokenTextSplitter splitter = //uses token counts to limit passage sizes.
-                TokenTextSplitter.builder().build(); //Divides that text into smaller passages, called chunks
+                TokenTextSplitter.builder().withChunkSize(350).build(); //Divides that text into smaller passages, called chunks
 
         List<Document> chunks = splitter.apply(pages); //divides that text into smaller Spring AI Document objects.
 
@@ -118,7 +118,6 @@ public class DocumentServiceImpl implements DocumentService {
         uploadedDocumentRepository.delete(upload);
     }
 
-    // Only the creator can use a conversation (admins included).
     private Conversation findOwnConversation(Long conversationId) {
         return conversationRepository
                 .findByIdAndCreatedByEmail(conversationId, currentUserEmail())

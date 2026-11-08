@@ -2,6 +2,7 @@ package com.example.DevTutor.controller;
 
 import com.example.DevTutor.dto.quiz.QuizResultResponse;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
+import com.example.DevTutor.dto.user.ChangePasswordRequest;
 import com.example.DevTutor.dto.user.LearnerNoteResponse;
 import com.example.DevTutor.dto.user.PreferencesRequest;
 import com.example.DevTutor.dto.user.PreferencesResponse;
@@ -41,6 +42,13 @@ public class UserController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public UserResponse updateMe(Authentication authentication, @Valid @RequestBody UpdateNameRequest request) {
         return userServiceInterface.updateMyName(authentication.getName(), request);
+    }
+
+    @PutMapping("/me/password")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(Authentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
+        userServiceInterface.changePassword(authentication.getName(), request);
     }
 
     @GetMapping("/me/reviews")
