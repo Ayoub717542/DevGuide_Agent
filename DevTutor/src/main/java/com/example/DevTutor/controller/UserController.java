@@ -2,6 +2,7 @@ package com.example.DevTutor.controller;
 
 import com.example.DevTutor.dto.user.LearnerNoteResponse;
 import com.example.DevTutor.dto.user.PreferencesRequest;
+import com.example.DevTutor.dto.user.UpdateNameRequest;
 import com.example.DevTutor.dto.user.PreferencesResponse;
 import com.example.DevTutor.service.LearnerPreferencesService;
 import com.example.DevTutor.repository.LearnerPreferencesRepository;
@@ -55,6 +56,16 @@ public class UserController {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "User not found")));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public UserResponse updateMe(Authentication authentication,
+                                 @Valid @RequestBody UpdateNameRequest request) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        user.setName(request.name().trim());
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @GetMapping("/me/reviews")
