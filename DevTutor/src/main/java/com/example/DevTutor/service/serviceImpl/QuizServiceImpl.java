@@ -13,12 +13,14 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.QuizResultRepository;
 import com.example.DevTutor.service.ChallengeRunner;
 import com.example.DevTutor.service.serviceInterface.QuizService;
+import com.example.DevTutor.util.Exceptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.core.JacksonException;
 
 import java.util.stream.Collectors;
 
@@ -52,7 +54,21 @@ public class QuizServiceImpl implements QuizService {
         checkOwner(conversationId);
         String lesson = lesson(conversationId);
 
-        return chatClient.prompt()
+        for (int attempt = 0; attempt < 2; attempt++) {
+            QuizResponse quiz = askQuiz(lesson);
+            if (isValid(quiz)) {
+                return quiz;
+            }
+            log.warn("Quiz rejected (attempt {}): {}", attempt + 1, quiz);
+        }
+        throw new ResponseStatusException(
+                HttpStatus.BAD_GATEWAY,
+                "Could not create a valid quiz. Please try again.");
+    }
+
+    private QuizResponse askQuiz(String lesson) {
+        try {
+            return chatClient.prompt()
                 .user("""
                         Write a multiple-choice quiz of exactly 3 questions
                         about what was taught in this lesson.
@@ -66,6 +82,22 @@ public class QuizServiceImpl implements QuizService {
                         """ + lesson)
                 .call()
                 .entity(QuizResponse.class);
+        } catch (IllegalStateException e) {
+            if (Exceptions.findCause(e, JacksonException.class).isEmpty()) {
+                throw e;
+            }
+            log.warn("Quiz reply was not valid JSON: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    static boolean isValid(QuizResponse quiz) {
+        return quiz != null && quiz.questions() != null && quiz.questions().size() == 3
+                && quiz.questions().stream().allMatch(q -> q != null
+                        && q.question() != null && !q.question().isBlank()
+                        && q.options() != null && q.options().size() == 4
+                        && q.options().stream().allMatch(o -> o != null && !o.isBlank())
+                        && q.correctIndex() >= 0 && q.correctIndex() < 4);
     }
 
     @Override

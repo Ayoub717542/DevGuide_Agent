@@ -36,6 +36,12 @@ public class DocumentController {
         return documentService.getUploads(conversationId);
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public List<DocumentUploadResponse> getAllUploads() {
+        return documentService.getAllUploads();
+    }
+
     @DeleteMapping("/uploads/{documentId}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { TOKEN_KEY } from "../api/axiosApi";
 import * as client from "../api/Client";
 
@@ -16,10 +16,14 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const { token } = await client.login(email, password);
+  const loginWithToken = useCallback(async (token) => {
     localStorage.setItem(TOKEN_KEY, token);
     setUser(await client.getMe());
+  }, []);
+
+  const login = async (email, password) => {
+    const { token } = await client.login(email, password);
+    await loginWithToken(token);
   };
 
   const logout = () => {
@@ -28,7 +32,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout }}>
       {children}
     </AuthContext.Provider>
   );

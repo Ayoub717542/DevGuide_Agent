@@ -17,9 +17,12 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 import com.example.DevTutor.repository.MessageRepository;
 import com.example.DevTutor.repository.LearnerNoteRepository;
+import com.example.DevTutor.repository.UploadedDocumentRepository;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import com.example.DevTutor.dto.quiz.ReviewResponse;
 import com.example.DevTutor.service.ReviewScheduler;
 import com.example.DevTutor.service.TrelloMcpService;
+import com.example.DevTutor.tools.ToolRouter;
 import com.example.DevTutor.tools.UntrustedToolCallback;
 import java.util.stream.Collectors;
 import com.example.DevTutor.repository.QuizResultRepository;
@@ -27,8 +30,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.DevTutor.service.serviceInterface.ChatService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
+import org.springframework.ai.tool.ToolCallback;
+import java.util.Set;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -101,6 +111,8 @@ public class ChatServiceImpl implements ChatService {
 
     private final ChatClient chatClient;
     private final ChatClient summaryClient;
+    private final QuestionAnswerAdvisor questionAnswerAdvisor;
+    private final UploadedDocumentRepository uploadedDocumentRepository;
     private final ConversationCheckpointRepository checkpointRepository;
     private final LearnerPreferencesRepository learnerPreferencesRepository;
     private final LearnerPreferencesService learnerPreferencesService;
@@ -114,6 +126,8 @@ public class ChatServiceImpl implements ChatService {
     private final LearnerNoteRepository learnerNoteRepository;
     private final ReviewScheduler reviewScheduler;
     private final TrelloMcpService trelloMcpService;
+    private final ToolCallbackProvider mcpTools;
+    private final JdbcChatMemoryRepository chatMemoryRepository;
     private final String guide;
 
     private static final String HINT_MODE = """
@@ -129,6 +143,22 @@ public class ChatServiceImpl implements ChatService {
             Dev mode is on: the user is an experienced developer.
             Answer directly and show the code first. Skip beginner explanations and step-by-step teaching.
             Any language or framework is fine, not only Java.
+            """;
+
+    private static final String GITHUB_NOT_ATTACHED = """
+
+
+            GitHub tools are not attached to this message. This does not mean GitHub is unavailable.
+            If the student needs GitHub data, do not guess and never claim you checked GitHub.
+            Ask them to mention GitHub or the owner/repo name in their message.
+            """;
+
+    private static final String TRELLO_NOT_ATTACHED = """
+
+
+            Trello tools are not attached to this message. This does not mean Trello is disconnected.
+            If the student needs Trello, do not guess and never claim a Trello action happened.
+            Ask them to mention Trello in their message.
             """;
 
     public ChatServiceImpl(
@@ -150,9 +180,13 @@ public class ChatServiceImpl implements ChatService {
             ConversationCheckpointRepository checkpointRepository,
             LearnerPreferencesRepository learnerPreferencesRepository,
             LearnerPreferencesService learnerPreferencesService,
-            JsonMapper jsonMapper
+            JsonMapper jsonMapper,
+            UploadedDocumentRepository uploadedDocumentRepository,
+            JdbcChatMemoryRepository chatMemoryRepository
     ) throws IOException {
 
+        this.uploadedDocumentRepository = uploadedDocumentRepository;
+        this.chatMemoryRepository = chatMemoryRepository;
         this.checkpointRepository = checkpointRepository;
         this.learnerPreferencesRepository = learnerPreferencesRepository;
         this.learnerPreferencesService = learnerPreferencesService;
@@ -164,6 +198,7 @@ public class ChatServiceImpl implements ChatService {
         this.learnerNoteRepository = learnerNoteRepository;
         this.reviewScheduler = reviewScheduler;
         this.trelloMcpService = trelloMcpService;
+        this.mcpTools = mcpTools;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.messageMapper = messageMapper;
@@ -172,13 +207,7 @@ public class ChatServiceImpl implements ChatService {
         this.guide = new ClassPathResource("devtutor-guide.txt")
                 .getContentAsString(StandardCharsets.UTF_8);
 
-        this.chatClient = builder
-                .defaultSystem(guide)
-                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools).defaultToolCallbacks(UntrustedToolCallback.wrap(mcpTools))
-                .defaultAdvisors(
-                        MessageChatMemoryAdvisor.builder(chatMemory).build(),
-
-                        QuestionAnswerAdvisor.builder(vectorStore)
+        this.questionAnswerAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
                                 .promptTemplate(new PromptTemplate("""
                                 Answer the user's question using the conversation
                                 and any attached image.
@@ -197,8 +226,13 @@ public class ChatServiceImpl implements ChatService {
                                 User question:
                                 {query}
                                 """))
-                                .build()
-                )
+                                .order(Advisor.DEFAULT_CHAT_MEMORY_PRECEDENCE_ORDER + 50)
+                                .build();
+
+        this.chatClient = builder
+                .defaultSystem(guide)
+                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools)
+                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
 
@@ -237,13 +271,22 @@ public class ChatServiceImpl implements ChatService {
 
         messageRepository.save(userMessage);
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
+        List<Advisor> requestAdvisors = uploadedDocumentRepository.existsByConversationId(conversation.getId())
+                ? List.of(questionAnswerAdvisor)
+                : List.of();
+        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
 
-        ChatClientResponse aiResponse = chatClient.prompt()
+        long aiStart = System.nanoTime();
+        ChatClientResponse aiResponse;
+        try {
+            aiResponse = chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
                         + preferences()
-                        + (firstMessage ? dueReviews() : "")
+                        + (firstMessage ? dueReviews(request.getContent()) : "")
                         + (request.isHintMode() ? HINT_MODE : "")
-                        + (request.isDevMode() ? DEV_MODE : ""))
+                        + (request.isDevMode() ? DEV_MODE : "")
+                        + (toolGroups.contains(ToolRouter.Group.GITHUB) ? "" : GITHUB_NOT_ATTACHED)
+                        + (toolGroups.contains(ToolRouter.Group.TRELLO) ? "" : TRELLO_NOT_ATTACHED))
                 .user(u -> {
                     u.text(request.getContent());
                     if (media != null) {
@@ -251,6 +294,7 @@ public class ChatServiceImpl implements ChatService {
                     }
                 })
                 .advisors(a -> a
+                        .advisors(requestAdvisors)
                         .param(
                                 ChatMemory.CONVERSATION_ID,
                                 conversation.getId().toString()
@@ -260,12 +304,17 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
-                .toolCallbacks(UntrustedToolCallback.wrap(trelloMcpService.toolsFor(currentUserEmail())))
+                .toolCallbacks(UntrustedToolCallback.wrap(routedTools(toolGroups)))
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
                         "userEmail", currentUserEmail()))
                 .call()
                 .chatClientResponse();
+        } catch (RuntimeException e) {
+            removeUnansweredQuestion(conversation.getId(), userMessage);
+            throw e;
+        }
+        long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
 
         String answer = aiResponse.chatResponse() == null
                 ? null
@@ -279,6 +328,8 @@ public class ChatServiceImpl implements ChatService {
                     HttpStatus.BAD_GATEWAY,
                     "The AI returned an empty answer. Please try again.");
         }
+
+        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs, toolGroups);
 
         Message assistantMessage = new Message();
         assistantMessage.setContent(answer);
@@ -303,6 +354,64 @@ public class ChatServiceImpl implements ChatService {
                 .map(GeneratedDocumentResponse::from)
                 .toList());
         return response;
+    }
+
+    private void removeUnansweredQuestion(Long conversationId, Message userMessage) {
+        try {
+            messageRepository.delete(userMessage);
+            String id = conversationId.toString();
+            var memory = new ArrayList<>(chatMemoryRepository.findByConversationId(id));
+            if (!memory.isEmpty() && memory.getLast().getMessageType() == MessageType.USER) {
+                memory.removeLast();
+                chatMemoryRepository.saveAll(id, memory);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Could not remove unanswered question for conversation {}", conversationId, e);
+        }
+    }
+
+    private List<String> userMessages(Long conversationId) {
+        return messageRepository.findByConversationIdOrderByCreatedAtAscIdAsc(conversationId).stream()
+                .filter(message -> message.getRole() == MessageRole.USER)
+                .map(Message::getContent)
+                .toList();
+    }
+
+    private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {
+        List<ToolCallback> tools = new ArrayList<>();
+        try {
+            for (ToolCallback tool : mcpTools.getToolCallbacks()) {
+                if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())
+                        || groups.contains(ToolRouter.Group.GITHUB)) {
+                    tools.add(tool);
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("MCP tools unavailable, answering without GitHub/Context7 tools: {}", e.getMessage());
+            tools.clear();
+        }
+        if (groups.contains(ToolRouter.Group.TRELLO)) {
+            tools.addAll(trelloMcpService.toolsFor(currentUserEmail()));
+        }
+        return tools;
+    }
+
+    private void logAiUsage(Long conversationId, ChatResponse chatResponse, long timeMs,
+                            Set<ToolRouter.Group> toolGroups) {
+        try {
+            ChatResponseMetadata metadata = chatResponse.getMetadata();
+            Usage usage = metadata.getUsage();
+            log.info("AI reply: conversation={}, model={}, tokensIn={}, tokensOut={}, tokensTotal={}, timeMs={}, tools={}",
+                    conversationId,
+                    metadata.getModel(),
+                    usage == null ? null : usage.getPromptTokens(),
+                    usage == null ? null : usage.getCompletionTokens(),
+                    usage == null ? null : usage.getTotalTokens(),
+                    timeMs,
+                    toolGroups);
+        } catch (RuntimeException e) {
+            log.warn("Could not log AI usage for conversation {}", conversationId);
+        }
     }
 
     private String checkpoint(Long conversationId) {
@@ -382,19 +491,22 @@ public class ChatServiceImpl implements ChatService {
                 .orElse("none");
     }
 
-    private String dueReviews() {
+    private String dueReviews(String message) {
+        String text = message.toLowerCase();
         String due = reviewScheduler.schedule(
                         quizResultRepository.findByUserEmailOrderByCreatedAtDesc(currentUserEmail()))
                 .stream()
                 .filter(ReviewResponse::due)
                 .map(ReviewResponse::concept)
+                .filter(concept -> concept != null && text.contains(concept.toLowerCase()))
                 .collect(Collectors.joining(", "));
         if (due.isEmpty()) {
             return "";
         }
 
         return "\n\nConcepts due for review: " + due + ".\n"
-                + "At the end of your answer, offer a short review quiz on them in one sentence.\n"
+                + "If one of them relates to the current question, offer a short review quiz on it in one sentence."
+                + " Otherwise do not mention them.\n"
                 + "Do not ask the quiz questions yourself.";
     }
 

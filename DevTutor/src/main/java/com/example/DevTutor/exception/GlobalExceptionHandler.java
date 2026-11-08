@@ -4,11 +4,15 @@ import com.example.DevTutor.dto.common.ApiError;
 import com.google.genai.errors.ClientException;
 import com.google.genai.errors.GenAiIOException;
 import com.google.genai.errors.ServerException;
+import com.openai.errors.OpenAIIoException;
+import com.openai.errors.OpenAIServiceException;
+import io.grpc.StatusRuntimeException;
 import io.qdrant.client.QdrantException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -19,9 +23,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
+
+import static com.example.DevTutor.util.Exceptions.findCause;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String DOCUMENT_SEARCH_DOWN =
+            "Document search is unavailable. Please try again later.";
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(
@@ -103,16 +114,62 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleQdrant(
             QdrantException ex, HttpServletRequest request) {
         log.error("Qdrant failure", ex);
+        return build(HttpStatus.SERVICE_UNAVAILABLE, DOCUMENT_SEARCH_DOWN, request);
+    }
+
+    @ExceptionHandler(DataAccessResourceFailureException.class)
+    public ResponseEntity<ApiError> handleDatabaseDown(
+            DataAccessResourceFailureException ex, HttpServletRequest request) {
+        log.error("Database unavailable", ex);
         return build(HttpStatus.SERVICE_UNAVAILABLE,
-                "Document search is unavailable. Please try again later.", request);
+                "Database is unavailable. Please try again later.", request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(
             Exception ex, HttpServletRequest request) {
+        if (findCause(ex, StatusRuntimeException.class).isPresent()) {
+            log.error("Qdrant unreachable", ex);
+            return build(HttpStatus.SERVICE_UNAVAILABLE, DOCUMENT_SEARCH_DOWN, request);
+        }
+        Optional<ClientException> geminiClient = findCause(ex, ClientException.class);
+        if (geminiClient.isPresent()) {
+            return handleGeminiClient(geminiClient.get(), request);
+        }
+        Optional<ServerException> geminiServer = findCause(ex, ServerException.class);
+        if (geminiServer.isPresent()) {
+            return handleGeminiServer(geminiServer.get(), request);
+        }
+        Optional<GenAiIOException> geminiIo = findCause(ex, GenAiIOException.class);
+        if (geminiIo.isPresent()) {
+            return handleGeminiUnreachable(geminiIo.get(), request);
+        }
+        Optional<OpenAIServiceException> groq = findCause(ex, OpenAIServiceException.class);
+        if (groq.isPresent()) {
+            return handleGroq(groq.get(), request);
+        }
+        if (findCause(ex, OpenAIIoException.class).isPresent()) {
+            log.error("Cannot reach Groq", ex);
+            return build(HttpStatus.BAD_GATEWAY,
+                    "Cannot reach the AI service. Please try again later.", request);
+        }
         log.error("Unhandled exception on {}", request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred.", request);
+    }
+
+    private ResponseEntity<ApiError> handleGroq(
+            OpenAIServiceException ex, HttpServletRequest request) {
+        int code = ex.statusCode();
+        if (code == 429) {
+            log.warn("Groq rate limit: {}", ex.getMessage());
+            return build(HttpStatus.SERVICE_UNAVAILABLE,
+                    "AI service is busy. Please try again shortly.", request);
+        }
+        log.error("Groq failed (code {}): {}", code, ex.getMessage(), ex);
+        return build(HttpStatus.BAD_GATEWAY, code >= 500
+                ? "The AI service is currently unavailable. Please try again."
+                : "The AI service rejected the request.", request);
     }
 
     private ResponseEntity<ApiError> build(
