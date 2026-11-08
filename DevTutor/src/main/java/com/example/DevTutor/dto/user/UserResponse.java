@@ -14,4 +14,5 @@ public class UserResponse {
     private String email;
     private Roles role;
     private LocalDateTime createdAt;
+    private boolean githubConnected;
 }
