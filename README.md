@@ -1,4 +1,3 @@
-<img width="1130" height="572" alt="devtutor-how-it-works" src="https://github.com/user-attachments/assets/d7838582-8c23-4ab2-b30d-4ab41323ca9b" />
 <div align="center">
 
 <img src="docs/hero.svg" alt="DevGuide Agent: an AI tutor agent that teaches you to code, tests your skills and remembers how you learn" width="100%"/>
