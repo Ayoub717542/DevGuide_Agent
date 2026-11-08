@@ -1,3 +1,4 @@
+[devtutor-how-it-works.webm](https://github.com/user-attachments/assets/51c8b3ac-ae93-45dc-8b84-94ab304e79f6)
 <div align="center">
 
 <img src="docs/hero.svg" alt="DevGuide Agent: an AI tutor agent that teaches you to code, tests your skills and remembers how you learn" width="100%"/>
