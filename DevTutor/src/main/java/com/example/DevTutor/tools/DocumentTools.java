@@ -21,20 +21,24 @@ public class DocumentTools {
     @Tool(description = """
             Create a styled PDF or Word document when requested.
 
-            Generate the complete document as valid XHTML with CSS.
+            Generate the complete document as one HTML page with CSS.
             Follow the user's requested colors, layout and style.
-            If no style is specified, choose a readable professional design.
+            If no style is specified, choose a modern, readable, professional design.
 
             Include all content inside the HTML.
-            Use headings, paragraphs, lists and tables where appropriate.
-            Use inline CSS for formatting.
-            Close every tag, including self-closing tags such as <br />.
-            Escape special characters, for example &amp; instead of &.
+            Use headings, paragraphs, lists, tables, code blocks and highlighted
+            tip boxes where appropriate.
             Always write < as &lt; and > as &gt; in text and code, for example
             if (a &lt; b) and List&lt;String&gt;.
+            Do not include Markdown fences or JavaScript.
 
-            Do not include Markdown fences, JavaScript, external resources,
-            CSS imports, flexbox or grid.
+            For PDF: a full <style> block, flexbox, grid and Google Fonts are allowed.
+            Add images with <img src="https://..."> only when you are sure the URL
+            exists, for example from upload.wikimedia.org; otherwise add no image.
+
+            For DOCX: use strict XHTML with inline CSS only. Close every tag,
+            including <br />, and do not use flexbox, grid or external resources.
+
             Use PDF or DOCX as the output format.
 
             Return the download path after successful creation.
