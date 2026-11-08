@@ -9,6 +9,8 @@ import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
@@ -17,6 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 public class DocumentTools {
 
     private final GeneratedDocumentService documentService;
+
+    private final RestClient wikimedia = RestClient.builder()
+            .baseUrl("https://commons.wikimedia.org")
+            .defaultHeader("User-Agent", "DevTutor/1.0")
+            .build();
 
     @Tool(description = """
             Create a styled PDF or Word document when requested.
@@ -33,8 +40,8 @@ public class DocumentTools {
             Do not include Markdown fences or JavaScript.
 
             For PDF: a full <style> block, flexbox, grid and Google Fonts are allowed.
-            Add images with <img src="https://..."> only when you are sure the URL
-            exists, for example from upload.wikimedia.org; otherwise add no image.
+            For pictures, call findImage first and use only the URLs it returns
+            in <img src="...">. Never invent image URLs.
 
             For DOCX: use strict XHTML with inline CSS only. Close every tag,
             including <br />, and do not use flexbox, grid or external resources.
@@ -47,7 +54,7 @@ public class DocumentTools {
             @ToolParam(description = "Document title, at most 255 characters")
             String title,
 
-            @ToolParam(description = "Complete valid XHTML with inline CSS")
+            @ToolParam(description = "Complete HTML page with CSS")
             String html,
 
             @ToolParam(description = "PDF or DOCX")
@@ -82,4 +89,49 @@ public class DocumentTools {
             );
         }
     }
+
+    @Tool(description = """
+            Find real pictures for a PDF. Returns up to 3 image URLs from Wikimedia Commons.
+            Call this before adding any <img> to a PDF and use only the URLs it returns.
+            """)
+    public List<String> findImage(
+            @ToolParam(description = "What the picture should show, in English, for example HDMI connector")
+            String query
+    ) {
+        try {
+            CommonsResponse response = wikimedia.get()
+                    .uri(uri -> uri.path("/w/api.php")
+                            .queryParam("action", "query")
+                            .queryParam("generator", "search")
+                            .queryParam("gsrsearch", "filetype:bitmap " + query)
+                            .queryParam("gsrnamespace", 6)
+                            .queryParam("gsrlimit", 3)
+                            .queryParam("prop", "imageinfo")
+                            .queryParam("iiprop", "url")
+                            .queryParam("iiurlwidth", 600)
+                            .queryParam("format", "json")
+                            .queryParam("formatversion", 2)
+                            .build())
+                    .retrieve()
+                    .body(CommonsResponse.class);
+
+            if (response == null || response.query() == null) {
+                return List.of();
+            }
+            return response.query().pages().stream()
+                    .filter(page -> page.imageinfo() != null)
+                    .flatMap(page -> page.imageinfo().stream())
+                    .map(ImageInfo::thumburl)
+                    .toList();
+
+        } catch (RuntimeException e) {
+            log.warn("Image search failed for '{}'", query, e);
+            return List.of();
+        }
+    }
+
+    record CommonsResponse(Query query) {}
+    record Query(List<Page> pages) {}
+    record Page(List<ImageInfo> imageinfo) {}
+    record ImageInfo(String thumburl) {}
 }
