@@ -5,18 +5,24 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.GeneratedDocumentRepository;
 import com.example.DevTutor.service.serviceInterface.GeneratedDocumentService;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
-
 import lombok.RequiredArgsConstructor;
 
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 @Service
@@ -24,6 +30,10 @@ import java.util.Locale;
 public class GeneratedDocumentServiceImpl implements GeneratedDocumentService {
     private final GeneratedDocumentRepository repository;
     private final ConversationRepository conversationRepository;
+
+    @Value("${app.gotenberg.url}")
+    private String gotenbergUrl;
+
     @Override
     public GeneratedDocument createDocument(
             String title,
@@ -68,21 +78,24 @@ public class GeneratedDocumentServiceImpl implements GeneratedDocumentService {
     }
 
     private byte[] generatePdf(String html) {
-        try (ByteArrayOutputStream output =
-                     new ByteArrayOutputStream()) {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+        form.add("files", new ByteArrayResource(html.getBytes(StandardCharsets.UTF_8)) {
+            @Override
+            public String getFilename() {
+                return "index.html";
+            }
+        });
+        form.add("printBackground", "true");
 
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-
-            // Supply the HTML containing content and styling.
-            builder.withHtmlContent(html, null);
-
-            // Write the PDF into memory.
-            builder.toStream(output);
-            builder.run();
-
-            return output.toByteArray();
-
-        } catch (Exception e) {
+        try {
+            return RestClient.create(gotenbergUrl)
+                    .post()
+                    .uri("/forms/chromium/convert/html")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(form)
+                    .retrieve()
+                    .body(byte[].class);
+        } catch (RestClientException e) {
             throw new IllegalStateException(
                     "Could not convert HTML to PDF.", e
             );
