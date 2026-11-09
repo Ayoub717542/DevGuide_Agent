@@ -70,6 +70,13 @@ public class UserServiceImpl implements UserServiceInterface {
     }
 
     @Override
+    public void disconnectGithub(String email) {
+        User user = findUser(email);
+        user.setGithubToken(null);
+        userRepository.save(user);
+    }
+
+    @Override
     public List<ReviewResponse> getReviews(String email) {
         return reviewScheduler.schedule(quizResultRepository.findByUserEmailOrderByCreatedAtDesc(email));
     }
