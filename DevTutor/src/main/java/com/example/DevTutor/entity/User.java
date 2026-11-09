@@ -38,6 +38,14 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Roles role = Roles.USER;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean emailVerified;
+
+    @Column(unique = true, length = 64)
+    private String verificationTokenHash;
+
+    private Instant verificationTokenExpiresAt;
+
     @Convert(converter = GitHubTokenConverter.class)
     private String githubToken;
 

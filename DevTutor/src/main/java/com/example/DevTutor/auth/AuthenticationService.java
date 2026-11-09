@@ -8,6 +8,7 @@ import com.example.DevTutor.entity.User;
 import com.example.DevTutor.mapper.UserMapper;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.security.JwtService;
+import com.example.DevTutor.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +29,7 @@ public class AuthenticationService {
     private final UserMapper userMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final EmailVerificationService emailVerificationService;
 
     public UserResponse register(RegisterRequoestDTO request) {
         String email = request.getEmail();
@@ -60,6 +62,7 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User saved = userRepository.save(user);
+        emailVerificationService.sendVerification(saved);
         return userMapper.toResponse(saved);
     }
 

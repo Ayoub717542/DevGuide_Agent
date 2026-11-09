@@ -2,6 +2,7 @@ package com.example.DevTutor.security;
 
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.UserRepository;
+import com.example.DevTutor.service.EmailVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailVerificationService emailVerificationService;
 
     @Value("${app.oauth2.redirect-url:http://localhost:5173/oauth/callback}")
     private String redirectUrl;
@@ -44,13 +46,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .getAccessToken()
                 .getTokenValue();
 
-        String email = profile.getAttribute("email");
-        if ("google".equals(provider) && !Boolean.TRUE.equals(profile.getAttribute("email_verified"))) {
-            email = null;
-        }
-        if (email == null && "github".equals(provider)) {
-            email = primaryGitHubEmail(accessToken);
-        }
+        String email = switch (provider) {
+            case "google" -> Boolean.TRUE.equals(profile.getAttribute("email_verified"))
+                    ? profile.getAttribute("email") : null;
+            case "github" -> verifiedGitHubEmail(accessToken, profile.getAttribute("email"));
+            default -> null;
+        };
         if (email == null) {
             response.sendRedirect(redirectUrl + "#error=no_email");
             return;
@@ -62,8 +63,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             newUser.setEmail(normalizedEmail);
             newUser.setName(displayName(profile));
             newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            newUser.setEmailVerified(true);
             return newUser;
         });
+        if (!user.isEmailVerified()) {
+            emailVerificationService.resend(normalizedEmail, request.getRemoteAddr());
+            response.sendRedirect(redirectUrl + "#error=verify_email_first");
+            return;
+        }
 
         if ("github".equals(provider)) {
             user.setGithubToken(accessToken);
@@ -81,7 +88,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         return name == null ? "New user" : name;
     }
 
-    private static String primaryGitHubEmail(String accessToken) {
+    private static String verifiedGitHubEmail(String accessToken, String profileEmail) {
         List<Map<String, Object>> emails = RestClient.create("https://api.github.com")
                 .get()
                 .uri("/user/emails")
@@ -92,8 +99,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         if (emails == null) {
             return null;
         }
-        return emails.stream()
-                .filter(e -> Boolean.TRUE.equals(e.get("primary")) && Boolean.TRUE.equals(e.get("verified")))
+        List<Map<String, Object>> verified = emails.stream()
+                .filter(e -> Boolean.TRUE.equals(e.get("verified")))
+                .toList();
+        if (profileEmail != null && verified.stream().anyMatch(e -> profileEmail.equalsIgnoreCase((String) e.get("email")))) {
+            return profileEmail;
+        }
+        return verified.stream()
+                .filter(e -> Boolean.TRUE.equals(e.get("primary")))
                 .map(e -> (String) e.get("email"))
                 .findFirst()
                 .orElse(null);
