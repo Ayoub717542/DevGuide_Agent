@@ -61,7 +61,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .toList();
 
         TokenTextSplitter splitter = //uses token counts to limit passage sizes.
-                TokenTextSplitter.builder().build(); //Divides that text into smaller passages, called chunks
+                TokenTextSplitter.builder().withChunkSize(350).build(); //Divides that text into smaller passages, called chunks
 
         List<Document> chunks = splitter.apply(pages); //divides that text into smaller Spring AI Document objects.
 

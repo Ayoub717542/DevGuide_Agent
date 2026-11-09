@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,7 +41,8 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
     @ExceptionHandler({HttpMessageNotReadableException.class,
-            MissingServletRequestParameterException.class})
+            MissingServletRequestParameterException.class,
+            MethodArgumentNotValidException.class})
     public ResponseEntity<ApiError> handleBadInput(
             Exception ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Invalid or missing request data", request);

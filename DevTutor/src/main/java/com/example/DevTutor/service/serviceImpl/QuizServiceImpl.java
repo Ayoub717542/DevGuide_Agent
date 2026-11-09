@@ -134,6 +134,7 @@ public class QuizServiceImpl implements QuizService {
             ChallengeDraft candidate = chatClient.prompt()
                 .user("""
                         Create a small Java coding exercise about what was taught in this lesson.
+                        If the lesson contains the learner's own code, build the exercise on that code and reuse its names (classes, fields, methods).
                         The learner writes a class named Solution with one static method.
                         task: explain what to write, including the exact method signature.
                         starterCode: class Solution with that method and a body that only returns a default value.

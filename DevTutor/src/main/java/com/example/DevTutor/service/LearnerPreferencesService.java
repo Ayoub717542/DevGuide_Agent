@@ -1,6 +1,7 @@
 package com.example.DevTutor.service;
 
 import com.example.DevTutor.dto.chat.CheckpointResult;
+import com.example.DevTutor.dto.user.PreferencesRequest;
 import com.example.DevTutor.entity.LearnerPreferences;
 import com.example.DevTutor.enums.CodePreference;
 import com.example.DevTutor.enums.ExperienceLevel;
@@ -29,15 +30,44 @@ public class LearnerPreferencesService {
         preferences.setUserEmail(userEmail);
 
         ExperienceLevel level = parse(ExperienceLevel.class, detected.experienceLevel());
-        if (level != null) {
+        if (level != null && !preferences.isExperienceLevelManual()) {
             preferences.setExperienceLevel(oneStep(preferences.getExperienceLevel(), level));
         }
-        set(parse(ExplanationStyle.class, detected.explanationStyle()), preferences::setExplanationStyle);
-        set(parse(ResponseLength.class, detected.responseLength()), preferences::setResponseLength);
-        set(parse(CodePreference.class, detected.codePreference()), preferences::setCodePreference);
-        set(parse(Tone.class, detected.tone()), preferences::setTone);
+        if (!preferences.isExplanationStyleManual()) {
+            set(parse(ExplanationStyle.class, detected.explanationStyle()), preferences::setExplanationStyle);
+        }
+        if (!preferences.isResponseLengthManual()) {
+            set(parse(ResponseLength.class, detected.responseLength()), preferences::setResponseLength);
+        }
+        if (!preferences.isCodePreferenceManual()) {
+            set(parse(CodePreference.class, detected.codePreference()), preferences::setCodePreference);
+        }
+        if (!preferences.isToneManual()) {
+            set(parse(Tone.class, detected.tone()), preferences::setTone);
+        }
 
         learnerPreferencesRepository.saveAndFlush(preferences);
+    }
+
+    @Transactional
+    public LearnerPreferences update(String userEmail, PreferencesRequest request) {
+        LearnerPreferences preferences = learnerPreferencesRepository
+                .findLockedByUserEmail(userEmail)
+                .orElseGet(LearnerPreferences::new);
+        preferences.setUserEmail(userEmail);
+
+        preferences.setExperienceLevelManual(request.experienceLevel() != null);
+        set(request.experienceLevel(), preferences::setExperienceLevel);
+        preferences.setExplanationStyleManual(request.explanationStyle() != null);
+        set(request.explanationStyle(), preferences::setExplanationStyle);
+        preferences.setResponseLengthManual(request.responseLength() != null);
+        set(request.responseLength(), preferences::setResponseLength);
+        preferences.setCodePreferenceManual(request.codePreference() != null);
+        set(request.codePreference(), preferences::setCodePreference);
+        preferences.setToneManual(request.tone() != null);
+        set(request.tone(), preferences::setTone);
+
+        return learnerPreferencesRepository.save(preferences);
     }
 
     static <E extends Enum<E>> E parse(Class<E> type, String value) {

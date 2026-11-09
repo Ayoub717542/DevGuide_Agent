@@ -20,6 +20,7 @@ public final class ToolRouter {
             "github",
             "\\brepos?\\b",
             "\\brepositor(y|ies)\\b",
+            "\\bmy projects?\\b",
             "\\bpull[\\s-]?requests?\\b",
             "\\bprs?\\b",
             "\\breadme\\b",
