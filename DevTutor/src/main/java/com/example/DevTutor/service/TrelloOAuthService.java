@@ -77,9 +77,9 @@ public class TrelloOAuthService {
                 .toUriString();
     }
 
-    public boolean finishConnect(String code, String state) {
+    public boolean finishConnect(String code, String state, String email) {
         PendingLogin login = state == null ? null : pendingLogins.remove(state);
-        if (login == null || isExpired(login)) {
+        if (login == null || isExpired(login) || code == null || !login.email().equals(email)) {
             return false;
         }
 
