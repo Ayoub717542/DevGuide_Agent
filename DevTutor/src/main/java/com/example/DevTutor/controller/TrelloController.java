@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +40,19 @@ public class TrelloController {
     public void callback(@RequestParam(required = false) String code,
                          @RequestParam(required = false) String state,
                          HttpServletResponse response) throws IOException {
-        boolean connected = code != null && trelloOAuthService.finishConnect(code, state);
-        response.sendRedirect(doneUrl + (connected ? "#trello=connected" : "#trello=error"));
+        if (code == null || state == null) {
+            response.sendRedirect(doneUrl + "#trello=error");
+            return;
+        }
+        response.sendRedirect(doneUrl + "#trello_code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
+                + "&trello_state=" + URLEncoder.encode(state, StandardCharsets.UTF_8));
+    }
+
+    @PostMapping("/finish")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Map<String, Boolean> finish(@RequestBody Map<String, String> body, Authentication authentication) {
+        return Map.of("connected",
+                trelloOAuthService.finishConnect(body.get("code"), body.get("state"), authentication.getName()));
     }
 
     @GetMapping("/tools")
