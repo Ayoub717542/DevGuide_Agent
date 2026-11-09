@@ -11,18 +11,24 @@ import com.example.DevTutor.dto.user.UpdateUserRequest;
 import com.example.DevTutor.dto.user.UserResponse;
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.mapper.UserMapper;
+import com.example.DevTutor.repository.ChallengeRepository;
+import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.LearnerNoteRepository;
 import com.example.DevTutor.repository.LearnerPreferencesRepository;
 import com.example.DevTutor.repository.QuizResultRepository;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.service.LearnerPreferencesService;
 import com.example.DevTutor.service.ReviewScheduler;
+import com.example.DevTutor.service.TrelloMcpService;
+import com.example.DevTutor.service.TrelloOAuthService;
+import com.example.DevTutor.service.serviceInterface.ConversationService;
 import com.example.DevTutor.service.serviceInterface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -39,6 +45,11 @@ public class UserServiceImpl implements UserServiceInterface {
     private final LearnerPreferencesRepository learnerPreferencesRepository;
     private final LearnerPreferencesService learnerPreferencesService;
     private final PasswordEncoder passwordEncoder;
+    private final ConversationRepository conversationRepository;
+    private final ConversationService conversationService;
+    private final ChallengeRepository challengeRepository;
+    private final TrelloOAuthService trelloOAuthService;
+    private final TrelloMcpService trelloMcpService;
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -74,6 +85,21 @@ public class UserServiceImpl implements UserServiceInterface {
         User user = findUser(email);
         user.setGithubToken(null);
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMyAccount(String email) {
+        User user = findUser(email);
+        trelloMcpService.forget(email);
+        trelloOAuthService.disconnect(email);
+        conversationRepository.findByCreatedByEmailOrderByCreatedAtDesc(email)
+                .forEach(conversation -> conversationService.deleteConversation(conversation.getId()));
+        challengeRepository.deleteByUserEmail(email);
+        learnerNoteRepository.deleteByUserEmail(email);
+        learnerPreferencesRepository.deleteByUserEmail(email);
+        quizResultRepository.deleteByUserEmail(email);
+        userRepository.delete(user);
     }
 
     @Override

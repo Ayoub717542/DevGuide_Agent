@@ -24,6 +24,8 @@ public interface UserServiceInterface {
 
     void disconnectGithub(String email);
 
+    void deleteMyAccount(String email);
+
     List<ReviewResponse> getReviews(String email);
 
     List<QuizResultResponse> getProgress(String email);
