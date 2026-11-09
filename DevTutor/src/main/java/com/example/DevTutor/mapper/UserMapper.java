@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "githubConnected", expression = "java(user.getGithubToken() != null)")
+    @Mapping(target = "trelloConnected", expression = "java(user.getTrelloAccessToken() != null)")
     UserResponse toResponse(User user);
 }
