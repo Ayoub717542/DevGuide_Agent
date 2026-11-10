@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -29,6 +30,21 @@ public class ChatController {
         MessageRequest request = new MessageRequest(conversationId, content, hintMode, devMode);
 
         return chatService.reply(request, file);
+    }
+
+    @PostMapping(value = "/stream", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Flux<String> replyStream(
+            @RequestParam("conversationId") Long conversationId,
+            @RequestParam("content") String content,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "hintMode", defaultValue = "false") boolean hintMode,
+            @RequestParam(value = "devMode", defaultValue = "false") boolean devMode) {
+
+        MessageRequest request = new MessageRequest(conversationId, content, hintMode, devMode);
+
+        return chatService.replyStream(request, file);
     }
 
     @GetMapping("/conversations/{id}/messages")
