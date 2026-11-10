@@ -32,6 +32,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.tool.ToolCallback;
 import java.util.Set;
+import reactor.core.publisher.Flux;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
@@ -238,6 +239,81 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public MessageResponse reply(MessageRequest request, MultipartFile file) {
+        Media media = toMedia(file);
+        Message userMessage = saveQuestion(request, file, media);
+        Conversation conversation = userMessage.getConversation();
+        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
+
+        long aiStart = System.nanoTime();
+        ChatClientResponse aiResponse;
+        try {
+            aiResponse = buildPrompt(request, conversation, media, toolGroups)
+                .call()
+                .chatClientResponse();
+        } catch (RuntimeException e) {
+            removeUnansweredQuestion(conversation.getId(), userMessage);
+            throw e;
+        }
+        long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
+
+        String answer = aiResponse.chatResponse() == null
+                ? null
+                : aiResponse.chatResponse().getResult().getOutput().getText();
+
+        List<SourceResponse> sources = toSources(aiResponse.context()
+                .get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS));
+
+        if (answer == null || answer.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "The AI returned an empty answer. Please try again.");
+        }
+
+        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs, toolGroups);
+
+        Message savedAnswer = saveAnswer(conversation, answer, currentUserEmail());
+
+        MessageResponse response = messageMapper.toResponse(savedAnswer);
+        response.setSources(sources);
+        response.setImageUrl(userMessage.getImageUrl());
+        response.setDocuments(generatedDocumentRepository
+                .findByConversationIdAndCreatedAtGreaterThanEqual(
+                        conversation.getId(), userMessage.getCreatedAt())
+                .stream()
+                .map(GeneratedDocumentResponse::from)
+                .toList());
+        return response;
+    }
+
+    @Override
+    public Flux<String> replyStream(MessageRequest request, MultipartFile file) {
+        String email = currentUserEmail();
+        Media media = toMedia(file);
+        Message userMessage = saveQuestion(request, file, media);
+        Conversation conversation = userMessage.getConversation();
+        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
+        StringBuilder answer = new StringBuilder();
+
+        try {
+            return buildPrompt(request, conversation, media, toolGroups)
+                    .stream()
+                    .content()
+                    .doOnNext(answer::append)
+                    .doOnComplete(() -> {
+                        if (answer.isEmpty()) {
+                            removeUnansweredQuestion(conversation.getId(), userMessage);
+                        } else {
+                            saveAnswer(conversation, answer.toString(), email);
+                        }
+                    })
+                    .doOnError(e -> removeUnansweredQuestion(conversation.getId(), userMessage));
+        } catch (RuntimeException e) {
+            removeUnansweredQuestion(conversation.getId(), userMessage);
+            throw e;
+        }
+    }
+
+    private Message saveQuestion(MessageRequest request, MultipartFile file, Media media) {
         if (request.getConversationId() == null
                 || request.getContent() == null
                 || request.getContent().isBlank()) {
@@ -250,8 +326,6 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Conversation not found"));
-
-        Media media = toMedia(file);
 
         Message userMessage = messageMapper.toEntity(request);
         userMessage.setRole(MessageRole.USER);
@@ -269,17 +343,32 @@ public class ChatServiceImpl implements ChatService {
             );
         }
 
-        messageRepository.save(userMessage);
+        return messageRepository.save(userMessage);
+    }
+
+    private Message saveAnswer(Conversation conversation, String answer, String email) {
+        Message assistantMessage = new Message();
+        assistantMessage.setContent(answer);
+        assistantMessage.setRole(MessageRole.ASSISTANT);
+        assistantMessage.setConversation(conversation);
+
+        Message savedAnswer = messageRepository.save(assistantMessage);
+
+        try {
+            updateCheckpoint(conversation.getId(), email);
+        } catch (RuntimeException e) {
+            log.warn("Could not update checkpoint for conversation {}", conversation.getId(), e);
+        }
+        return savedAnswer;
+    }
+
+    private ChatClient.ChatClientRequestSpec buildPrompt(
+            MessageRequest request, Conversation conversation, Media media, Set<ToolRouter.Group> toolGroups) {
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
         List<Advisor> requestAdvisors = uploadedDocumentRepository.existsByConversationId(conversation.getId())
                 ? List.of(questionAnswerAdvisor)
                 : List.of();
-        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
-
-        long aiStart = System.nanoTime();
-        ChatClientResponse aiResponse;
-        try {
-            aiResponse = chatClient.prompt()
+        return chatClient.prompt()
                 .system(guide + quizScores() + learnerNotes() + checkpoint(conversation.getId())
                         + preferences()
                         + (firstMessage ? dueReviews(request.getContent()) : "")
@@ -304,56 +393,10 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
-                .toolCallbacks(UntrustedToolCallback.wrap(routedTools(toolGroups)))
+                .tools(UntrustedToolCallback.wrap(routedTools(toolGroups)))
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
-                        "userEmail", currentUserEmail()))
-                .call()
-                .chatClientResponse();
-        } catch (RuntimeException e) {
-            removeUnansweredQuestion(conversation.getId(), userMessage);
-            throw e;
-        }
-        long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
-
-        String answer = aiResponse.chatResponse() == null
-                ? null
-                : aiResponse.chatResponse().getResult().getOutput().getText();
-
-        List<SourceResponse> sources = toSources(aiResponse.context()
-                .get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS));
-
-        if (answer == null || answer.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "The AI returned an empty answer. Please try again.");
-        }
-
-        logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs, toolGroups);
-
-        Message assistantMessage = new Message();
-        assistantMessage.setContent(answer);
-        assistantMessage.setRole(MessageRole.ASSISTANT);
-        assistantMessage.setConversation(conversation);
-
-        Message savedAnswer = messageRepository.save(assistantMessage);
-
-        try {
-            updateCheckpoint(conversation.getId());
-        } catch (RuntimeException e) {
-            log.warn("Could not update checkpoint for conversation {}", conversation.getId(), e);
-        }
-
-        MessageResponse response = messageMapper.toResponse(savedAnswer);
-        response.setSources(sources);
-        response.setImageUrl(userMessage.getImageUrl());
-        response.setDocuments(generatedDocumentRepository
-                .findByConversationIdAndCreatedAtGreaterThanEqual(
-                        conversation.getId(), userMessage.getCreatedAt())
-                .stream()
-                .map(GeneratedDocumentResponse::from)
-                .toList());
-        return response;
+                        "userEmail", currentUserEmail()));
     }
 
     private void removeUnansweredQuestion(Long conversationId, Message userMessage) {
@@ -423,8 +466,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElse("");
     }
 
-    private void updateCheckpoint(Long conversationId) {
-        String userEmail = currentUserEmail();
+    private void updateCheckpoint(Long conversationId, String userEmail) {
         long count = messageRepository.countByConversationId(conversationId);
         ConversationCheckpoint checkpoint = checkpointRepository
                 .findByConversationId(conversationId)
