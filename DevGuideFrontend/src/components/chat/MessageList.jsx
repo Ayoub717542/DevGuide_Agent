@@ -7,7 +7,7 @@ const SUGGESTIONS = [
   "Give me a small Java exercise",
 ];
 
-export default function MessageList({ messages, answer, error, onAsk }) {
+export default function MessageList({ messages, pdfs, answer, error, onAsk }) {
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -38,10 +38,10 @@ export default function MessageList({ messages, answer, error, onAsk }) {
         )}
 
         {messages.map((message) => (
-          <Message key={message.id} message={message} />
+          <Message key={message.id} message={message} pdfs={pdfs} />
         ))}
 
-        {answer !== null && <Message message={{ role: "ASSISTANT", content: answer }} />}
+        {answer !== null && <Message message={{ role: "ASSISTANT", content: answer }} pdfs={pdfs} />}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
         <div ref={endRef} />

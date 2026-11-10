@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { ArrowUp, Lightbulb, Square, Terminal } from "lucide-react";
+import { ArrowUp, Image, Lightbulb, Paperclip, Square, Terminal, X } from "lucide-react";
 
-export default function Composer({ busy, onSend, onStop }) {
+export default function Composer({ busy, uploading, onSend, onStop, onUploadPdf }) {
   const [text, setText] = useState("");
+  const [image, setImage] = useState(null);
   const [hintMode, setHintMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
   const send = () => {
     const content = text.trim();
     if (!content || busy) return;
-    onSend({ content, hintMode, devMode });
+    onSend({ content, hintMode, devMode, file: image });
     setText("");
+    setImage(null);
+  };
+
+  const attach = (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.type === "application/pdf") onUploadPdf(file);
+    else setImage(file);
   };
 
   const handleKeyDown = (e) => {
@@ -23,6 +33,17 @@ export default function Composer({ busy, onSend, onStop }) {
   return (
     <div className="mx-auto w-full max-w-190 px-7 pt-3 pb-5.5">
       <div className="rounded-[14px] border bg-secondary px-3 pt-3 pb-2.5 focus-within:border-muted-foreground/50">
+        {(image || uploading) && (
+          <div className="mb-2 ml-0.5 inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-0.75 text-xs">
+            <Image className="size-3.5" />
+            {uploading ? "Uploading PDF…" : image.name}
+            {image && !uploading && (
+              <button onClick={() => setImage(null)} aria-label="Remove image" className="text-muted-foreground hover:text-foreground">
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+        )}
         <textarea
           rows={2}
           value={text}
@@ -33,6 +54,10 @@ export default function Composer({ busy, onSend, onStop }) {
           className="w-full resize-none bg-transparent px-1 outline-none placeholder:text-[#6B7380]"
         />
         <div className="mt-2 flex items-center gap-1.5">
+          <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] text-muted-foreground hover:bg-card hover:text-foreground">
+            <Paperclip className="size-4" /> Attach
+            <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden onChange={attach} />
+          </label>
           <Toggle icon={Lightbulb} label="Hint mode" on={hintMode} onClick={() => setHintMode(!hintMode)} />
           <Toggle icon={Terminal} label="Dev mode" on={devMode} onClick={() => setDevMode(!devMode)} />
           {busy ? (
