@@ -35,6 +35,7 @@ import java.util.Set;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import org.springframework.http.codec.ServerSentEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -288,6 +289,7 @@ public class ChatServiceImpl implements ChatService {
         StringBuilder answer = new StringBuilder();
         AtomicReference<ChatClientResponse> lastChunk = new AtomicReference<>();
         AtomicReference<Object> retrieved = new AtomicReference<>();
+        AtomicBoolean answered = new AtomicBoolean();
         long aiStart = System.nanoTime();
 
         Flux<ServerSentEvent<Object>> deltas;
@@ -321,6 +323,7 @@ public class ChatServiceImpl implements ChatService {
             ChatClientResponse last = lastChunk.get();
             logAiUsage(conversation.getId(), last == null ? null : last.chatResponse(), aiTimeMs, toolGroups);
             Message savedAnswer = saveAnswer(conversation, answer.toString(), email);
+            answered.set(true);
             MessageResponse response = toReplyResponse(savedAnswer, userMessage, toSources(retrieved.get()));
             return ServerSentEvent.<Object>builder(response).event("done").build();
         });
@@ -334,6 +337,12 @@ public class ChatServiceImpl implements ChatService {
                             : "The AI could not answer. Please try again.";
                     return Mono.just(ServerSentEvent.<Object>builder(Map.of("message", message))
                             .event("error").build());
+                })
+                .doOnCancel(() -> {
+                    if (!answered.get()) {
+                        log.info("Streaming reply cancelled for conversation {}", conversation.getId());
+                        removeUnansweredQuestion(conversation.getId(), userMessage);
+                    }
                 });
     }
 

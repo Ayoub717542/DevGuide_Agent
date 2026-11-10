@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Primary;
 import reactor.core.publisher.Flux;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.example.DevTutor.util.Exceptions.findCause;
 
@@ -68,11 +70,14 @@ public class FallbackChatConfig {
             @Override
             public Flux<ChatResponse> stream(Prompt prompt) {
                 ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
-                return gemini.stream(prompt)
-                        .onErrorResume(e -> e instanceof RuntimeException r && isRecoverable(r),
-                                e -> groq.stream(prompt.mutate()
+                return beforeFirstWord("Main model", () -> gemini.stream(prompt),
+                        () -> beforeFirstWord("Backup Gemini",
+                                () -> gemini.stream(prompt.mutate()
+                                        .chatOptions(options.mutate().model(fallbackModel).build())
+                                        .build()),
+                                () -> groq.stream(prompt.mutate()
                                         .chatOptions(groqOptions(options, groq.getOptions().getModel()))
-                                        .build()));
+                                        .build())));
             }
 
             @Override
@@ -80,6 +85,30 @@ public class FallbackChatConfig {
                 return gemini.getOptions();
             }
         };
+    }
+
+    private static Flux<ChatResponse> beforeFirstWord(String name, Supplier<Flux<ChatResponse>> model,
+                                                      Supplier<Flux<ChatResponse>> backup) {
+        return Flux.defer(() -> {
+            AtomicBoolean started = new AtomicBoolean();
+            return Flux.defer(model)
+                    .doOnNext(response -> {
+                        if (hasText(response)) {
+                            started.set(true);
+                        }
+                    })
+                    .onErrorResume(e -> !started.get() && e instanceof RuntimeException r && isRecoverable(r),
+                            e -> {
+                                log.warn("{} failed before answering ({}), switching model", name, e.getMessage());
+                                return Flux.defer(backup);
+                            });
+        });
+    }
+
+    private static boolean hasText(ChatResponse response) {
+        return response.getResult() != null
+                && response.getResult().getOutput().getText() != null
+                && !response.getResult().getOutput().getText().isEmpty();
     }
 
     private static OpenAiChatOptions groqOptions(ChatOptions options, String model) {
