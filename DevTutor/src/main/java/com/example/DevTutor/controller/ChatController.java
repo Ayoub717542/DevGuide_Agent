@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class ChatController {
     @PostMapping(value = "/stream", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public Flux<String> replyStream(
+    public Flux<ServerSentEvent<Object>> replyStream(
             @RequestParam("conversationId") Long conversationId,
             @RequestParam("content") String content,
             @RequestParam(value = "file", required = false) MultipartFile file,

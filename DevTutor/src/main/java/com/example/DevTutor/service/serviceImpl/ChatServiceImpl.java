@@ -33,6 +33,9 @@ import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.tool.ToolCallback;
 import java.util.Set;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import org.springframework.http.codec.ServerSentEvent;
+import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
@@ -272,45 +275,87 @@ public class ChatServiceImpl implements ChatService {
         logAiUsage(conversation.getId(), aiResponse.chatResponse(), aiTimeMs, toolGroups);
 
         Message savedAnswer = saveAnswer(conversation, answer, currentUserEmail());
-
-        MessageResponse response = messageMapper.toResponse(savedAnswer);
-        response.setSources(sources);
-        response.setImageUrl(userMessage.getImageUrl());
-        response.setDocuments(generatedDocumentRepository
-                .findByConversationIdAndCreatedAtGreaterThanEqual(
-                        conversation.getId(), userMessage.getCreatedAt())
-                .stream()
-                .map(GeneratedDocumentResponse::from)
-                .toList());
-        return response;
+        return toReplyResponse(savedAnswer, userMessage, sources);
     }
 
     @Override
-    public Flux<String> replyStream(MessageRequest request, MultipartFile file) {
+    public Flux<ServerSentEvent<Object>> replyStream(MessageRequest request, MultipartFile file) {
         String email = currentUserEmail();
         Media media = toMedia(file);
         Message userMessage = saveQuestion(request, file, media);
         Conversation conversation = userMessage.getConversation();
         Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
         StringBuilder answer = new StringBuilder();
+        AtomicReference<ChatClientResponse> lastChunk = new AtomicReference<>();
+        AtomicReference<Object> retrieved = new AtomicReference<>();
+        long aiStart = System.nanoTime();
 
+        Flux<ServerSentEvent<Object>> deltas;
         try {
-            return buildPrompt(request, conversation, media, toolGroups)
+            deltas = buildPrompt(request, conversation, media, toolGroups)
                     .stream()
-                    .content()
-                    .doOnNext(answer::append)
-                    .doOnComplete(() -> {
-                        if (answer.isEmpty()) {
-                            removeUnansweredQuestion(conversation.getId(), userMessage);
-                        } else {
-                            saveAnswer(conversation, answer.toString(), email);
+                    .chatClientResponse()
+                    .doOnNext(chunk -> {
+                        lastChunk.set(chunk);
+                        Object documents = chunk.context().get(QuestionAnswerAdvisor.RETRIEVED_DOCUMENTS);
+                        if (documents != null) {
+                            retrieved.set(documents);
                         }
                     })
-                    .doOnError(e -> removeUnansweredQuestion(conversation.getId(), userMessage));
+                    .map(ChatServiceImpl::chunkText)
+                    .filter(text -> !text.isEmpty())
+                    .doOnNext(answer::append)
+                    .map(text -> ServerSentEvent.<Object>builder(Map.of("text", text)).event("delta").build());
         } catch (RuntimeException e) {
             removeUnansweredQuestion(conversation.getId(), userMessage);
             throw e;
         }
+
+        Mono<ServerSentEvent<Object>> done = Mono.fromCallable(() -> {
+            if (answer.isEmpty()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_GATEWAY,
+                        "The AI returned an empty answer. Please try again.");
+            }
+            long aiTimeMs = (System.nanoTime() - aiStart) / 1_000_000;
+            ChatClientResponse last = lastChunk.get();
+            logAiUsage(conversation.getId(), last == null ? null : last.chatResponse(), aiTimeMs, toolGroups);
+            Message savedAnswer = saveAnswer(conversation, answer.toString(), email);
+            MessageResponse response = toReplyResponse(savedAnswer, userMessage, toSources(retrieved.get()));
+            return ServerSentEvent.<Object>builder(response).event("done").build();
+        });
+
+        return deltas.concatWith(done)
+                .onErrorResume(e -> {
+                    log.warn("Streaming reply failed for conversation {}", conversation.getId(), e);
+                    removeUnansweredQuestion(conversation.getId(), userMessage);
+                    String message = e instanceof ResponseStatusException status && status.getReason() != null
+                            ? status.getReason()
+                            : "The AI could not answer. Please try again.";
+                    return Mono.just(ServerSentEvent.<Object>builder(Map.of("message", message))
+                            .event("error").build());
+                });
+    }
+
+    private static String chunkText(ChatClientResponse chunk) {
+        if (chunk.chatResponse() == null || chunk.chatResponse().getResult() == null) {
+            return "";
+        }
+        String text = chunk.chatResponse().getResult().getOutput().getText();
+        return text == null ? "" : text;
+    }
+
+    private MessageResponse toReplyResponse(Message savedAnswer, Message userMessage, List<SourceResponse> sources) {
+        MessageResponse response = messageMapper.toResponse(savedAnswer);
+        response.setSources(sources);
+        response.setImageUrl(userMessage.getImageUrl());
+        response.setDocuments(generatedDocumentRepository
+                .findByConversationIdAndCreatedAtGreaterThanEqual(
+                        savedAnswer.getConversation().getId(), userMessage.getCreatedAt())
+                .stream()
+                .map(GeneratedDocumentResponse::from)
+                .toList());
+        return response;
     }
 
     private Message saveQuestion(MessageRequest request, MultipartFile file, Media media) {
