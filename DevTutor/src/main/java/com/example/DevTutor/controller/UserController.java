@@ -51,6 +51,20 @@ public class UserController {
         userServiceInterface.changePassword(authentication.getName(), request);
     }
 
+    @DeleteMapping("/me")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMyAccount(Authentication authentication) {
+        userServiceInterface.deleteMyAccount(authentication.getName());
+    }
+
+    @DeleteMapping("/me/github")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disconnectGithub(Authentication authentication) {
+        userServiceInterface.disconnectGithub(authentication.getName());
+    }
+
     @GetMapping("/me/reviews")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public List<ReviewResponse> reviews(Authentication authentication) {

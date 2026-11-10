@@ -11,4 +11,6 @@ public interface QuizResultRepository
     List<QuizResult> findTop5ByUserEmailOrderByCreatedAtDesc(String userEmail);
 
     List<QuizResult> findByUserEmailOrderByCreatedAtDesc(String userEmail);
+
+    void deleteByUserEmail(String userEmail);
 }

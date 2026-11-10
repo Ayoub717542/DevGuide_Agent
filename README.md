@@ -191,6 +191,8 @@ Every resource belongs to one user; nobody else can see it, not even an admin.
 
 </details>
 
+How deleting your account works, step by step: [docs/diagrams/delete-account.html](docs/diagrams/delete-account.html) (download it and open it in a browser).
+
 <br/>
 
 ### Getting started

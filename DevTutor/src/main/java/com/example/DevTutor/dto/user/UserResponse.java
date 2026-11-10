@@ -15,4 +15,6 @@ public class UserResponse {
     private Roles role;
     private LocalDateTime createdAt;
     private boolean githubConnected;
+    private boolean trelloConnected;
+    private boolean emailVerified;
 }

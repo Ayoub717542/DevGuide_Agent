@@ -22,6 +22,10 @@ public interface UserServiceInterface {
 
     void changePassword(String email, ChangePasswordRequest request);
 
+    void disconnectGithub(String email);
+
+    void deleteMyAccount(String email);
+
     List<ReviewResponse> getReviews(String email);
 
     List<QuizResultResponse> getProgress(String email);

@@ -14,4 +14,6 @@ public interface LearnerPreferencesRepository
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<LearnerPreferences> findLockedByUserEmail(String userEmail);
+
+    void deleteByUserEmail(String userEmail);
 }

@@ -13,4 +13,6 @@ public interface LearnerNoteRepository
 
     @Transactional
     long deleteByIdAndUserEmail(Long id, String userEmail);
+
+    void deleteByUserEmail(String userEmail);
 }
