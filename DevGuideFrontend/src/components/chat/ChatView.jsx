@@ -94,6 +94,11 @@ export default function ChatView({ chat }) {
     }
   };
 
+  const trelloFinished = (text) => {
+    setMessages((list) => [...list, { id: crypto.randomUUID(), type: "note", data: text }]);
+    loadPending();
+  };
+
   const deletePdf = async (documentId) => {
     await documentsApi.deletePdf(documentId);
     await loadPdfs();
@@ -119,7 +124,7 @@ export default function ChatView({ chat }) {
         answer={answer}
         error={error}
         onAsk={(content) => send({ content })}
-        onTrelloFinished={loadPending}
+        onTrelloFinished={trelloFinished}
       />
       <Composer busy={answer !== null} onSend={send} onStop={stop} onUploadPdf={uploadPdf} />
     </main>

@@ -16,11 +16,17 @@ export default function TrelloCard({ action, onFinished }) {
 
   const answer = async (approve) => {
     setWorking(true);
+    const what = `${action.toolName}: ${describe(action)}`;
     try {
-      if (approve) await approveAction(action.id);
-      else await rejectAction(action.id);
-    } finally {
-      onFinished(action.id);
+      if (approve) {
+        await approveAction(action.id);
+        onFinished(`✓ Done on Trello: ${what}`);
+      } else {
+        await rejectAction(action.id);
+        onFinished(`Rejected, nothing changed on Trello: ${what}`);
+      }
+    } catch (e) {
+      onFinished(`Trello could not do it: ${e.response?.data?.message || what}`);
     }
   };
 
