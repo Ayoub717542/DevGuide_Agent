@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import reactor.core.publisher.Flux;
 
 import java.util.Map;
 
@@ -62,6 +63,16 @@ public class FallbackChatConfig {
                             .chatOptions(groqOptions(options, groqModel))
                             .build());
                 }
+            }
+
+            @Override
+            public Flux<ChatResponse> stream(Prompt prompt) {
+                ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
+                return gemini.stream(prompt)
+                        .onErrorResume(e -> e instanceof RuntimeException r && isRecoverable(r),
+                                e -> groq.stream(prompt.mutate()
+                                        .chatOptions(groqOptions(options, groq.getOptions().getModel()))
+                                        .build()));
             }
 
             @Override
