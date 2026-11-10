@@ -4,7 +4,10 @@ import com.google.genai.errors.ClientException;
 import com.google.genai.errors.ServerException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.Generation;
+import reactor.core.publisher.Flux;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -73,5 +76,38 @@ class FallbackChatConfigTest {
         ArgumentCaptor<Prompt> groqPrompt = ArgumentCaptor.forClass(Prompt.class);
         verify(groq).call(groqPrompt.capture());
         assertEquals("groq-model", groqPrompt.getValue().getOptions().getModel());
+    }
+
+    @Test
+    void streamSwitchesModelWhenErrorComesBeforeFirstWord() {
+        when(gemini.stream(any(Prompt.class)))
+                .thenReturn(Flux.error(serverError()))
+                .thenReturn(Flux.just(words("Hello")));
+
+        List<String> answer = chatModel.stream(prompt).map(this::text).collectList().block();
+
+        assertEquals(List.of("Hello"), answer);
+    }
+
+    @Test
+    void streamDoesNotSwitchModelAfterFirstWord() {
+        when(gemini.stream(any(Prompt.class)))
+                .thenReturn(Flux.just(words("Hello")).concatWith(Flux.error(serverError())));
+
+        assertThrows(RuntimeException.class, () -> chatModel.stream(prompt).blockLast());
+        verify(gemini, times(1)).stream(any(Prompt.class));
+    }
+
+    private static RuntimeException serverError() {
+        return new RuntimeException("Failed to generate content",
+                new ServerException(503, "UNAVAILABLE", "overloaded"));
+    }
+
+    private static ChatResponse words(String text) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
+    }
+
+    private String text(ChatResponse response) {
+        return response.getResult().getOutput().getText();
     }
 }
