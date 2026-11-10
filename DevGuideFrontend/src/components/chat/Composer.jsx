@@ -1,26 +1,33 @@
 import { useState } from "react";
-import { ArrowUp, Image, Lightbulb, Paperclip, Square, Terminal, X } from "lucide-react";
+import { ArrowUp, Lightbulb, Paperclip, Square, Terminal, X } from "lucide-react";
+import FileLabel from "./FileLabel";
 
-export default function Composer({ busy, uploading, onSend, onStop, onUploadPdf }) {
+export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
   const [text, setText] = useState("");
-  const [image, setImage] = useState(null);
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [hintMode, setHintMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
   const send = () => {
     const content = text.trim();
-    if (!content || busy) return;
-    onSend({ content, hintMode, devMode, file: image });
+    if (!content || busy || uploading) return;
+    onSend({ content, hintMode, devMode, file });
     setText("");
-    setImage(null);
+    setFile(null);
   };
 
-  const attach = (e) => {
-    const file = e.target.files[0];
+  const attach = async (e) => {
+    const picked = e.target.files[0];
     e.target.value = "";
-    if (!file) return;
-    if (file.type === "application/pdf") onUploadPdf(file);
-    else setImage(file);
+    if (!picked) return;
+    setFile(picked);
+    if (picked.type !== "application/pdf") return;
+
+    setUploading(true);
+    const uploaded = await onUploadPdf(picked);
+    setUploading(false);
+    if (!uploaded) setFile(null);
   };
 
   const handleKeyDown = (e) => {
@@ -33,15 +40,15 @@ export default function Composer({ busy, uploading, onSend, onStop, onUploadPdf 
   return (
     <div className="mx-auto w-full max-w-190 px-7 pt-3 pb-5.5">
       <div className="rounded-[14px] border bg-secondary px-3 pt-3 pb-2.5 focus-within:border-muted-foreground/50">
-        {(image || uploading) && (
-          <div className="mb-2 ml-0.5 inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-0.75 text-xs">
-            <Image className="size-3.5" />
-            {uploading ? "Uploading PDF…" : image.name}
-            {image && !uploading && (
-              <button onClick={() => setImage(null)} aria-label="Remove image" className="text-muted-foreground hover:text-foreground">
-                <X className="size-3.5" />
-              </button>
-            )}
+        {file && (
+          <div className="mb-2 ml-0.5">
+            <FileLabel name={uploading ? `Uploading ${file.name}…` : file.name}>
+              {!uploading && (
+                <button onClick={() => setFile(null)} aria-label="Remove file" className="text-muted-foreground hover:text-foreground">
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </FileLabel>
           </div>
         )}
         <textarea
@@ -65,7 +72,7 @@ export default function Composer({ busy, uploading, onSend, onStop, onUploadPdf 
               <Square className="size-3.5 fill-current" />
             </button>
           ) : (
-            <button onClick={send} disabled={!text.trim()} aria-label="Send" className="ml-auto grid size-8.5 place-items-center rounded-[9px] bg-primary text-primary-foreground disabled:opacity-40">
+            <button onClick={send} disabled={!text.trim() || uploading} aria-label="Send" className="ml-auto grid size-8.5 place-items-center rounded-[9px] bg-primary text-primary-foreground disabled:opacity-40">
               <ArrowUp className="size-4" />
             </button>
           )}

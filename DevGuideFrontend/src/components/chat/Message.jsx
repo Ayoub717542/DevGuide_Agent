@@ -1,5 +1,5 @@
-import { Image } from "lucide-react";
 import { DownloadChips, SourceChips } from "./FileChips";
+import FileLabel from "./FileLabel";
 import Markdown from "./Markdown";
 
 export default function Message({ message, pdfs }) {
@@ -11,11 +11,7 @@ export default function Message({ message, pdfs }) {
             <img src={message.imageUrl} alt="Attached" className="max-h-48 rounded-[10px] border" />
           </a>
         )}
-        {message.fileName && (
-          <span className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-0.75 text-xs text-muted-foreground">
-            <Image className="size-3.5" />{message.fileName}
-          </span>
-        )}
+        {message.fileName && <FileLabel name={message.fileName} />}
         <div className="rounded-[14px] rounded-br-sm border bg-card px-3.5 py-2.5 whitespace-pre-wrap">
           {message.content}
         </div>

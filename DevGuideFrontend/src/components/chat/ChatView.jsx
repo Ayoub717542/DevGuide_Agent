@@ -25,17 +25,18 @@ export default function ChatView({ chat }) {
   }, [chat.id]);
 
   const send = async ({ content, hintMode, devMode, file }) => {
-    const question = { id: `question-${Date.now()}`, role: "USER", content, fileName: file?.name };
+    const question = { id: crypto.randomUUID(), role: "USER", content, fileName: file?.name };
     const removeQuestion = () => setMessages((list) => list.filter((m) => m !== question));
     setMessages((list) => [...list, question]);
     setAnswer("");
     setError("");
 
+    const isPdf = file?.type === "application/pdf";
     const controller = new AbortController();
     stopRef.current = controller;
     try {
       await streamReply(
-        { conversationId: chat.id, content, hintMode, devMode, file },
+        { conversationId: chat.id, content, hintMode, devMode, file: isPdf ? null : file },
         {
           onDelta: (text) => setAnswer((current) => current + text),
           onDone: (saved) => setMessages((list) => [...list, saved]),
@@ -62,8 +63,10 @@ export default function ChatView({ chat }) {
     try {
       await documentsApi.uploadPdf(chat.id, file);
       await loadPdfs();
+      return true;
     } catch (e) {
       setError(e.response?.data?.message || "Could not upload this PDF.");
+      return false;
     } finally {
       setUploading(false);
     }
@@ -78,7 +81,7 @@ export default function ChatView({ chat }) {
     <main className="flex min-h-0 min-w-0 flex-col">
       <ChatHeader chat={chat} pdfs={pdfs} uploading={uploading} onUpload={uploadPdf} onDeletePdf={deletePdf} />
       <MessageList messages={messages} pdfs={pdfs} answer={answer} error={error} onAsk={(content) => send({ content })} />
-      <Composer busy={answer !== null} uploading={uploading} onSend={send} onStop={stop} onUploadPdf={uploadPdf} />
+      <Composer busy={answer !== null} onSend={send} onStop={stop} onUploadPdf={uploadPdf} />
     </main>
   );
 }
