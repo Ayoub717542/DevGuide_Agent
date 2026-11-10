@@ -1,4 +1,7 @@
 import { useEffect, useRef } from "react";
+import ChallengeCard from "../cards/ChallengeCard";
+import QuizCard from "../cards/QuizCard";
+import TrelloCard from "../cards/TrelloCard";
 import Message from "./Message";
 
 const SUGGESTIONS = [
@@ -7,12 +10,12 @@ const SUGGESTIONS = [
   "Give me a small Java exercise",
 ];
 
-export default function MessageList({ messages, pdfs, answer, error, onAsk }) {
+export default function MessageList({ chatId, messages, pdfs, pending, answer, error, onAsk, onTrelloFinished }) {
   const endRef = useRef(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, answer]);
+  }, [messages, answer, pending]);
 
   const empty = messages.length === 0 && answer === null;
 
@@ -37,11 +40,17 @@ export default function MessageList({ messages, pdfs, answer, error, onAsk }) {
           </div>
         )}
 
-        {messages.map((message) => (
-          <Message key={message.id} message={message} pdfs={pdfs} />
-        ))}
+        {messages.map((message) => {
+          if (message.type === "quiz") return <QuizCard key={message.id} chatId={chatId} quiz={message.data} />;
+          if (message.type === "challenge") return <ChallengeCard key={message.id} challenge={message.data} />;
+          return <Message key={message.id} message={message} pdfs={pdfs} />;
+        })}
 
         {answer !== null && <Message message={{ role: "ASSISTANT", content: answer }} pdfs={pdfs} />}
+
+        {pending.map((action) => (
+          <TrelloCard key={action.id} action={action} onFinished={onTrelloFinished} />
+        ))}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
         <div ref={endRef} />

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { getMessages } from "../../api/chats";
+import * as chatsApi from "../../api/chats";
 import * as documentsApi from "../../api/documents";
 import { streamReply } from "../../api/stream";
+import { getPendingActions } from "../../api/trello";
 import ChatHeader from "./ChatHeader";
 import Composer from "./Composer";
 import MessageList from "./MessageList";
@@ -14,13 +15,18 @@ export default function ChatView({ chat }) {
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(null);
+  const [pending, setPending] = useState([]);
   const stopRef = useRef(null);
+
+  const loadPending = () => getPendingActions().then(setPending).catch(() => setPending([]));
 
   const loadPdfs = () => documentsApi.getChatPdfs(chat.id).then((list) => setPdfs(newestFirst(list)));
 
   useEffect(() => {
-    getMessages(chat.id).then(setMessages);
+    chatsApi.getMessages(chat.id).then(setMessages);
     documentsApi.getChatPdfs(chat.id).then((list) => setPdfs(newestFirst(list)));
+    getPendingActions().then(setPending).catch(() => setPending([]));
     return () => stopRef.current?.abort();
   }, [chat.id]);
 
@@ -39,7 +45,10 @@ export default function ChatView({ chat }) {
         { conversationId: chat.id, content, hintMode, devMode, file: isPdf ? null : file },
         {
           onDelta: (text) => setAnswer((current) => current + text),
-          onDone: (saved) => setMessages((list) => [...list, saved]),
+          onDone: (saved) => {
+            setMessages((list) => [...list, saved]);
+            loadPending();
+          },
           onError: (message) => {
             setError(message);
             removeQuestion();
@@ -72,6 +81,19 @@ export default function ChatView({ chat }) {
     }
   };
 
+  const addCard = async (type, create) => {
+    setLoading(type);
+    setError("");
+    try {
+      const data = await create(chat.id);
+      setMessages((list) => [...list, { id: crypto.randomUUID(), type, data }]);
+    } catch (e) {
+      setError(e.response?.data?.message || "Could not create it. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const deletePdf = async (documentId) => {
     await documentsApi.deletePdf(documentId);
     await loadPdfs();
@@ -79,8 +101,26 @@ export default function ChatView({ chat }) {
 
   return (
     <main className="flex min-h-0 min-w-0 flex-col">
-      <ChatHeader chat={chat} pdfs={pdfs} uploading={uploading} onUpload={uploadPdf} onDeletePdf={deletePdf} />
-      <MessageList messages={messages} pdfs={pdfs} answer={answer} error={error} onAsk={(content) => send({ content })} />
+      <ChatHeader
+        chat={chat}
+        pdfs={pdfs}
+        uploading={uploading}
+        loading={loading}
+        onUpload={uploadPdf}
+        onDeletePdf={deletePdf}
+        onQuiz={() => addCard("quiz", chatsApi.createQuiz)}
+        onChallenge={() => addCard("challenge", chatsApi.createChallenge)}
+      />
+      <MessageList
+        chatId={chat.id}
+        messages={messages}
+        pdfs={pdfs}
+        pending={pending}
+        answer={answer}
+        error={error}
+        onAsk={(content) => send({ content })}
+        onTrelloFinished={loadPending}
+      />
       <Composer busy={answer !== null} onSend={send} onStop={stop} onUploadPdf={uploadPdf} />
     </main>
   );
