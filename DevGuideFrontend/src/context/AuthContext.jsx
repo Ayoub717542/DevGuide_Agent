@@ -3,6 +3,7 @@ import { TOKEN_KEY } from "../api/axiosApi";
 import * as client from "../api/Client";
 
 const AuthContext = createContext(null);
+const JWT_PATTERN = /^[\w-]+\.[\w-]+\.[\w-]+$/;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -17,8 +18,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithToken = useCallback(async (token) => {
+    if (!JWT_PATTERN.test(token)) throw new Error("Invalid token");
+    const me = await client.getMe(token);
     localStorage.setItem(TOKEN_KEY, token);
-    setUser(await client.getMe());
+    setUser(me);
   }, []);
 
   const login = async (email, password) => {
