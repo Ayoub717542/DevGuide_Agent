@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ChatView from "../components/chat/ChatView";
 import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
 
@@ -39,16 +40,16 @@ export default function StudyDesk() {
         onRename={renameChat}
         onDelete={deleteChat}
       />
-      <main className="grid place-items-center p-6 text-center">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {activeChat ? activeChat.title : "What do you want to learn today?"}
-          </h2>
-          <p className="mt-1.5 text-muted-foreground">
-            {activeChat ? "Messages will appear here." : "Pick a chat on the left or start a new one."}
-          </p>
-        </div>
-      </main>
+      {activeChat ? (
+        <ChatView key={activeChat.id} chat={activeChat} />
+      ) : (
+        <main className="grid place-items-center p-6 text-center">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">What do you want to learn today?</h2>
+            <p className="mt-1.5 text-muted-foreground">Pick a chat on the left or start a new one.</p>
+          </div>
+        </main>
+      )}
     </div>
   );
 }
