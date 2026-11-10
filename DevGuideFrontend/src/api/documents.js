@@ -24,7 +24,7 @@ export const downloadFile = async (file) => {
   const url = URL.createObjectURL(res.data);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${file.title}.${file.format === "PDF" ? "pdf" : "docx"}`;
+  link.download = `${file.title}.${res.data.type === "application/pdf" ? "pdf" : "docx"}`;
   link.click();
   URL.revokeObjectURL(url);
 };
