@@ -2,10 +2,22 @@ import { useState } from "react";
 import { submitChallenge } from "../../api/chats";
 
 const MESSAGES = {
-  ok: "All tests passed",
-  wrong_answer: "Some tests failed",
-  error: "Your code has an error",
-  timeout: "Your code took too long",
+  ok: "Correct! Your code works.",
+  error: "Your code has an error. Read the message below and fix it.",
+  timeout: "Your code took too long. Check for a loop that never ends.",
+};
+
+function resultText(result) {
+  if (result.status === "wrong_answer") {
+    return `Not yet: ${result.passed} of ${result.total} tests passed. Fix your code and try again.`;
+  }
+  return MESSAGES[result.status] || result.status;
+}
+
+const LANGUAGES = {
+  java: "Java",
+  python: "Python",
+  javascript: "JavaScript",
 };
 
 export default function ChallengeCard({ challenge }) {
@@ -27,8 +39,16 @@ export default function ChallengeCard({ challenge }) {
   return (
     <div className="overflow-hidden rounded-xl border bg-secondary">
       <div className="px-4.5 py-3.5">
-        <b className="block font-semibold">Challenge: {challenge.title}</b>
+        <div className="flex items-center gap-2">
+          <b className="font-semibold">Challenge: {challenge.title}</b>
+          <span className="rounded-md border bg-card px-1.5 py-0.5 text-[11px] text-muted-foreground">
+            {LANGUAGES[challenge.language] || "Java"}
+          </span>
+        </div>
         <span className="text-[13px] whitespace-pre-wrap text-muted-foreground">{challenge.task}</span>
+        <p className="mt-2 text-[13px] text-muted-foreground">
+          Write your code in the box. Click "Run tests" to check if it works.
+        </p>
       </div>
 
       <textarea
@@ -43,8 +63,7 @@ export default function ChallengeCard({ challenge }) {
       {result && (
         <div className="border-b px-4.5 py-3 text-[13px]">
           <b className={passed ? "text-success" : "text-destructive"}>
-            {MESSAGES[result.status] || result.status}
-            {result.total > 0 && ` (${result.passed}/${result.total})`}
+            {resultText(result)}
           </b>
           {result.output && !passed && (
             <pre className="mt-2 max-h-40 overflow-auto font-mono text-xs text-muted-foreground">{result.output}</pre>
