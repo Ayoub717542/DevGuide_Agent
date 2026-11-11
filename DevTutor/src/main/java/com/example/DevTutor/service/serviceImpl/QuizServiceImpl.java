@@ -135,7 +135,7 @@ public class QuizServiceImpl implements QuizService {
                 .user("""
                         Create a small coding exercise about what was taught in this lesson.
                         If the lesson contains the learner's own code, build the exercise on that code and reuse its names (classes, fields, methods).
-                        language: the language of the lesson, exactly one of java, python or javascript. Use java if the lesson uses another language.
+                        language: the language of the lesson, exactly one of java, python, javascript, c or cpp. Use java if the lesson uses another language.
                         task: explain what to write, including the exact method or function signature.
                         starterCode: the method or function with a body that only returns a default value.
                         referenceSolution: a complete and correct solution.
@@ -153,7 +153,12 @@ public class QuizServiceImpl implements QuizService {
                         Each test line is like: check("test name", () => fn(args) === expected);
                         Compare arrays and objects with JSON.stringify. Do not use require or import.
 
-                        concept: a short lowercase concept id that starts with the language, like java-streams, python-lists or js-promises.
+                        If c or cpp: the learner writes one function, no main and no #include.
+                        Each test line is like: check("test name", function(args) == expected);
+                        In c, compare strings with strcmp. In cpp, you can use std types like vector and string.
+                        Use fabs(a - b) < 0.001 for doubles.
+
+                        concept: a short lowercase concept id that starts with the language, like java-streams, python-lists, js-promises, c-pointers or cpp-vectors.
 
                         Lesson:
                         """ + lesson)
@@ -209,7 +214,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     private String language(ChallengeDraft draft) {
-        return draft.language() == null ? "java" : draft.language().strip().toLowerCase();
+        return draft.language() == null ? "java" : draft.language().strip().toLowerCase().replace("c++", "cpp");
     }
 
     private String lesson(Long conversationId) {
