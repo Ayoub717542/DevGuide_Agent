@@ -6,13 +6,15 @@ public record ChallengeResponse(
         Long id,
         String title,
         String task,
-        String starterCode) {
+        String starterCode,
+        String language) {
 
     public static ChallengeResponse from(Challenge challenge) {
         return new ChallengeResponse(
                 challenge.getId(),
                 challenge.getTitle(),
                 challenge.getTask(),
-                challenge.getStarterCode());
+                challenge.getStarterCode(),
+                challenge.getLanguage());
     }
 }
