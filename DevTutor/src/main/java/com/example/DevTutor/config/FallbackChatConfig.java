@@ -13,7 +13,6 @@ import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -34,8 +33,7 @@ public class FallbackChatConfig {
     @Primary
     public ChatModel fallbackChatModel(
             GoogleGenAiChatModel gemini,
-            OpenAiChatModel groq,
-            @Value("${app.ai.fallback-model}") String fallbackModel) {
+            OpenAiChatModel groq) {
 
         return new ChatModel() {
             @Override
@@ -46,21 +44,11 @@ public class FallbackChatConfig {
                     if (!isRecoverable(e)) {
                         throw e;
                     }
-                    log.warn("Main model failed ({}), using fallback {}", e.getMessage(), fallbackModel);
-                }
-                ChatOptions options = prompt.getOptions() != null
-                        ? prompt.getOptions()
-                        : gemini.getOptions();
-                try {
-                    return gemini.call(prompt.mutate()
-                            .chatOptions(options.mutate().model(fallbackModel).build())
-                            .build());
-                } catch (RuntimeException e) {
-                    if (!isRecoverable(e)) {
-                        throw e;
-                    }
                     String groqModel = groq.getOptions().getModel();
-                    log.warn("Backup Gemini failed ({}), using Groq {}", e.getMessage(), groqModel);
+                    ChatOptions options = prompt.getOptions() != null
+                            ? prompt.getOptions()
+                            : gemini.getOptions();
+                    log.warn("Main model failed ({}), using Groq {}", e.getMessage(), groqModel);
                     return groq.call(prompt.mutate()
                             .chatOptions(groqOptions(options, groqModel))
                             .build());
@@ -71,13 +59,9 @@ public class FallbackChatConfig {
             public Flux<ChatResponse> stream(Prompt prompt) {
                 ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
                 return beforeFirstWord("Main model", () -> gemini.stream(prompt),
-                        () -> beforeFirstWord("Backup Gemini",
-                                () -> gemini.stream(prompt.mutate()
-                                        .chatOptions(options.mutate().model(fallbackModel).build())
-                                        .build()),
-                                () -> groq.stream(prompt.mutate()
-                                        .chatOptions(groqOptions(options, groq.getOptions().getModel()))
-                                        .build())));
+                        () -> groq.stream(prompt.mutate()
+                                .chatOptions(groqOptions(options, groq.getOptions().getModel()))
+                                .build()));
             }
 
             @Override

@@ -146,7 +146,7 @@ Every quiz and challenge saves a score per concept. A weak score brings the conc
 | **Citations** | Chunks keep the PDF reader's `page_number` / `end_page_number`; `toSources()` deduplicates them into one entry per file and page range. | `ChatServiceImpl.toSources` |
 | **Tool context** | `createDocument` and `saveLearnerNote` get the conversation and user through Spring AI's `ToolContext`, never from the model, so files and notes always belong to the right user. | `DocumentTools`, `LearnerNoteTools` |
 | **Tool errors** | Gemini only accepts JSON tool results, so a custom `ToolExecutionExceptionProcessor` turns tool failures into a JSON error the model can recover from, instead of a 500, and logs them. | `AiConfig` |
-| **Backup model** | A `@Primary` `ChatModel` wraps Gemini: on any error it retries once with `app.ai.fallback-model`, keeping the same prompt, tools and memory, and logs a `WARN`. | `FallbackChatConfig` |
+| **Backup model** | A `@Primary` `ChatModel` wraps Gemini: on a recoverable error (5xx, network, 429/408) it retries once with Groq (`spring.ai.openai.*`), keeping the same prompt, tools and memory, and logs a `WARN`. | `FallbackChatConfig` |
 | **Trusted challenges** | A challenge is only saved if the AI's reference solution passes its own hidden tests (2 tries, else `502`). Tests and solution are never returned or added to the chat history. | `QuizServiceImpl`, `ChallengeRunner` |
 | **Cheat-proof grading** | Each run gets a random nonce; only the final `RESULT-<nonce> passed/total` line counts, so printing `PASS` can't fake a score. Compile errors and timeouts are reported as such, not as `0/3`. | `ChallengeRunner` |
 | **Spaced repetition** | No extra table: review dates are computed from the score history (streak of perfect scores → 1, 2, 4… days, max 64). The code, not the prompt, decides to mention due reviews, and only on a conversation's first message. | `ReviewScheduler`, `ChatServiceImpl` |
@@ -257,7 +257,7 @@ npm run dev
 | `PISTON_URL` | | Code sandbox. Defaults to `http://localhost:2000` |
 | `PORT` | | Defaults to `8081` |
 
-Token lifetime is set by `jwt.expiration-minutes` (default `60`) in `application.properties`. The models are set there too: `spring.ai.google.genai.chat.model` (main) and `app.ai.fallback-model` (backup).
+Token lifetime is set by `jwt.expiration-minutes` (default `60`) in `application.properties`. The models are set there too: `spring.ai.google.genai.chat.model` (main) and `spring.ai.openai.chat.model` (Groq backup).
 
 </details>
 
@@ -286,7 +286,7 @@ After that, admins can change roles with `PUT /api/users/{id}`.
 | `503 AI service is busy` | Gemini rate limit (429) | Wait a moment and retry |
 | CORS error in the browser | Frontend URL isn't allowed | Add it to `CORS_ALLOWED_ORIGINS` |
 | `McpHttpClientTransportAuthorizationException` on startup | A Context7 or GitHub key is wrong, expired or not set in this terminal / IDE run configuration | Check `CONTEXT7_API_KEY` and `GITHUB_PERSONAL_ACCESS_TOKEN`, then restart |
-| `WARN Main model failed …, using fallback …` | The main Gemini model is busy or unavailable | Nothing to do; the backup answered. Change `app.ai.fallback-model` if the backup is retired |
+| `WARN Main model failed …, using Groq …` | The main Gemini model is busy or unavailable | Nothing to do; Groq answered. Change `spring.ai.openai.chat.model` if the Groq model is retired |
 | The tutor says it couldn't run the code | Piston isn't running | `docker start piston_api` |
 | `Time limit exceeded` for Java | Piston's default 3 s limit | Recreate the container with the `PISTON_RUN_TIMEOUT` / `PISTON_RUN_CPU_TIME` settings above |
 | `502 Could not create a valid challenge` | The AI's reference solution failed its own tests twice | Retry; the reason is logged as `Challenge rejected …` |
