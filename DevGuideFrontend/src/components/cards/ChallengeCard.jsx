@@ -18,6 +18,8 @@ const LANGUAGES = {
   java: "Java",
   python: "Python",
   javascript: "JavaScript",
+  c: "C",
+  cpp: "C++",
 };
 
 export default function ChallengeCard({ challenge }) {
