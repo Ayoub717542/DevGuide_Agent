@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -14,10 +15,42 @@ public class ChallengeRunner {
 
     private final CodeRunnerTools codeRunnerTools;
 
-    public ChallengeResult run(String testCode, String code) {
+    public ChallengeResult run(String language, String testCode, String code) {
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
-        String file = """
+        String runtime = switch (language) {
+            case "python", "javascript" -> language;
+            default -> "java";
+        };
+        String file = switch (runtime) {
+            case "python" -> pythonFile(nonce, testCode, code);
+            case "javascript" -> javascriptFile(nonce, testCode, code);
+            default -> javaFile(nonce, testCode, code);
+        };
+
+        Map<String, Object> run = codeRunnerTools.runCode(runtime, file);
+        String output = String.valueOf(run.getOrDefault("output", run.get("error")));
+
+        if (String.valueOf(run.get("message")).contains("Time limit")) {
+            return new ChallengeResult("timeout", 0, 0, "Your code did not finish in time.");
+        }
+
+        String marker = "RESULT-" + nonce + " ";
+        int index = output.lastIndexOf(marker);
+        if (index < 0) {
+            return new ChallengeResult("error", 0, 0, output);
+        }
+
+        String[] score = output.substring(index + marker.length()).trim().split("\\s+")[0].split("/");
+        int passed = Integer.parseInt(score[0]);
+        int total = Integer.parseInt(score[1]);
+        String status = total > 0 && passed == total ? "ok" : "wrong_answer";
+
+        return new ChallengeResult(status, passed, total, output.substring(0, index).trim());
+    }
+
+    private static String javaFile(String nonce, String testCode, String code) {
+        return """
                 import java.util.*;
                 import java.util.function.*;
                 import java.util.stream.*;
@@ -54,26 +87,54 @@ public class ChallengeRunner {
                 %s
                 """.formatted(nonce, removeImports(testCode),
                 removeImports(code).replace("public class Solution", "class Solution"));
+    }
 
-        Map<String, Object> run = codeRunnerTools.runCode("java", file);
-        String output = String.valueOf(run.getOrDefault("output", run.get("error")));
+    private static String pythonFile(String nonce, String testCode, String code) {
+        String tests = testCode.lines().map(String::strip).collect(Collectors.joining("\n"));
+        return """
+                %s
 
-        if (String.valueOf(run.get("message")).contains("Time limit")) {
-            return new ChallengeResult("timeout", 0, 0, "Your code did not finish in time.");
-        }
+                passed = 0
+                total = 0
 
-        String marker = "RESULT-" + nonce + " ";
-        int index = output.lastIndexOf(marker);
-        if (index < 0) {
-            return new ChallengeResult("error", 0, 0, output);
-        }
+                def check(name, test):
+                    global passed, total
+                    total += 1
+                    try:
+                        if test():
+                            passed += 1
+                        else:
+                            print("FAIL " + name)
+                    except Exception as e:
+                        print("FAIL " + name + ": " + repr(e))
 
-        String[] score = output.substring(index + marker.length()).trim().split("\\s+")[0].split("/");
-        int passed = Integer.parseInt(score[0]);
-        int total = Integer.parseInt(score[1]);
-        String status = total > 0 && passed == total ? "ok" : "wrong_answer";
+                %s
 
-        return new ChallengeResult(status, passed, total, output.substring(0, index).trim());
+                print("RESULT-%s " + str(passed) + "/" + str(total))
+                """.formatted(code, tests, nonce);
+    }
+
+    private static String javascriptFile(String nonce, String testCode, String code) {
+        return """
+                %s
+
+                let passed = 0;
+                let total = 0;
+
+                function check(name, test) {
+                    total++;
+                    try {
+                        if (test()) passed++;
+                        else console.log("FAIL " + name);
+                    } catch (e) {
+                        console.log("FAIL " + name + ": " + e);
+                    }
+                }
+
+                %s
+
+                console.log("RESULT-%s " + passed + "/" + total);
+                """.formatted(code, testCode, nonce);
     }
 
     private static String removeImports(String code) {

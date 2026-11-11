@@ -133,24 +133,34 @@ public class QuizServiceImpl implements QuizService {
         for (int attempt = 0; attempt < 2 && draft == null; attempt++) {
             ChallengeDraft candidate = chatClient.prompt()
                 .user("""
-                        Create a small Java coding exercise about what was taught in this lesson.
+                        Create a small coding exercise about what was taught in this lesson.
                         If the lesson contains the learner's own code, build the exercise on that code and reuse its names (classes, fields, methods).
-                        The learner writes a class named Solution with one static method.
-                        task: explain what to write, including the exact method signature.
-                        starterCode: class Solution with that method and a body that only returns a default value.
-                        referenceSolution: a complete and correct class Solution.
-                        testCode: exactly 3 lines, each like:
-                        check("test name", () -> Solution.method(args) == expected);
-                        Use .equals for objects and Math.abs(a - b) < 0.001 for doubles.
-                        One test must be an edge case. Only use java.util classes.
-                        concept: a short lowercase concept id, like java-streams or java-generics.
+                        language: the language of the lesson, exactly one of java, python or javascript. Use java if the lesson uses another language.
+                        task: explain what to write, including the exact method or function signature.
+                        starterCode: the method or function with a body that only returns a default value.
+                        referenceSolution: a complete and correct solution.
+                        testCode: exactly 3 lines, one test per line. One test must be an edge case.
+
+                        If java: the learner writes a class named Solution with one static method.
+                        Each test line is like: check("test name", () -> Solution.method(args) == expected);
+                        Use .equals for objects and Math.abs(a - b) < 0.001 for doubles. Only use java.util classes.
+
+                        If python: the learner writes one function, no class.
+                        Each test line is like: check("test name", lambda: function(args) == expected)
+                        Use abs(a - b) < 0.001 for floats. Only use the standard library.
+
+                        If javascript: the learner writes one function, no class.
+                        Each test line is like: check("test name", () => fn(args) === expected);
+                        Compare arrays and objects with JSON.stringify. Do not use require or import.
+
+                        concept: a short lowercase concept id that starts with the language, like java-streams, python-lists or js-promises.
 
                         Lesson:
                         """ + lesson)
                 .call()
                 .entity(ChallengeDraft.class);
 
-            ChallengeResult check = challengeRunner.run(candidate.testCode(), candidate.referenceSolution());
+            ChallengeResult check = challengeRunner.run(language(candidate), candidate.testCode(), candidate.referenceSolution());
             if (check.status().equals("ok")) {
                 draft = candidate;
             } else {
@@ -171,6 +181,7 @@ public class QuizServiceImpl implements QuizService {
         challenge.setTestCode(draft.testCode());
         challenge.setReferenceSolution(draft.referenceSolution());
         challenge.setConcept(draft.concept());
+        challenge.setLanguage(language(draft));
         challenge.setUserEmail(email);
 
         return ChallengeResponse.from(challengeRepository.save(challenge));
@@ -190,11 +201,15 @@ public class QuizServiceImpl implements QuizService {
                     "Write some code before submitting.");
         }
 
-        ChallengeResult result = challengeRunner.run(challenge.getTestCode(), code);
+        ChallengeResult result = challengeRunner.run(challenge.getLanguage(), challenge.getTestCode(), code);
         if (result.total() > 0) {
             saveScore(challenge.getConcept(), result.passed(), result.total(), email);
         }
         return result;
+    }
+
+    private String language(ChallengeDraft draft) {
+        return draft.language() == null ? "java" : draft.language().strip().toLowerCase();
     }
 
     private String lesson(Long conversationId) {
