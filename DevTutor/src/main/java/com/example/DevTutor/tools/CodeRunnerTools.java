@@ -21,13 +21,15 @@ public class CodeRunnerTools {
     }
 
     @Tool(description = """
-            Run Java or Python code and return its real output.
+            Run code and return its real output.
+            Supported languages: java, python, javascript, c, c++.
             Use it to check a code example before showing it, or when the user asks to run code.
             Java code must have a public class with a main method.
+            C and C++ code must have a main function.
             Show the user the output you got.
             """)
     public Map<String, Object> runCode(
-            @ToolParam(description = "java or python")
+            @ToolParam(description = "java, python, javascript, c or c++")
             String language,
 
             @ToolParam(description = "The complete source code to run")
