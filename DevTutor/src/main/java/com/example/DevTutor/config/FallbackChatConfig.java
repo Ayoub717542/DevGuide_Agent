@@ -5,6 +5,7 @@ import com.google.genai.errors.GenAiIOException;
 import com.google.genai.errors.ServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -32,6 +33,7 @@ import static com.example.DevTutor.util.Exceptions.findCause;
 public class FallbackChatConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FallbackChatConfig.class);
+    private static final String GEMINI_MESSAGE_KEY = "candidateIndex";
 
     @Bean
     @Primary
@@ -42,6 +44,11 @@ public class FallbackChatConfig {
         return new ChatModel() {
             @Override
             public ChatResponse call(Prompt prompt) {
+                ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
+                if (toolCallFromAnotherModel(prompt)) {
+                    log.info("Answer started on Groq, continuing on Groq");
+                    return groq.call(groqPrompt(prompt, options, groq.getOptions().getModel()));
+                }
                 try {
                     return gemini.call(prompt);
                 } catch (RuntimeException e) {
@@ -49,26 +56,21 @@ public class FallbackChatConfig {
                         throw e;
                     }
                     String groqModel = groq.getOptions().getModel();
-                    ChatOptions options = prompt.getOptions() != null
-                            ? prompt.getOptions()
-                            : gemini.getOptions();
                     log.warn("Main model failed ({}), using Groq {}",
                             NestedExceptionUtils.getMostSpecificCause(e).toString(), groqModel);
-                    return groq.call(prompt.mutate()
-                            .messages(withoutImages(prompt))
-                            .chatOptions(groqOptions(options, groqModel))
-                            .build());
+                    return groq.call(groqPrompt(prompt, options, groqModel));
                 }
             }
 
             @Override
             public Flux<ChatResponse> stream(Prompt prompt) {
                 ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
+                if (toolCallFromAnotherModel(prompt)) {
+                    log.info("Answer started on Groq, continuing on Groq");
+                    return groq.stream(groqPrompt(prompt, options, groq.getOptions().getModel()));
+                }
                 return beforeFirstWord("Main model", () -> gemini.stream(prompt),
-                        () -> groq.stream(prompt.mutate()
-                                .messages(withoutImages(prompt))
-                                .chatOptions(groqOptions(options, groq.getOptions().getModel()))
-                                .build()));
+                        () -> groq.stream(groqPrompt(prompt, options, groq.getOptions().getModel())));
             }
 
             @Override
@@ -101,6 +103,20 @@ public class FallbackChatConfig {
         return response.getResult() != null
                 && response.getResult().getOutput().getText() != null
                 && !response.getResult().getOutput().getText().isEmpty();
+    }
+
+    static boolean toolCallFromAnotherModel(Prompt prompt) {
+        return prompt.getInstructions().stream()
+                .anyMatch(message -> message instanceof AssistantMessage assistant
+                        && assistant.hasToolCalls()
+                        && !assistant.getMetadata().containsKey(GEMINI_MESSAGE_KEY));
+    }
+
+    private static Prompt groqPrompt(Prompt prompt, ChatOptions options, String groqModel) {
+        return prompt.mutate()
+                .messages(withoutImages(prompt))
+                .chatOptions(groqOptions(options, groqModel))
+                .build();
     }
 
     private static List<Message> withoutImages(Prompt prompt) {
