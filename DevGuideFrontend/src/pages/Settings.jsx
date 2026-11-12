@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AccountTab from "../components/settings/AccountTab";
+import TutorTab from "../components/settings/TutorTab";
 
 const TABS = [
   { id: "account", label: "Account" },
@@ -35,7 +36,7 @@ export default function Settings() {
 
         <section role="tabpanel" className="pt-7">
           {tab === "account" && <AccountTab />}
-          {tab === "tutor" && <p className="text-[0.8125rem] text-muted-foreground">How your tutor answers you.</p>}
+          {tab === "tutor" && <TutorTab />}
           {tab === "apps" && <p className="text-[0.8125rem] text-muted-foreground">Your GitHub and Trello connections.</p>}
         </section>
       </div>
