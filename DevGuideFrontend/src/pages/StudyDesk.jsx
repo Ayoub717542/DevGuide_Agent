@@ -35,7 +35,7 @@ export default function StudyDesk() {
   return (
     <div
       className={`grid h-screen grid-cols-[256px_minmax(0,1fr)] ${
-        railOpen ? "min-[1100px]:grid-cols-[256px_minmax(0,1fr)_312px]" : ""
+        railOpen ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
       }`}
     >
       <Sidebar
