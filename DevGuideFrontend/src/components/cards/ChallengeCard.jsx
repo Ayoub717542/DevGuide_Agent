@@ -22,7 +22,7 @@ const LANGUAGES = {
   cpp: "C++",
 };
 
-export default function ChallengeCard({ challenge }) {
+export default function ChallengeCard({ challenge, onScoreSaved }) {
   const [code, setCode] = useState(challenge.starterCode || "");
   const [result, setResult] = useState(null);
   const [running, setRunning] = useState(false);
@@ -30,7 +30,9 @@ export default function ChallengeCard({ challenge }) {
   const run = async () => {
     setRunning(true);
     try {
-      setResult(await submitChallenge(challenge.id, code));
+      const saved = await submitChallenge(challenge.id, code);
+      setResult(saved);
+      if (saved.total > 0) onScoreSaved();
     } finally {
       setRunning(false);
     }

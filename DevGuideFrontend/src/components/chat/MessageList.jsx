@@ -10,7 +10,17 @@ const SUGGESTIONS = [
   "Give me a small Java exercise",
 ];
 
-export default function MessageList({ chatId, messages, pdfs, pending, answer, error, onAsk, onTrelloFinished }) {
+export default function MessageList({
+  chatId,
+  messages,
+  pdfs,
+  pending,
+  answer,
+  error,
+  onAsk,
+  onTrelloFinished,
+  onScoreSaved,
+}) {
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -41,8 +51,12 @@ export default function MessageList({ chatId, messages, pdfs, pending, answer, e
         )}
 
         {messages.map((message) => {
-          if (message.type === "quiz") return <QuizCard key={message.id} chatId={chatId} quiz={message.data} />;
-          if (message.type === "challenge") return <ChallengeCard key={message.id} challenge={message.data} />;
+          if (message.type === "quiz") {
+            return <QuizCard key={message.id} chatId={chatId} quiz={message.data} onScoreSaved={onScoreSaved} />;
+          }
+          if (message.type === "challenge") {
+            return <ChallengeCard key={message.id} challenge={message.data} onScoreSaved={onScoreSaved} />;
+          }
           if (message.type === "note") return <p key={message.id} className="text-[13px] text-muted-foreground">{message.data}</p>;
           return <Message key={message.id} message={message} pdfs={pdfs} />;
         })}

@@ -10,6 +10,7 @@ export default function StudyDesk() {
   const [activeId, setActiveId] = useState(null);
   const [railOpen, setRailOpen] = useState(true);
   const [firstQuestion, setFirstQuestion] = useState(null);
+  const [learningVersion, setLearningVersion] = useState(0);
 
   useEffect(() => {
     chatsApi.getChats().then(setChats);
@@ -63,6 +64,7 @@ export default function StudyDesk() {
           onToggleRail={() => setRailOpen(!railOpen)}
           firstQuestion={firstQuestion}
           onFirstQuestionSent={() => setFirstQuestion(null)}
+          onScoreSaved={() => setLearningVersion((v) => v + 1)}
         />
       ) : (
         <main className="grid place-items-center p-6 text-center">
@@ -72,7 +74,7 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {railOpen && <LearningRail onReview={reviewTopic} />}
+      {railOpen && <LearningRail key={learningVersion} onReview={reviewTopic} />}
     </div>
   );
 }

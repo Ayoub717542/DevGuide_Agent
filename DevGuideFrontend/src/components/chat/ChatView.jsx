@@ -9,7 +9,14 @@ import MessageList from "./MessageList";
 
 const newestFirst = (pdfs) => [...pdfs].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
-export default function ChatView({ chat, railOpen, onToggleRail, firstQuestion, onFirstQuestionSent }) {
+export default function ChatView({
+  chat,
+  railOpen,
+  onToggleRail,
+  firstQuestion,
+  onFirstQuestionSent,
+  onScoreSaved,
+}) {
   const [messages, setMessages] = useState([]);
   const [pdfs, setPdfs] = useState([]);
   const [answer, setAnswer] = useState(null);
@@ -141,6 +148,7 @@ export default function ChatView({ chat, railOpen, onToggleRail, firstQuestion, 
         error={error}
         onAsk={(content) => send({ content })}
         onTrelloFinished={trelloFinished}
+        onScoreSaved={onScoreSaved}
       />
       <Composer busy={answer !== null} onSend={send} onStop={stop} onUploadPdf={uploadPdf} />
     </main>

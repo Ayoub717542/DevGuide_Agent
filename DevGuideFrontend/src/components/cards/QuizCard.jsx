@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { saveQuizResult } from "../../api/chats";
 
-export default function QuizCard({ chatId, quiz }) {
+export default function QuizCard({ chatId, quiz, onScoreSaved }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState(0);
@@ -19,7 +19,7 @@ export default function QuizCard({ chatId, quiz }) {
   const next = () => {
     if (index === total - 1) {
       setFinished(true);
-      saveQuizResult(chatId, quiz.topic, score, total);
+      saveQuizResult(chatId, quiz.topic, score, total).then(onScoreSaved);
       return;
     }
     setIndex(index + 1);
