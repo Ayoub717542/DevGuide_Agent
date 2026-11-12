@@ -21,7 +21,7 @@ public class AiConfig {
         return Client.builder()
                 .apiKey(properties.getApiKey())
                 .httpOptions(HttpOptions.builder()
-                        .timeout(30_000)
+                        .timeout(60_000)
                         .retryOptions(HttpRetryOptions.builder().attempts(1).build())
                         .build())
                 .build();
