@@ -16,6 +16,11 @@ axiosApi.interceptors.request.use((config) => {
   return config;
 });
 
+export const goToLogin = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  window.location.href = "/login";
+};
+
 // Token expired or invalid: log out and go to the login page.
 // Auth calls are skipped so a wrong password just shows an error.
 axiosApi.interceptors.response.use(
@@ -23,8 +28,7 @@ axiosApi.interceptors.response.use(
   (error) => {
     const isAuthCall = error.config?.url?.startsWith("/api/auth/");
     if (error.response?.status === 401 && !isAuthCall) {
-      localStorage.removeItem(TOKEN_KEY);
-      window.location.href = "/login";
+      goToLogin();
     }
     return Promise.reject(error);
   }

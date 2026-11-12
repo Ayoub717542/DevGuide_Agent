@@ -33,6 +33,8 @@ public class Challenge {
 
     private String concept;
 
+    private String language = "java";
+
     private String userEmail;
 
     private LocalDateTime createdAt;
@@ -40,5 +42,9 @@ public class Challenge {
     @PrePersist
     private void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    public String getLanguage() {
+        return language == null ? "java" : language;
     }
 }

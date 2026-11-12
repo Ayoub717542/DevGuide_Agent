@@ -65,7 +65,9 @@ public class DocumentTools {
             .build();
 
     @Tool(description = """
-            Create a styled PDF or Word document when requested.
+            Create a styled PDF or Word document, only when the student explicitly asks
+            for a file, PDF, Word document or download. Never use it just to show a diagram;
+            diagrams go directly in the chat answer as a ```mermaid code block.
 
             Generate the complete document as one HTML page with CSS.
             Follow the user's requested colors, layout and style.

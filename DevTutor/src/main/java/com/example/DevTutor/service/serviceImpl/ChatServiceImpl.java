@@ -67,6 +67,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -187,7 +189,8 @@ public class ChatServiceImpl implements ChatService {
             LearnerPreferencesService learnerPreferencesService,
             JsonMapper jsonMapper,
             UploadedDocumentRepository uploadedDocumentRepository,
-            JdbcChatMemoryRepository chatMemoryRepository
+            JdbcChatMemoryRepository chatMemoryRepository,
+            @Value("${app.rag.similarity-threshold}") double similarityThreshold
     ) throws IOException {
 
         this.uploadedDocumentRepository = uploadedDocumentRepository;
@@ -213,6 +216,9 @@ public class ChatServiceImpl implements ChatService {
                 .getContentAsString(StandardCharsets.UTF_8);
 
         this.questionAnswerAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
+                                .searchRequest(SearchRequest.builder()
+                                        .similarityThreshold(similarityThreshold)
+                                        .build())
                                 .promptTemplate(new PromptTemplate("""
                                 Answer the user's question using the conversation
                                 and any attached image.
@@ -697,6 +703,10 @@ public class ChatServiceImpl implements ChatService {
         if (!(retrieved instanceof List<?> documents)) {
             return List.of();
         }
+        log.info("PDF search scores: {}", documents.stream()
+                .filter(Document.class::isInstance)
+                .map(item -> ((Document) item).getScore())
+                .toList());
 
         Map<String, SourceResponse> unique = new LinkedHashMap<>();
 

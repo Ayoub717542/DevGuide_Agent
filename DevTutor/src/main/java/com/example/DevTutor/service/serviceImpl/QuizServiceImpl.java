@@ -7,9 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import com.example.DevTutor.dto.quiz.QuizResponse;
 import com.example.DevTutor.dto.quiz.QuizResultRequest;
 import com.example.DevTutor.entity.Challenge;
+import com.example.DevTutor.entity.LearnerPreferences;
 import com.example.DevTutor.entity.QuizResult;
 import com.example.DevTutor.repository.ChallengeRepository;
 import com.example.DevTutor.repository.ConversationRepository;
+import com.example.DevTutor.repository.LearnerPreferencesRepository;
 import com.example.DevTutor.repository.QuizResultRepository;
 import com.example.DevTutor.service.ChallengeRunner;
 import com.example.DevTutor.service.serviceInterface.QuizService;
@@ -34,19 +36,22 @@ public class QuizServiceImpl implements QuizService {
     private final QuizResultRepository quizResultRepository;
     private final ChallengeRepository challengeRepository;
     private final ChallengeRunner challengeRunner;
+    private final LearnerPreferencesRepository learnerPreferencesRepository;
 
     public QuizServiceImpl(ChatClient.Builder builder,
                            ChatMemory chatMemory,
                            ConversationRepository conversationRepository,
                            QuizResultRepository quizResultRepository,
                            ChallengeRepository challengeRepository,
-                           ChallengeRunner challengeRunner) {
+                           ChallengeRunner challengeRunner,
+                           LearnerPreferencesRepository learnerPreferencesRepository) {
         this.chatClient = builder.build();
         this.chatMemory = chatMemory;
         this.conversationRepository = conversationRepository;
         this.quizResultRepository = quizResultRepository;
         this.challengeRepository = challengeRepository;
         this.challengeRunner = challengeRunner;
+        this.learnerPreferencesRepository = learnerPreferencesRepository;
     }
 
     @Override
@@ -75,7 +80,7 @@ public class QuizServiceImpl implements QuizService {
                         Each question has 4 options and one correct answer.
                         correctIndex starts at 0.
                         Keep the explanation to one short sentence.
-                        Set topic to a short lowercase concept id, like java-streams or java-generics.
+                        Set topic to a short lowercase concept id that starts with the language, like python-lists, js-promises or java-streams.
                         Always use the same id for the same concept.
 
                         Lesson:
@@ -128,29 +133,53 @@ public class QuizServiceImpl implements QuizService {
     public ChallengeResponse createChallenge(Long conversationId) {
         String email = checkOwner(conversationId);
         String lesson = lesson(conversationId);
+        String level = learnerPreferencesRepository.findByUserEmail(email)
+                .map(LearnerPreferences::getExperienceLevel)
+                .map(Enum::name)
+                .orElse("BEGINNER");
 
         ChallengeDraft draft = null;
         for (int attempt = 0; attempt < 2 && draft == null; attempt++) {
             ChallengeDraft candidate = chatClient.prompt()
                 .user("""
-                        Create a small Java coding exercise about what was taught in this lesson.
+                        Create a small, easy coding exercise about what was taught in this lesson.
+                        Learner level: %s. Match the difficulty to this level.
+                        Practise one idea only. The solution is 5 to 15 lines. No tricky cases.
                         If the lesson contains the learner's own code, build the exercise on that code and reuse its names (classes, fields, methods).
-                        The learner writes a class named Solution with one static method.
-                        task: explain what to write, including the exact method signature.
-                        starterCode: class Solution with that method and a body that only returns a default value.
-                        referenceSolution: a complete and correct class Solution.
-                        testCode: exactly 3 lines, each like:
-                        check("test name", () -> Solution.method(args) == expected);
-                        Use .equals for objects and Math.abs(a - b) < 0.001 for doubles.
-                        One test must be an edge case. Only use java.util classes.
-                        concept: a short lowercase concept id, like java-streams or java-generics.
+                        If the lesson is about a framework or library that cannot run here (like Spring, React or Hibernate),
+                        practise the plain idea behind it, and start the task with one sentence that links it to the lesson.
+                        Give the method or function a clear name that says what it does.
+                        language: the language of the lesson, exactly one of java, python, javascript, c or cpp. Use java if the lesson uses another language.
+                        task: explain what to write, including the exact method or function signature.
+                        starterCode: the method or function with a body that only returns a default value.
+                        referenceSolution: a complete and correct solution.
+                        testCode: exactly 3 lines, one test per line. One test may be a simple edge case.
+
+                        If java: the learner writes a class named Solution with one static method.
+                        Each test line is like: check("test name", () -> Solution.add(2, 3) == 5);
+                        Use .equals for objects and Math.abs(a - b) < 0.001 for doubles. Only use java.util classes.
+
+                        If python: the learner writes one function, no class.
+                        Each test line is like: check("test name", lambda: add(2, 3) == 5)
+                        Use abs(a - b) < 0.001 for floats. Only use the standard library.
+
+                        If javascript: the learner writes one function, no class.
+                        Each test line is like: check("test name", () => add(2, 3) === 5);
+                        Compare arrays and objects with JSON.stringify. Do not use require or import.
+
+                        If c or cpp: the learner writes one function, no main and no #include.
+                        Each test line is like: check("test name", add(2, 3) == 5);
+                        In c, compare strings with strcmp. In cpp, you can use std types like vector and string.
+                        Use fabs(a - b) < 0.001 for doubles.
+
+                        concept: a short lowercase concept id that starts with the language, like java-streams, python-lists, js-promises, c-pointers or cpp-vectors.
 
                         Lesson:
-                        """ + lesson)
+                        """.formatted(level) + lesson)
                 .call()
                 .entity(ChallengeDraft.class);
 
-            ChallengeResult check = challengeRunner.run(candidate.testCode(), candidate.referenceSolution());
+            ChallengeResult check = challengeRunner.run(language(candidate), candidate.testCode(), candidate.referenceSolution());
             if (check.status().equals("ok")) {
                 draft = candidate;
             } else {
@@ -171,6 +200,7 @@ public class QuizServiceImpl implements QuizService {
         challenge.setTestCode(draft.testCode());
         challenge.setReferenceSolution(draft.referenceSolution());
         challenge.setConcept(draft.concept());
+        challenge.setLanguage(language(draft));
         challenge.setUserEmail(email);
 
         return ChallengeResponse.from(challengeRepository.save(challenge));
@@ -190,11 +220,15 @@ public class QuizServiceImpl implements QuizService {
                     "Write some code before submitting.");
         }
 
-        ChallengeResult result = challengeRunner.run(challenge.getTestCode(), code);
+        ChallengeResult result = challengeRunner.run(challenge.getLanguage(), challenge.getTestCode(), code);
         if (result.total() > 0) {
             saveScore(challenge.getConcept(), result.passed(), result.total(), email);
         }
         return result;
+    }
+
+    private String language(ChallengeDraft draft) {
+        return draft.language() == null ? "java" : draft.language().strip().toLowerCase().replace("c++", "cpp");
     }
 
     private String lesson(Long conversationId) {

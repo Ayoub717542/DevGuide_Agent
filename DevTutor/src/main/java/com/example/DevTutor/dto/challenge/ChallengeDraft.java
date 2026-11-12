@@ -6,5 +6,6 @@ public record ChallengeDraft(
         String starterCode,
         String testCode,
         String referenceSolution,
-        String concept) {
+        String concept,
+        String language) {
 }

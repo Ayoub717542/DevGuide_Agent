@@ -5,6 +5,8 @@ import com.google.genai.errors.GenAiIOException;
 import com.google.genai.errors.ServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -13,12 +15,13 @@ import org.springframework.ai.google.genai.GoogleGenAiChatModel;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.NestedExceptionUtils;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -34,8 +37,7 @@ public class FallbackChatConfig {
     @Primary
     public ChatModel fallbackChatModel(
             GoogleGenAiChatModel gemini,
-            OpenAiChatModel groq,
-            @Value("${app.ai.fallback-model}") String fallbackModel) {
+            OpenAiChatModel groq) {
 
         return new ChatModel() {
             @Override
@@ -46,22 +48,14 @@ public class FallbackChatConfig {
                     if (!isRecoverable(e)) {
                         throw e;
                     }
-                    log.warn("Main model failed ({}), using fallback {}", e.getMessage(), fallbackModel);
-                }
-                ChatOptions options = prompt.getOptions() != null
-                        ? prompt.getOptions()
-                        : gemini.getOptions();
-                try {
-                    return gemini.call(prompt.mutate()
-                            .chatOptions(options.mutate().model(fallbackModel).build())
-                            .build());
-                } catch (RuntimeException e) {
-                    if (!isRecoverable(e)) {
-                        throw e;
-                    }
                     String groqModel = groq.getOptions().getModel();
-                    log.warn("Backup Gemini failed ({}), using Groq {}", e.getMessage(), groqModel);
+                    ChatOptions options = prompt.getOptions() != null
+                            ? prompt.getOptions()
+                            : gemini.getOptions();
+                    log.warn("Main model failed ({}), using Groq {}",
+                            NestedExceptionUtils.getMostSpecificCause(e).toString(), groqModel);
                     return groq.call(prompt.mutate()
+                            .messages(withoutImages(prompt))
                             .chatOptions(groqOptions(options, groqModel))
                             .build());
                 }
@@ -71,13 +65,10 @@ public class FallbackChatConfig {
             public Flux<ChatResponse> stream(Prompt prompt) {
                 ChatOptions options = prompt.getOptions() != null ? prompt.getOptions() : gemini.getOptions();
                 return beforeFirstWord("Main model", () -> gemini.stream(prompt),
-                        () -> beforeFirstWord("Backup Gemini",
-                                () -> gemini.stream(prompt.mutate()
-                                        .chatOptions(options.mutate().model(fallbackModel).build())
-                                        .build()),
-                                () -> groq.stream(prompt.mutate()
-                                        .chatOptions(groqOptions(options, groq.getOptions().getModel()))
-                                        .build())));
+                        () -> groq.stream(prompt.mutate()
+                                .messages(withoutImages(prompt))
+                                .chatOptions(groqOptions(options, groq.getOptions().getModel()))
+                                .build()));
             }
 
             @Override
@@ -99,7 +90,8 @@ public class FallbackChatConfig {
                     })
                     .onErrorResume(e -> !started.get() && e instanceof RuntimeException r && isRecoverable(r),
                             e -> {
-                                log.warn("{} failed before answering ({}), switching model", name, e.getMessage());
+                                log.warn("{} failed before answering ({}), switching model", name,
+                                        NestedExceptionUtils.getMostSpecificCause(e).toString());
                                 return Flux.defer(backup);
                             });
         });
@@ -109,6 +101,20 @@ public class FallbackChatConfig {
         return response.getResult() != null
                 && response.getResult().getOutput().getText() != null
                 && !response.getResult().getOutput().getText().isEmpty();
+    }
+
+    private static List<Message> withoutImages(Prompt prompt) {
+        return prompt.getInstructions().stream()
+                .map(message -> {
+                    if (message instanceof UserMessage user && !user.getMedia().isEmpty()) {
+                        return (Message) user.mutate()
+                                .media(List.of())
+                                .text(user.getText() + "\n\n(The student attached an image you cannot see. Say so and answer from the text.)")
+                                .build();
+                    }
+                    return message;
+                })
+                .toList();
     }
 
     private static OpenAiChatOptions groqOptions(ChatOptions options, String model) {

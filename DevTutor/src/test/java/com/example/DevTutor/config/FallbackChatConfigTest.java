@@ -30,7 +30,7 @@ class FallbackChatConfigTest {
 
     private final GoogleGenAiChatModel gemini = mock(GoogleGenAiChatModel.class);
     private final OpenAiChatModel groq = mock(OpenAiChatModel.class);
-    private final ChatModel chatModel = new FallbackChatConfig().fallbackChatModel(gemini, groq, "backup-model");
+    private final ChatModel chatModel = new FallbackChatConfig().fallbackChatModel(gemini, groq);
     private final Prompt prompt = new Prompt("Hi", ChatOptions.builder().model("main-model").build());
 
     @Test
@@ -46,23 +46,24 @@ class FallbackChatConfigTest {
     }
 
     @Test
-    void serverErrorUsesBackupModel() {
-        ChatResponse backupAnswer = new ChatResponse(List.of());
-        when(gemini.call(any(Prompt.class)))
-                .thenThrow(new RuntimeException("Failed to generate content",
-                        new ServerException(503, "UNAVAILABLE", "overloaded")))
-                .thenReturn(backupAnswer);
+    void serverErrorUsesGroq() {
+        ChatResponse groqAnswer = new ChatResponse(List.of());
+        when(gemini.call(any(Prompt.class))).thenThrow(new RuntimeException("Failed to generate content",
+                new ServerException(503, "UNAVAILABLE", "overloaded")));
+        when(groq.getOptions()).thenReturn(OpenAiChatOptions.builder().model("groq-model").build());
+        when(groq.call(any(Prompt.class))).thenReturn(groqAnswer);
 
         ChatResponse answer = chatModel.call(prompt);
 
-        assertSame(backupAnswer, answer);
-        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(gemini, times(2)).call(prompts.capture());
-        assertEquals("backup-model", prompts.getAllValues().get(1).getOptions().getModel());
+        assertSame(groqAnswer, answer);
+        verify(gemini, times(1)).call(any(Prompt.class));
+        ArgumentCaptor<Prompt> groqPrompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(groq).call(groqPrompt.capture());
+        assertEquals("groq-model", groqPrompt.getValue().getOptions().getModel());
     }
 
     @Test
-    void bothGeminiOutOfTokensUsesGroq() {
+    void geminiOutOfTokensUsesGroq() {
         ChatResponse groqAnswer = new ChatResponse(List.of());
         when(gemini.call(any(Prompt.class))).thenThrow(new RuntimeException("Failed to generate content",
                 new ClientException(429, "RESOURCE_EXHAUSTED", "quota exceeded")));
@@ -72,7 +73,7 @@ class FallbackChatConfigTest {
         ChatResponse answer = chatModel.call(prompt);
 
         assertSame(groqAnswer, answer);
-        verify(gemini, times(2)).call(any(Prompt.class));
+        verify(gemini, times(1)).call(any(Prompt.class));
         ArgumentCaptor<Prompt> groqPrompt = ArgumentCaptor.forClass(Prompt.class);
         verify(groq).call(groqPrompt.capture());
         assertEquals("groq-model", groqPrompt.getValue().getOptions().getModel());
@@ -80,9 +81,9 @@ class FallbackChatConfigTest {
 
     @Test
     void streamSwitchesModelWhenErrorComesBeforeFirstWord() {
-        when(gemini.stream(any(Prompt.class)))
-                .thenReturn(Flux.error(serverError()))
-                .thenReturn(Flux.just(words("Hello")));
+        when(gemini.stream(any(Prompt.class))).thenReturn(Flux.error(serverError()));
+        when(groq.getOptions()).thenReturn(OpenAiChatOptions.builder().model("groq-model").build());
+        when(groq.stream(any(Prompt.class))).thenReturn(Flux.just(words("Hello")));
 
         List<String> answer = chatModel.stream(prompt).map(this::text).collectList().block();
 
