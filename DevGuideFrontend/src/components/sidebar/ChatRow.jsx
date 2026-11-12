@@ -33,7 +33,7 @@ export default function ChatRow({ chat, active, onSelect, onRename, onDelete }) 
           onBlur={() => setEditing(false)}
           onKeyDown={(e) => e.key === "Escape" && setEditing(false)}
           aria-label="Chat title"
-          className="w-full rounded-md border border-ring bg-card px-2.5 py-1.5 text-sm outline-none"
+          className="h-8 w-full rounded-md border border-ring bg-card px-2.5 text-sm outline-none"
         />
       </form>
     );
@@ -43,7 +43,7 @@ export default function ChatRow({ chat, active, onSelect, onRename, onDelete }) 
     <div className="group relative">
       <button
         onClick={() => onSelect(chat.id)}
-        className={`relative block w-full truncate rounded-md py-1.75 pr-14 pl-2.5 text-left text-sm ${
+        className={`relative block h-8 w-full truncate rounded-md pr-14 pl-2.5 text-left text-sm leading-8 ${
           active
             ? "bg-card text-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded before:bg-success"
             : "text-muted-foreground hover:bg-card hover:text-foreground"

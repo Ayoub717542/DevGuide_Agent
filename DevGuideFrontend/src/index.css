@@ -1,21 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
-/* Dark ink theme */
 :root {
-  --bg: #0E1117;
-  --surface: #191E26;
-  --app-border: #2A313C;
-  --text: #E6EDF3;
-  --app-muted: #9198A1;
-  --indigo: #6366f1;
-  --cyan: #22d3ee;
-  --violet: #a78bfa;
-  --error: #f87171;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -58,14 +47,13 @@ html {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2A313C transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
   line-height: normal;
 }
 
@@ -76,69 +64,9 @@ body {
   padding: 16px;
 }
 
-.auth-card {
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 32px;
-  background: var(--surface);
-  border: 1px solid var(--app-border);
-  border-radius: 14px;
-}
-
-.auth-card h1 {
-  font-size: 2em;
-  font-weight: bold;
-  margin: 0;
-  background: linear-gradient(90deg, var(--indigo), var(--cyan));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.auth-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-}
-
-.auth-card input {
-  font-family: revert;
-  padding: 10px 12px;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-.auth-card input:focus {
-  outline: none;
-  border-color: var(--indigo);
-}
-
-.auth-card button {
-  font-family: revert;
-  padding: 11px;
-  border: none;
-  border-radius: 8px;
-  background: var(--indigo);
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.auth-card button:disabled { opacity: 0.6; cursor: default; }
-
-.muted { margin: 0; color: var(--app-muted); }
-.error { margin: 0; color: var(--error); font-size: 14px; }
-
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -175,7 +103,7 @@ body {
   --color-foreground: var(--foreground);
   --color-background: var(--background);
   --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-md: calc(var(--radius) * 0.6);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
@@ -188,7 +116,7 @@ body {
   --foreground: #E6EDF3;
   --card: #191E26;
   --card-foreground: #E6EDF3;
-  --popover: #191E26;
+  --popover: #1F252E;
   --popover-foreground: #E6EDF3;
   --primary: #FFFFFF;
   --primary-foreground: #0E1117;
@@ -199,13 +127,13 @@ body {
   --accent: #191E26;
   --accent-foreground: #E6EDF3;
   --destructive: #F0716A;
-  --border: #2A313C;
-  --input: #2A313C;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 15%);
   --ring: #3FB950;
   --link: #6CA4F8;
   --success: #3FB950;
   --warning: #D29922;
-  --brand: #F25F5C;
+  --brand: #3FB950;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -238,15 +166,15 @@ body {
 .markdown ul { list-style: disc; padding-left: 22px; }
 .markdown ol { list-style: decimal; padding-left: 22px; }
 .markdown li { margin: 3px 0; }
-.markdown h1, .markdown h2, .markdown h3 { font-weight: 600; margin: 18px 0 8px; letter-spacing: -0.01em; }
-.markdown h1 { font-size: 18px; }
-.markdown h2 { font-size: 16px; }
-.markdown h3 { font-size: 15px; }
+.markdown h1, .markdown h2, .markdown h3 { font-weight: 600; margin: 20px 0 8px; letter-spacing: -0.01em; }
+.markdown h1 { font-size: 1.25rem; }
+.markdown h2 { font-size: 1.125rem; }
+.markdown h3 { font-size: 1rem; }
 .markdown strong { font-weight: 600; }
 .markdown a { color: var(--link); }
 .markdown a:hover { text-decoration: underline; }
 .markdown blockquote { border-left: 2px solid var(--border); padding-left: 12px; color: var(--muted-foreground); }
-.markdown :not(pre) > code { background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-size: 12.5px; }
+.markdown :not(pre) > code { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 5px; font-size: 0.8125rem; }
 .markdown table { border-collapse: collapse; display: block; overflow-x: auto; }
 .markdown th, .markdown td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
 .markdown th { background: var(--secondary); font-weight: 600; }
