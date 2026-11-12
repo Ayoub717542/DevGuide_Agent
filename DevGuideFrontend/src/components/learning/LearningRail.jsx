@@ -3,6 +3,7 @@ import { getProgress } from "../../api/learning";
 import NeedsPractice from "./NeedsPractice";
 import Progress from "./Progress";
 import ReviewToday from "./ReviewToday";
+import TutorNotes from "./TutorNotes";
 
 export default function LearningRail({ onReview }) {
   const [results, setResults] = useState([]);
@@ -19,6 +20,7 @@ export default function LearningRail({ onReview }) {
       <ReviewToday onReview={onReview} />
       <Progress results={results} />
       <NeedsPractice results={results} />
+      <TutorNotes />
     </aside>
   );
 }
