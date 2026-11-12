@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatView from "../components/chat/ChatView";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
 import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
+import Settings from "./Settings";
 
 export default function StudyDesk() {
+  const navigate = useNavigate();
+  const onSettings = useLocation().pathname === "/settings";
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [railOpen, setRailOpen] = useState(true);
@@ -16,10 +20,15 @@ export default function StudyDesk() {
     chatsApi.getChats().then(setChats);
   }, []);
 
+  const openChat = (id) => {
+    setActiveId(id);
+    navigate("/");
+  };
+
   const newChat = async () => {
     const chat = await chatsApi.createChat("New chat");
     setChats([chat, ...chats]);
-    setActiveId(chat.id);
+    openChat(chat.id);
   };
 
   const reviewTopic = async (concept) => {
@@ -41,22 +50,26 @@ export default function StudyDesk() {
   };
 
   const activeChat = chats.find((chat) => chat.id === activeId);
+  const showRail = railOpen && !onSettings;
 
   return (
     <div
       className={`grid h-screen grid-cols-[256px_minmax(0,1fr)] ${
-        railOpen ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
+        showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
       }`}
     >
       <Sidebar
         chats={chats}
-        activeId={activeId}
-        onSelect={setActiveId}
+        activeId={onSettings ? null : activeId}
+        onSettings={onSettings}
+        onSelect={openChat}
         onNew={newChat}
         onRename={renameChat}
         onDelete={deleteChat}
       />
-      {activeChat ? (
+      {onSettings ? (
+        <Settings />
+      ) : activeChat ? (
         <ChatView
           key={activeChat.id}
           chat={activeChat}
@@ -74,7 +87,7 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {railOpen && <LearningRail key={learningVersion} onReview={reviewTopic} />}
+      {showRail && <LearningRail key={learningVersion} onReview={reviewTopic} />}
     </div>
   );
 }

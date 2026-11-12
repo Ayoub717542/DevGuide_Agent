@@ -12,6 +12,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/" element={<ProtectedRoute><StudyDesk /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><StudyDesk /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { BookMarked, LogOut, Plus, Search, SquareKanban } from "lucide-react";
+import { Link } from "react-router-dom";
+import { BookMarked, LogOut, Plus, Search, Settings, SquareKanban } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
-export default function Sidebar({ chats, activeId, onSelect, onNew, onRename, onDelete }) {
+export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
 
@@ -57,10 +58,20 @@ export default function Sidebar({ chats, activeId, onSelect, onNew, onRename, on
           <div className="truncate">{name}</div>
           <div className="truncate text-xs text-muted-foreground">{user.email}</div>
         </div>
+        <Link
+          to="/settings"
+          aria-label="Settings"
+          aria-current={onSettings ? "page" : undefined}
+          className={`ml-auto rounded-md p-1 hover:text-foreground ${
+            onSettings ? "bg-card text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          <Settings className="size-4" />
+        </Link>
         <button
           onClick={logout}
           aria-label="Log out"
-          className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1 text-muted-foreground hover:text-foreground"
         >
           <LogOut className="size-4" />
         </button>
