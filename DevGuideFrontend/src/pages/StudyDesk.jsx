@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ChatView from "../components/chat/ChatView";
 import LearningRail from "../components/learning/LearningRail";
+import { topicName } from "../components/learning/topicName";
 import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
 
@@ -8,6 +9,7 @@ export default function StudyDesk() {
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [railOpen, setRailOpen] = useState(true);
+  const [firstQuestion, setFirstQuestion] = useState(null);
 
   useEffect(() => {
     chatsApi.getChats().then(setChats);
@@ -16,6 +18,13 @@ export default function StudyDesk() {
   const newChat = async () => {
     const chat = await chatsApi.createChat("New chat");
     setChats([chat, ...chats]);
+    setActiveId(chat.id);
+  };
+
+  const reviewTopic = async (concept) => {
+    const chat = await chatsApi.createChat(`Review: ${topicName(concept)}`);
+    setChats([chat, ...chats]);
+    setFirstQuestion(`Quiz me on ${topicName(concept)}`);
     setActiveId(chat.id);
   };
 
@@ -52,6 +61,8 @@ export default function StudyDesk() {
           chat={activeChat}
           railOpen={railOpen}
           onToggleRail={() => setRailOpen(!railOpen)}
+          firstQuestion={firstQuestion}
+          onFirstQuestionSent={() => setFirstQuestion(null)}
         />
       ) : (
         <main className="grid place-items-center p-6 text-center">
@@ -61,7 +72,7 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {railOpen && <LearningRail />}
+      {railOpen && <LearningRail onReview={reviewTopic} />}
     </div>
   );
 }

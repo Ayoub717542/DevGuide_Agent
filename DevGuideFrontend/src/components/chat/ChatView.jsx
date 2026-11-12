@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import * as chatsApi from "../../api/chats";
 import * as documentsApi from "../../api/documents";
 import { streamReply } from "../../api/stream";
@@ -9,7 +9,7 @@ import MessageList from "./MessageList";
 
 const newestFirst = (pdfs) => [...pdfs].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
-export default function ChatView({ chat, railOpen, onToggleRail }) {
+export default function ChatView({ chat, railOpen, onToggleRail, firstQuestion, onFirstQuestionSent }) {
   const [messages, setMessages] = useState([]);
   const [pdfs, setPdfs] = useState([]);
   const [answer, setAnswer] = useState(null);
@@ -22,13 +22,6 @@ export default function ChatView({ chat, railOpen, onToggleRail }) {
   const loadPending = () => getPendingActions().then(setPending).catch(() => setPending([]));
 
   const loadPdfs = () => documentsApi.getChatPdfs(chat.id).then((list) => setPdfs(newestFirst(list)));
-
-  useEffect(() => {
-    chatsApi.getMessages(chat.id).then(setMessages);
-    documentsApi.getChatPdfs(chat.id).then((list) => setPdfs(newestFirst(list)));
-    getPendingActions().then(setPending).catch(() => setPending([]));
-    return () => stopRef.current?.abort();
-  }, [chat.id]);
 
   const send = async ({ content, hintMode, devMode, file }) => {
     const question = { id: crypto.randomUUID(), role: "USER", content, fileName: file?.name };
@@ -63,6 +56,27 @@ export default function ChatView({ chat, railOpen, onToggleRail }) {
       setAnswer(null);
     }
   };
+
+  const askFirstQuestion = useEffectEvent(() => {
+    if (!firstQuestion) return;
+    onFirstQuestionSent();
+    send({ content: firstQuestion });
+  });
+
+  useEffect(() => {
+    let active = true;
+    chatsApi.getMessages(chat.id).then((list) => {
+      if (!active) return;
+      setMessages(list);
+      askFirstQuestion();
+    });
+    documentsApi.getChatPdfs(chat.id).then((list) => setPdfs(newestFirst(list)));
+    getPendingActions().then(setPending).catch(() => setPending([]));
+    return () => {
+      active = false;
+      stopRef.current?.abort();
+    };
+  }, [chat.id]);
 
   const stop = () => stopRef.current?.abort();
 
