@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import ChatView from "../components/chat/ChatView";
+import LearningRail from "../components/learning/LearningRail";
 import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
 
 export default function StudyDesk() {
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
+  const [railOpen, setRailOpen] = useState(true);
 
   useEffect(() => {
     chatsApi.getChats().then(setChats);
@@ -31,7 +33,11 @@ export default function StudyDesk() {
   const activeChat = chats.find((chat) => chat.id === activeId);
 
   return (
-    <div className="grid h-screen grid-cols-[256px_minmax(0,1fr)]">
+    <div
+      className={`grid h-screen grid-cols-[256px_minmax(0,1fr)] ${
+        railOpen ? "min-[1100px]:grid-cols-[256px_minmax(0,1fr)_312px]" : ""
+      }`}
+    >
       <Sidebar
         chats={chats}
         activeId={activeId}
@@ -41,7 +47,12 @@ export default function StudyDesk() {
         onDelete={deleteChat}
       />
       {activeChat ? (
-        <ChatView key={activeChat.id} chat={activeChat} />
+        <ChatView
+          key={activeChat.id}
+          chat={activeChat}
+          railOpen={railOpen}
+          onToggleRail={() => setRailOpen(!railOpen)}
+        />
       ) : (
         <main className="grid place-items-center p-6 text-center">
           <div>
@@ -50,6 +61,7 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
+      {railOpen && <LearningRail />}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import MessageList from "./MessageList";
 
 const newestFirst = (pdfs) => [...pdfs].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
-export default function ChatView({ chat }) {
+export default function ChatView({ chat, railOpen, onToggleRail }) {
   const [messages, setMessages] = useState([]);
   const [pdfs, setPdfs] = useState([]);
   const [answer, setAnswer] = useState(null);
@@ -115,6 +115,8 @@ export default function ChatView({ chat }) {
         onDeletePdf={deletePdf}
         onQuiz={() => addCard("quiz", chatsApi.createQuiz)}
         onChallenge={() => addCard("challenge", chatsApi.createChallenge)}
+        railOpen={railOpen}
+        onToggleRail={onToggleRail}
       />
       <MessageList
         chatId={chat.id}
