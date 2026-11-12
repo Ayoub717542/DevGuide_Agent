@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BookMarked, LogOut, Plus, Search, Settings, SquareKanban } from "lucide-react";
+import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
@@ -46,8 +46,8 @@ export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, 
       />
 
       <div className="border-t p-2">
-        <Connection icon={SquareKanban} name="Trello" connected={user.trelloConnected} />
-        <Connection icon={BookMarked} name="GitHub" connected={user.githubConnected} />
+        <Connection logo="/trello.svg" name="Trello" connected={user.trelloConnected} />
+        <Connection logo="/github.svg" name="GitHub" connected={user.githubConnected} />
       </div>
 
       <div className="flex items-center gap-2.5 border-t px-4 py-3">
@@ -80,10 +80,10 @@ export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, 
   );
 }
 
-function Connection({ icon: Icon, name, connected }) {
+function Connection({ logo, name, connected }) {
   return (
     <div className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground">
-      <Icon className="size-4" />
+      <img src={logo} alt="" className="size-4" />
       {name}
       <span className={`ml-auto text-xs ${connected ? "text-success" : ""}`}>
         {connected ? "Connected" : "Not connected"}

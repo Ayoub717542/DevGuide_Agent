@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AccountTab from "../components/settings/AccountTab";
+import AppsTab from "../components/settings/AppsTab";
 import TutorTab from "../components/settings/TutorTab";
 
 const TABS = [
@@ -9,7 +10,7 @@ const TABS = [
 ];
 
 export default function Settings() {
-  const [tab, setTab] = useState("account");
+  const [tab, setTab] = useState(() => (window.location.hash.includes("trello") ? "apps" : "account"));
 
   return (
     <main className="min-w-0 overflow-auto">
@@ -37,7 +38,7 @@ export default function Settings() {
         <section role="tabpanel" className="pt-7">
           {tab === "account" && <AccountTab />}
           {tab === "tutor" && <TutorTab />}
-          {tab === "apps" && <p className="text-[0.8125rem] text-muted-foreground">Your GitHub and Trello connections.</p>}
+          {tab === "apps" && <AppsTab />}
         </section>
       </div>
     </main>
