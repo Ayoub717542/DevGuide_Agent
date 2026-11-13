@@ -12,7 +12,7 @@ export default function Message({ message, pdfs }) {
           </a>
         )}
         {message.fileName && <FileLabel name={message.fileName} />}
-        <div className="rounded-[14px] rounded-br-sm border bg-card px-3.5 py-2.5 whitespace-pre-wrap">
+        <div className="rounded-xl bg-card px-4 py-2.5 leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
       </div>
@@ -20,13 +20,10 @@ export default function Message({ message, pdfs }) {
   }
 
   return (
-    <div className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
-      <img src="/devguide-logo.svg" alt="" className="size-7" />
-      <div className="min-w-0">
-        {message.content ? <Markdown text={message.content} /> : <Thinking />}
-        <SourceChips sources={message.sources} pdfs={pdfs} />
-        <DownloadChips documents={message.documents} />
-      </div>
+    <div className="min-w-0">
+      {message.content ? <Markdown text={message.content} /> : <Thinking />}
+      <SourceChips sources={message.sources} pdfs={pdfs} />
+      <DownloadChips documents={message.documents} />
     </div>
   );
 }

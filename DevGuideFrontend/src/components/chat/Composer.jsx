@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Lightbulb, Paperclip, Square, Terminal, X } from "lucide-react";
 import FileLabel from "./FileLabel";
 
@@ -8,6 +8,13 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
   const [uploading, setUploading] = useState(false);
   const [hintMode, setHintMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    input.style.height = "auto";
+    input.style.height = `${input.scrollHeight}px`;
+  }, [text]);
 
   const send = () => {
     const content = text.trim();
@@ -39,7 +46,7 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
 
   return (
     <div className="mx-auto w-full max-w-190 px-7 pt-3 pb-5.5">
-      <div className="rounded-[14px] border bg-secondary px-3 pt-3 pb-2.5 focus-within:border-muted-foreground/50">
+      <div className="rounded-xl border bg-card px-3 pt-3 pb-2.5 focus-within:border-ring">
         {file && (
           <div className="mb-2 ml-0.5">
             <FileLabel name={uploading ? `Uploading ${file.name}…` : file.name}>
@@ -52,16 +59,17 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
           </div>
         )}
         <textarea
+          ref={inputRef}
           rows={2}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about your code, a concept, or your repo…"
           aria-label="Your question"
-          className="w-full resize-none bg-transparent px-1 outline-none placeholder:text-[#6B7380]"
+          className="block max-h-48 w-full resize-none overflow-y-auto bg-transparent px-1 leading-6 outline-none placeholder:text-muted-foreground"
         />
         <div className="mt-2 flex items-center gap-1.5">
-          <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] text-muted-foreground hover:bg-card hover:text-foreground">
+          <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground">
             <Paperclip className="size-4" /> Attach
             <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden onChange={attach} />
           </label>
@@ -78,7 +86,6 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
           )}
         </div>
       </div>
-      <p className="mt-2 text-center text-xs text-[#6B7380]">Enter to send, Shift+Enter for a new line</p>
     </div>
   );
 }
@@ -89,7 +96,7 @@ function Toggle({ icon: Icon, label, on, onClick }) {
       onClick={onClick}
       aria-pressed={on}
       className={`inline-flex h-7.5 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] ${
-        on ? "border-border bg-card text-foreground" : "border-transparent text-muted-foreground hover:bg-card hover:text-foreground"
+        on ? "border-border bg-foreground/5 text-foreground" : "border-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
       }`}
     >
       {on && <span className="size-1.5 rounded-full bg-success" />}
