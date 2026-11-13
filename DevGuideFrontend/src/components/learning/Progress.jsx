@@ -24,7 +24,7 @@ export default function Progress({ results }) {
           <div>
             <b className="block text-xl leading-tight font-semibold tracking-tight">{average}%</b>
             <small className="text-xs text-muted-foreground">
-              average of your last {recent.length} {recent.length === 1 ? "result" : "results"}
+              last {recent.length} {recent.length === 1 ? "result" : "results"}
             </small>
           </div>
           {end && (

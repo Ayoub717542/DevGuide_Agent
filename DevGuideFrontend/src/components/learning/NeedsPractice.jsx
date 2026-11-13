@@ -23,7 +23,7 @@ export default function NeedsPractice({ results }) {
 
       {weakest.map((result) => (
         <div key={result.topic} className="grid grid-cols-[1fr_3.75rem_1.875rem] items-center gap-2.5 py-1.25 text-[0.8125rem]">
-          <span className="truncate">{topicName(result.topic)}</span>
+          <span className="truncate first-letter:uppercase">{topicName(result.topic)}</span>
           <i className="h-1 overflow-hidden rounded-sm bg-border">
             <u className="block h-full bg-muted-foreground" style={{ width: `${(result.score / result.total) * 100}%` }} />
           </i>

@@ -39,7 +39,7 @@ export default function ReviewToday({ onReview }) {
           <div className="min-w-0">
             <b className="flex items-center gap-1.75 text-[0.84375rem] font-medium">
               {review.due && <span className="size-1.5 shrink-0 rounded-full bg-destructive" />}
-              {topicName(review.concept)}
+              <span className="first-letter:uppercase">{topicName(review.concept)}</span>
             </b>
             <small className="text-xs text-muted-foreground">{review.label}</small>
           </div>
