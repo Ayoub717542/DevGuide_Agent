@@ -14,7 +14,7 @@ export default function Settings() {
 
   return (
     <main className="min-w-0 overflow-auto">
-      <div className="mx-auto max-w-260 px-10 pt-9 pb-24">
+      <div className="mx-auto max-w-260 px-4 pt-6 pb-24 sm:px-10 sm:pt-9">
         <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
 
         <div role="tablist" aria-label="Settings" className="mt-4.5 flex gap-1 border-b">

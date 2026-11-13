@@ -10,12 +10,12 @@ export function Block({ title, lead, danger, children }) {
 
 export function Row({ title, help, children }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-center gap-6 px-5 py-4 [&+&]:border-t">
+    <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,auto)] sm:items-center sm:gap-6 sm:px-5 [&+&]:border-t">
       <div>
         <h3 className="text-sm font-medium">{title}</h3>
         {help}
       </div>
-      <div className="flex flex-wrap items-center justify-end gap-2">{children}</div>
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">{children}</div>
     </div>
   );
 }

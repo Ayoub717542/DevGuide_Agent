@@ -5,7 +5,7 @@ import Markdown from "./Markdown";
 export default function Message({ message, pdfs }) {
   if (message.role === "USER") {
     return (
-      <div className="flex max-w-[76%] flex-col items-end gap-1.5 self-end">
+      <div className="flex max-w-[90%] flex-col sm:max-w-[76%] items-end gap-1.5 self-end">
         {message.imageUrl && (
           <a href={message.imageUrl} target="_blank" rel="noreferrer">
             <img src={message.imageUrl} alt="Attached" className="max-h-48 rounded-[10px] border" />

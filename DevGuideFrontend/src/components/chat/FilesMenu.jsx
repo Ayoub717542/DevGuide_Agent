@@ -32,7 +32,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
       {open && (
         <>
           <button aria-label="Close files" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="fixed inset-x-3 top-28 z-20 rounded-xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 border bg-card p-2 text-sm shadow-xl">
+          <div className="fixed inset-x-3 top-28 z-20 rounded-xl duration-150 fade-in zoom-in-95 motion-safe:animate-in sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 border bg-card p-2 text-sm shadow-xl">
             <div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
               <span>PDFs in this chat ({pdfs.length})</span>
               <label className="cursor-pointer text-link hover:underline">

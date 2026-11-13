@@ -160,6 +160,9 @@ body {
   html {
     @apply font-sans;
   }
+  button, a {
+    @apply transition-colors duration-150 motion-reduce:transition-none;
+  }
 }
 .markdown { line-height: 1.6; }
 .markdown > :first-child { margin-top: 0; }

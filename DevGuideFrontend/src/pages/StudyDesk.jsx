@@ -8,12 +8,14 @@ import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
 import Settings from "./Settings";
 
+const isWide = () => window.matchMedia("(min-width: 68.75rem)").matches;
+
 export default function StudyDesk() {
   const navigate = useNavigate();
   const onSettings = useLocation().pathname === "/settings";
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
-  const [railOpen, setRailOpen] = useState(true);
+  const [railOpen, setRailOpen] = useState(isWide);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [firstQuestion, setFirstQuestion] = useState(null);
   const [learningVersion, setLearningVersion] = useState(0);
@@ -39,6 +41,7 @@ export default function StudyDesk() {
     setChats([chat, ...chats]);
     setFirstQuestion(`Quiz me on ${topicName(concept)}`);
     setActiveId(chat.id);
+    if (!isWide()) setRailOpen(false);
   };
 
   const renameChat = async (id, title) => {
@@ -75,7 +78,14 @@ export default function StudyDesk() {
         <button
           onClick={() => setSidebarOpen(false)}
           aria-label="Close menu"
-          className="fixed inset-0 z-30 cursor-default bg-black/50 md:hidden"
+          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in md:hidden"
+        />
+      )}
+      {showRail && (
+        <button
+          onClick={() => setRailOpen(false)}
+          aria-label="Close My learning"
+          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in min-[68.75rem]:hidden"
         />
       )}
       <Sidebar
@@ -109,7 +119,9 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {showRail && <LearningRail key={learningVersion} onReview={reviewTopic} />}
+      {showRail && (
+        <LearningRail key={learningVersion} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
+      )}
     </div>
   );
 }

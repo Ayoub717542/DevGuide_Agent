@@ -15,7 +15,7 @@ export default function Sidebar({ open, onClose, chats, activeId, onSettings, on
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 min-h-0 w-64 flex-col bg-secondary md:static md:flex md:w-auto ${
+      className={`fixed inset-y-0 left-0 z-40 min-h-0 w-64 flex-col bg-secondary duration-200 slide-in-from-left max-md:motion-safe:animate-in md:static md:flex md:w-auto ${
         open ? "flex" : "hidden"
       }`}
     >

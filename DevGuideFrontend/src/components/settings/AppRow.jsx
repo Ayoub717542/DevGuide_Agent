@@ -5,7 +5,7 @@ export default function AppRow({ logo, name, connected, text, children }) {
         <img src={logo} alt="" className="size-5" />
       </span>
       <div className="min-w-0">
-        <h3 className="flex items-center gap-2 text-sm font-medium">
+        <h3 className="flex flex-wrap items-center gap-2 text-sm font-medium whitespace-nowrap">
           {name}
           {connected ? (
             <span className="rounded-full bg-success/10 px-2 py-px text-xs font-medium text-success ring-1 ring-success/30 ring-inset">

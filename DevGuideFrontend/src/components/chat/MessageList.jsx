@@ -39,7 +39,7 @@ export default function MessageList({
 
   return (
     <div ref={listRef} onScroll={checkNearBottom} className="flex-1 overflow-auto">
-      <div className="mx-auto flex max-w-190 flex-col gap-6.5 px-7 pt-7 pb-2">
+      <div className="mx-auto flex max-w-190 flex-col gap-6.5 px-4 pt-5 pb-2 sm:px-7 sm:pt-7">
         {empty && (
           <div className="pt-[12vh] text-center">
             <h2 className="text-[22px] font-semibold tracking-tight">What do you want to learn today?</h2>

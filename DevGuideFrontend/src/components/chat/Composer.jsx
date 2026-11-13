@@ -46,7 +46,7 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-190 px-7 pt-3 pb-5.5">
+    <div className="mx-auto w-full max-w-190 px-4 pt-3 pb-4 sm:px-7 sm:pb-5.5">
       <div className="rounded-xl border bg-card px-3 pt-3 pb-2.5 focus-within:border-foreground/25">
         {file && (
           <div className="mb-2 ml-0.5">

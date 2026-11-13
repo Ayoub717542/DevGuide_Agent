@@ -42,7 +42,7 @@ export default function NameRow() {
         maxLength={100}
         aria-label="Name"
         aria-invalid={changed && tooShort}
-        className="w-65"
+        className="w-full sm:w-65"
       />
       {changed && (
         <Button onClick={save} disabled={tooShort || saving}>

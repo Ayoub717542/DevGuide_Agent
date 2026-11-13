@@ -33,7 +33,7 @@ export default function ChatHeader({
           onClick={onToggleRail}
           aria-label="Show or hide My learning"
           aria-pressed={railOpen}
-          className={`hidden h-8 w-8 items-center justify-center rounded-lg hover:bg-card hover:text-foreground min-[68.75rem]:inline-flex ${
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-card hover:text-foreground ${
             railOpen ? "bg-card text-foreground" : "text-muted-foreground"
           }`}
         >
