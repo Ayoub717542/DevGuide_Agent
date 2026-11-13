@@ -24,12 +24,14 @@ export default function Login() {
       submitLabel="Log in"
       onSubmit={handleSubmit}
       initialError={location.state?.error}
+      notice={location.state?.notice}
       footer={<>No account? <Link to="/register" className="text-link hover:underline">Create one</Link></>}
     >
       <Field id="email" label="Email" type="email" placeholder="you@example.com"
              value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field id="password" label="Password" type="password"
              value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Link to="/forgot-password" className="-mt-2 text-sm text-link hover:underline">Forgot password?</Link>
     </AuthLayout>
   );
 }

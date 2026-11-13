@@ -24,7 +24,7 @@ export function Field({ id, label, ...inputProps }) {
   );
 }
 
-export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, footer, initialError = "", children }) {
+export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, footer, initialError = "", notice = "", social = true, children }) {
   const [error, setError] = useState(initialError);
   const [sending, setSending] = useState(false);
 
@@ -55,25 +55,30 @@ export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, foo
             <p className="text-muted-foreground">{subtitle}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {PROVIDERS.map((provider) => (
-              <a key={provider.id} href={`${API_URL}/oauth2/authorization/${provider.id}`}
-                 className={buttonVariants({ variant: "outline", className: "h-10 gap-2" })}>
-                <img src={`/${provider.id}.svg`} alt="" className="size-4" />
-                {provider.name}
-              </a>
-            ))}
-          </div>
+          {social && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {PROVIDERS.map((provider) => (
+                  <a key={provider.id} href={`${API_URL}/oauth2/authorization/${provider.id}`}
+                     className={buttonVariants({ variant: "outline", className: "h-10 gap-2" })}>
+                    <img src={`/${provider.id}.svg`} alt="" className="size-4" />
+                    {provider.name}
+                  </a>
+                ))}
+              </div>
 
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            or continue with email
-            <span className="h-px flex-1 bg-border" />
-          </div>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or continue with email
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          )}
 
           {children}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {notice && !error && <p className="text-sm text-success">{notice}</p>}
 
           <Button type="submit" className="h-10" disabled={sending}>
             {sending ? "Please wait…" : submitLabel}
