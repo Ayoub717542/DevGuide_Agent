@@ -21,16 +21,24 @@ export default function MessageList({
   onTrelloFinished,
   onScoreSaved,
 }) {
+  const listRef = useRef(null);
   const endRef = useRef(null);
+  const nearBottomRef = useRef(true);
+
+  const checkNearBottom = () => {
+    const list = listRef.current;
+    nearBottomRef.current = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+  };
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    const justAsked = answer === "" && messages[messages.length - 1]?.role === "USER";
+    if (nearBottomRef.current || justAsked) endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, answer, pending]);
 
   const empty = messages.length === 0 && answer === null;
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div ref={listRef} onScroll={checkNearBottom} className="flex-1 overflow-auto">
       <div className="mx-auto flex max-w-190 flex-col gap-6.5 px-7 pt-7 pb-2">
         {empty && (
           <div className="pt-[12vh] text-center">

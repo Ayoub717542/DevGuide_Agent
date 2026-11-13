@@ -16,12 +16,13 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
     input.style.height = `${input.scrollHeight}px`;
   }, [text]);
 
-  const send = () => {
+  const send = async () => {
     const content = text.trim();
     if (!content || busy || uploading) return;
-    onSend({ content, hintMode, devMode, file });
     setText("");
     setFile(null);
+    const sent = await onSend({ content, hintMode, devMode, file });
+    if (!sent) setText((current) => current || content);
   };
 
   const attach = async (e) => {
