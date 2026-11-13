@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -42,8 +43,9 @@ class EmailVerificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EmailVerificationService(userRepository, mailSenderProvider,
-                "http://localhost:8081/api/auth/verify-email", "devtutor@mail.com");
+        service = new EmailVerificationService(userRepository, mailSenderProvider, new BCryptPasswordEncoder(),
+                "http://localhost:8081/api/auth/verify-email", "http://localhost:5173/reset-password",
+                "devtutor@mail.com");
         user = new User();
         user.setEmail(EMAIL);
         user.setName("Ali");

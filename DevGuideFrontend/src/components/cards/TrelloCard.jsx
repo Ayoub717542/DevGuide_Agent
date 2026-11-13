@@ -35,15 +35,15 @@ export default function TrelloCard({ action, onFinished }) {
       <SquareKanban className="size-5 text-warning" />
       <div className="min-w-0">
         <b className="block font-semibold">Your tutor wants to change Trello</b>
-        <span className="block truncate text-[13px] text-muted-foreground">
+        <span className="block truncate text-[0.8125rem] text-muted-foreground">
           {action.toolName}: {describe(action)}
         </span>
       </div>
       <div className="flex gap-2">
-        <button onClick={() => answer(false)} disabled={working} className="h-8 rounded-lg border bg-secondary px-3 text-[13px]">
+        <button onClick={() => answer(false)} disabled={working} className="h-8 rounded-lg border bg-secondary px-3 text-[0.8125rem]">
           Reject
         </button>
-        <button onClick={() => answer(true)} disabled={working} className="h-8 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground">
+        <button onClick={() => answer(true)} disabled={working} className="h-8 rounded-lg bg-primary px-3 text-[0.8125rem] font-semibold text-primary-foreground">
           Approve
         </button>
       </div>

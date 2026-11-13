@@ -40,6 +40,7 @@ export default function ChatView({
     const isPdf = file?.type === "application/pdf";
     const controller = new AbortController();
     stopRef.current = controller;
+    let failed = false;
     try {
       await streamReply(
         { conversationId: chat.id, content, hintMode, devMode, file: isPdf ? null : file },
@@ -50,6 +51,7 @@ export default function ChatView({
             loadPending();
           },
           onError: (message) => {
+            failed = true;
             setError(message);
             removeQuestion();
           },
@@ -57,11 +59,15 @@ export default function ChatView({
         controller.signal
       );
     } catch (e) {
-      if (e.name !== "AbortError") setError("Connection lost. Please try again.");
+      if (e.name !== "AbortError") {
+        failed = true;
+        setError("Connection lost. Please try again.");
+      }
       removeQuestion();
     } finally {
       setAnswer(null);
     }
+    return !failed;
   };
 
   const askFirstQuestion = useEffectEvent(() => {

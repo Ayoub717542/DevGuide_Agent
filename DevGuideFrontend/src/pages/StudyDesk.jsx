@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 import ChatView from "../components/chat/ChatView";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
 import Sidebar from "../components/sidebar/Sidebar";
 import * as chatsApi from "../api/chats";
+import Settings from "./Settings";
+
+const isWide = () => window.matchMedia("(min-width: 68.75rem)").matches;
 
 export default function StudyDesk() {
+  const navigate = useNavigate();
+  const onSettings = useLocation().pathname === "/settings";
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
-  const [railOpen, setRailOpen] = useState(true);
+  const [railOpen, setRailOpen] = useState(isWide);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [firstQuestion, setFirstQuestion] = useState(null);
   const [learningVersion, setLearningVersion] = useState(0);
 
@@ -16,10 +24,16 @@ export default function StudyDesk() {
     chatsApi.getChats().then(setChats);
   }, []);
 
+  const openChat = (id) => {
+    setActiveId(id);
+    setSidebarOpen(false);
+    navigate("/");
+  };
+
   const newChat = async () => {
     const chat = await chatsApi.createChat("New chat");
     setChats([chat, ...chats]);
-    setActiveId(chat.id);
+    openChat(chat.id);
   };
 
   const reviewTopic = async (concept) => {
@@ -27,6 +41,7 @@ export default function StudyDesk() {
     setChats([chat, ...chats]);
     setFirstQuestion(`Quiz me on ${topicName(concept)}`);
     setActiveId(chat.id);
+    if (!isWide()) setRailOpen(false);
   };
 
   const renameChat = async (id, title) => {
@@ -41,22 +56,52 @@ export default function StudyDesk() {
   };
 
   const activeChat = chats.find((chat) => chat.id === activeId);
+  const showRail = railOpen && !onSettings;
 
   return (
     <div
-      className={`grid h-screen grid-cols-[256px_minmax(0,1fr)] ${
-        railOpen ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
+      className={`grid h-dvh grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
+        showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
       }`}
     >
+      <div className="flex h-12 items-center gap-2 border-b px-2 md:hidden">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
+        >
+          <Menu className="size-5" />
+        </button>
+        <span className="text-sm font-semibold">DevGuide AI</span>
+      </div>
+      {sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close menu"
+          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in md:hidden"
+        />
+      )}
+      {showRail && (
+        <button
+          onClick={() => setRailOpen(false)}
+          aria-label="Close My learning"
+          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in min-[68.75rem]:hidden"
+        />
+      )}
       <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         chats={chats}
-        activeId={activeId}
-        onSelect={setActiveId}
+        activeId={onSettings ? null : activeId}
+        onSettings={onSettings}
+        onSelect={openChat}
         onNew={newChat}
         onRename={renameChat}
         onDelete={deleteChat}
       />
-      {activeChat ? (
+      {onSettings ? (
+        <Settings />
+      ) : activeChat ? (
         <ChatView
           key={activeChat.id}
           chat={activeChat}
@@ -74,7 +119,9 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {railOpen && <LearningRail key={learningVersion} onReview={reviewTopic} />}
+      {showRail && (
+        <LearningRail key={learningVersion} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
+      )}
     </div>
   );
 }

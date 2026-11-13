@@ -10,14 +10,14 @@ export default function CodeBlock({ language, code }) {
   };
 
   return (
-    <div className="my-3 overflow-hidden rounded-[10px] border bg-[#0A0D12]">
-      <div className="flex items-center justify-between border-b bg-secondary px-3 py-1.5 text-xs text-muted-foreground">
-        <span>{language || "code"}</span>
-        <button onClick={copy} className="hover:text-foreground">
+    <div className="my-4 overflow-hidden rounded-lg border bg-[#0A0D12]">
+      <div className="flex h-8 items-center justify-between border-b pr-1.5 pl-4 text-xs text-muted-foreground">
+        <span className="font-mono">{language || "code"}</span>
+        <button onClick={copy} className="rounded-md px-2 py-1 hover:bg-card hover:text-foreground">
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="overflow-auto px-4 py-3.5 font-mono text-[13px] leading-relaxed">
+      <pre className="overflow-auto px-4 py-3.5 font-mono text-[0.8125rem] leading-relaxed">
         <code>{code}</code>
       </pre>
     </div>

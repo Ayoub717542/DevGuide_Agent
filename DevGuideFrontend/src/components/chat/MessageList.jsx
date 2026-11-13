@@ -21,27 +21,35 @@ export default function MessageList({
   onTrelloFinished,
   onScoreSaved,
 }) {
+  const listRef = useRef(null);
   const endRef = useRef(null);
+  const nearBottomRef = useRef(true);
+
+  const checkNearBottom = () => {
+    const list = listRef.current;
+    nearBottomRef.current = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+  };
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    const justAsked = answer === "" && messages[messages.length - 1]?.role === "USER";
+    if (nearBottomRef.current || justAsked) endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, answer, pending]);
 
   const empty = messages.length === 0 && answer === null;
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="mx-auto flex max-w-190 flex-col gap-6.5 px-7 pt-7 pb-2">
+    <div ref={listRef} onScroll={checkNearBottom} className="flex-1 overflow-auto">
+      <div className="mx-auto flex max-w-190 flex-col gap-6.5 px-4 pt-5 pb-2 sm:px-7 sm:pt-7">
         {empty && (
           <div className="pt-[12vh] text-center">
-            <h2 className="text-[22px] font-semibold tracking-tight">What do you want to learn today?</h2>
+            <h2 className="text-[1.375rem] font-semibold tracking-tight">What do you want to learn today?</h2>
             <p className="mt-1.5 mb-5.5 text-muted-foreground">Ask about your code, a concept, or your GitHub repo.</p>
             <div className="flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((text) => (
                 <button
                   key={text}
                   onClick={() => onAsk(text)}
-                  className="rounded-[10px] border bg-secondary px-3.5 py-2 text-[13px] hover:bg-card"
+                  className="rounded-lg border bg-secondary px-3.5 py-2 text-[0.8125rem] hover:bg-card"
                 >
                   {text}
                 </button>
@@ -57,7 +65,7 @@ export default function MessageList({
           if (message.type === "challenge") {
             return <ChallengeCard key={message.id} challenge={message.data} onScoreSaved={onScoreSaved} />;
           }
-          if (message.type === "note") return <p key={message.id} className="text-[13px] text-muted-foreground">{message.data}</p>;
+          if (message.type === "note") return <p key={message.id} className="text-[0.8125rem] text-muted-foreground">{message.data}</p>;
           return <Message key={message.id} message={message} pdfs={pdfs} />;
         })}
 

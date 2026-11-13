@@ -46,6 +46,11 @@ public class User implements UserDetails {
 
     private Instant verificationTokenExpiresAt;
 
+    @Column(unique = true, length = 64)
+    private String resetTokenHash;
+
+    private Instant resetTokenExpiresAt;
+
     @Convert(converter = GitHubTokenConverter.class)
     private String githubToken;
 

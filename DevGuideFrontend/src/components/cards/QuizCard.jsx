@@ -34,7 +34,7 @@ export default function QuizCard({ chatId, quiz, onScoreSaved }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-[14px] border bg-secondary">
+    <div className="overflow-hidden rounded-xl border bg-secondary">
       <header className="flex items-center gap-2.5 border-b px-4.5 py-3.5">
         <b className="font-semibold">Quiz: {quiz.topic}</b>
         <span className="ml-auto text-xs text-muted-foreground">
@@ -55,7 +55,7 @@ export default function QuizCard({ chatId, quiz, onScoreSaved }) {
                 key={option}
                 onClick={() => pick(option)}
                 disabled={picked !== null}
-                className={`flex items-center gap-3 rounded-[10px] border bg-card px-3.5 py-2.5 text-left ${optionStyle(option)}`}
+                className={`flex items-center gap-3 rounded-lg border bg-card px-3.5 py-2.5 text-left ${optionStyle(option)}`}
               >
                 <span className="grid size-6 shrink-0 place-items-center rounded-md border font-mono text-xs text-muted-foreground">
                   {"ABCD"[option]}
@@ -66,11 +66,11 @@ export default function QuizCard({ chatId, quiz, onScoreSaved }) {
           </div>
           {picked !== null && (
             <>
-              <p className="mx-4.5 mt-2 rounded-[10px] bg-card px-3.5 py-3 text-[13px] text-muted-foreground">
+              <p className="mx-4.5 mt-2 rounded-lg bg-card px-3.5 py-3 text-[0.8125rem] text-muted-foreground">
                 {question.explanation}
               </p>
               <div className="flex justify-end px-4.5 py-3.5">
-                <button onClick={next} className="h-8.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground">
+                <button onClick={next} className="h-8.5 rounded-lg bg-primary px-3.5 text-[0.8125rem] font-semibold text-primary-foreground">
                   {index === total - 1 ? "See my score" : "Next question"}
                 </button>
               </div>

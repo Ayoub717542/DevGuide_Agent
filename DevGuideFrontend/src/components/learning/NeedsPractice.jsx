@@ -1,3 +1,4 @@
+import LearningSection from "./LearningSection";
 import { topicName } from "./topicName";
 
 function weakestTopics(results) {
@@ -15,16 +16,14 @@ export default function NeedsPractice({ results }) {
   const weakest = weakestTopics(results);
 
   return (
-    <section className="mb-6.5">
-      <h2 className="mb-2.5 text-[0.78125rem] font-medium text-muted-foreground">Needs more practice</h2>
-
+    <LearningSection title="Needs more practice">
       {weakest.length === 0 && (
-        <p className="text-[0.8125rem] text-muted-foreground">Nothing yet. Keep going!</p>
+        <p className="py-1 text-[0.8125rem] text-muted-foreground">Nothing yet. Keep going!</p>
       )}
 
       {weakest.map((result) => (
         <div key={result.topic} className="grid grid-cols-[1fr_3.75rem_1.875rem] items-center gap-2.5 py-1.25 text-[0.8125rem]">
-          <span className="truncate">{topicName(result.topic)}</span>
+          <span className="truncate first-letter:uppercase">{topicName(result.topic)}</span>
           <i className="h-1 overflow-hidden rounded-sm bg-border">
             <u className="block h-full bg-muted-foreground" style={{ width: `${(result.score / result.total) * 100}%` }} />
           </i>
@@ -33,6 +32,6 @@ export default function NeedsPractice({ results }) {
           </em>
         </div>
       ))}
-    </section>
+    </LearningSection>
   );
 }

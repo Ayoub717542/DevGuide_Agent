@@ -8,3 +8,11 @@ export const approveAction = (id) =>
 
 export const rejectAction = (id) =>
   axiosApi.delete(`/api/trello/pending/${id}`);
+
+export const getConnectUrl = () =>
+  axiosApi.get("/api/trello/connect").then((res) => res.data);
+
+export const finishConnect = (code, state) =>
+  axiosApi.post("/api/trello/finish", { code, state }).then((res) => res.data);
+
+export const disconnectTrello = () => axiosApi.delete("/api/trello");

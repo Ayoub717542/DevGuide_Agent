@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getReviews } from "../../api/learning";
+import LearningSection from "./LearningSection";
 import { topicName } from "./topicName";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -25,11 +26,9 @@ export default function ReviewToday({ onReview }) {
   }, []);
 
   return (
-    <section className="mb-6.5">
-      <h2 className="mb-2.5 text-[0.78125rem] font-medium text-muted-foreground">Review today</h2>
-
+    <LearningSection title="Review today">
       {reviews.length === 0 && (
-        <p className="text-[0.8125rem] text-muted-foreground">Nothing to review yet. Take a quiz to start.</p>
+        <p className="py-1 text-[0.8125rem] text-muted-foreground">Nothing to review yet. Take a quiz to start.</p>
       )}
 
       {reviews.map((review) => (
@@ -40,20 +39,20 @@ export default function ReviewToday({ onReview }) {
           <div className="min-w-0">
             <b className="flex items-center gap-1.75 text-[0.84375rem] font-medium">
               {review.due && <span className="size-1.5 shrink-0 rounded-full bg-destructive" />}
-              {topicName(review.concept)}
+              <span className="first-letter:uppercase">{topicName(review.concept)}</span>
             </b>
             <small className="text-xs text-muted-foreground">{review.label}</small>
           </div>
           {review.due && (
             <button
               onClick={() => onReview(review.concept)}
-              className="ml-auto h-7 shrink-0 rounded-md border bg-card px-2.5 text-xs font-medium whitespace-nowrap hover:border-muted-foreground/40"
+              className="ml-auto h-7 shrink-0 rounded-md border bg-foreground/5 px-2.5 text-xs font-medium whitespace-nowrap hover:border-muted-foreground/40"
             >
               Review now
             </button>
           )}
         </div>
       ))}
-    </section>
+    </LearningSection>
   );
 }

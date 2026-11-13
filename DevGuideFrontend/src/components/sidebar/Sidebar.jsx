@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { BookMarked, LogOut, Plus, Search, SquareKanban } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
-export default function Sidebar({ chats, activeId, onSelect, onNew, onRename, onDelete }) {
+export default function Sidebar({ open, onClose, chats, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
 
@@ -13,26 +14,30 @@ export default function Sidebar({ chats, activeId, onSelect, onNew, onRename, on
   const name = user.name || user.email;
 
   return (
-    <aside className="flex min-h-0 flex-col border-r bg-secondary">
-      <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[15px] font-semibold">
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 min-h-0 w-64 flex-col bg-secondary duration-200 slide-in-from-left max-md:motion-safe:animate-in md:static md:flex md:w-auto ${
+        open ? "flex" : "hidden"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[0.9375rem] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
         DevGuide AI
       </div>
 
       <button
         onClick={onNew}
-        className="mx-3.5 flex h-9 items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+        className="mx-3 flex h-9 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-medium hover:border-muted-foreground/40"
       >
-        <Plus className="size-4" /> New chat
+        <Plus className="size-4 text-muted-foreground" /> New chat
       </button>
 
-      <label className="mx-3.5 mt-3 mb-1.5 flex h-8.5 items-center gap-2 rounded-lg border px-2.5 text-muted-foreground focus-within:border-ring">
+      <label className="mx-3 mt-2 mb-1 flex h-9 items-center gap-2 rounded-lg border px-3 text-muted-foreground focus-within:border-ring">
         <Search className="size-4" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search chats"
-          className="w-full bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="w-full bg-transparent text-[0.8125rem] text-foreground outline-none placeholder:text-muted-foreground"
         />
       </label>
 
@@ -44,39 +49,35 @@ export default function Sidebar({ chats, activeId, onSelect, onNew, onRename, on
         onDelete={onDelete}
       />
 
-      <div className="border-t p-2">
-        <Connection icon={SquareKanban} name="Trello" connected={user.trelloConnected} />
-        <Connection icon={BookMarked} name="GitHub" connected={user.githubConnected} />
-      </div>
-
-      <div className="flex items-center gap-2.5 border-t px-4 py-3">
-        <div className="grid size-7.5 shrink-0 place-items-center rounded-full border bg-card text-[13px] font-semibold">
+      <div className="flex items-center gap-2.5 border-t px-3 py-3">
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-card text-[0.8125rem] font-semibold">
           {name[0].toUpperCase()}
         </div>
         <div className="min-w-0 text-sm">
-          <div className="truncate">{name}</div>
+          <div className="truncate font-medium">{name}</div>
           <div className="truncate text-xs text-muted-foreground">{user.email}</div>
         </div>
-        <button
-          onClick={logout}
-          aria-label="Log out"
-          className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-        </button>
+        <div className="ml-auto flex shrink-0 gap-1">
+          <Link
+            to="/settings"
+            onClick={onClose}
+            aria-label="Settings"
+            aria-current={onSettings ? "page" : undefined}
+            className={`grid size-8 place-items-center rounded-md hover:bg-card hover:text-foreground ${
+              onSettings ? "bg-card text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Settings className="size-4" />
+          </Link>
+          <button
+            onClick={logout}
+            aria-label="Log out"
+            className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
+          >
+            <LogOut className="size-4" />
+          </button>
+        </div>
       </div>
     </aside>
-  );
-}
-
-function Connection({ icon: Icon, name, connected }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground">
-      <Icon className="size-4" />
-      {name}
-      <span className={`ml-auto text-xs ${connected ? "text-success" : ""}`}>
-        {connected ? "Connected" : "Not connected"}
-      </span>
-    </div>
   );
 }
