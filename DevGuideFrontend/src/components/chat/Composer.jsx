@@ -71,7 +71,7 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
         />
         <div className="mt-2 flex items-center gap-1.5">
           <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground">
-            <Paperclip className="size-4" /> Attach
+            <Paperclip className="size-4" /> <span className="hidden sm:inline">Attach</span>
             <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden onChange={attach} />
           </label>
           <Toggle icon={Lightbulb} label="Hint mode" on={hintMode} onClick={() => setHintMode(!hintMode)} />
@@ -96,13 +96,15 @@ function Toggle({ icon: Icon, label, on, onClick }) {
     <button
       onClick={onClick}
       aria-pressed={on}
+      aria-label={label}
+      title={label}
       className={`inline-flex h-7.5 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] ${
         on ? "border-border bg-foreground/5 text-foreground" : "border-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
       }`}
     >
       {on && <span className="size-1.5 rounded-full bg-success" />}
       <Icon className="size-4" />
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }

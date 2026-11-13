@@ -4,7 +4,7 @@ import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
-export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
+export default function Sidebar({ open, onClose, chats, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
 
@@ -14,7 +14,11 @@ export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, 
   const name = user.name || user.email;
 
   return (
-    <aside className="flex min-h-0 flex-col bg-secondary">
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 min-h-0 w-64 flex-col bg-secondary md:static md:flex md:w-auto ${
+        open ? "flex" : "hidden"
+      }`}
+    >
       <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[15px] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
         DevGuide AI
@@ -56,6 +60,7 @@ export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, 
         <div className="ml-auto flex shrink-0 gap-1">
           <Link
             to="/settings"
+            onClick={onClose}
             aria-label="Settings"
             aria-current={onSettings ? "page" : undefined}
             className={`grid size-8 place-items-center rounded-md hover:bg-card hover:text-foreground ${

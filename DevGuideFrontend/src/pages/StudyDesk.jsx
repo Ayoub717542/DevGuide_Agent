@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 import ChatView from "../components/chat/ChatView";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
@@ -13,6 +14,7 @@ export default function StudyDesk() {
   const [chats, setChats] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [railOpen, setRailOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [firstQuestion, setFirstQuestion] = useState(null);
   const [learningVersion, setLearningVersion] = useState(0);
 
@@ -22,6 +24,7 @@ export default function StudyDesk() {
 
   const openChat = (id) => {
     setActiveId(id);
+    setSidebarOpen(false);
     navigate("/");
   };
 
@@ -54,11 +57,30 @@ export default function StudyDesk() {
 
   return (
     <div
-      className={`grid h-screen grid-cols-[256px_minmax(0,1fr)] ${
+      className={`grid h-dvh grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
         showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
       }`}
     >
+      <div className="flex h-12 items-center gap-2 border-b px-2 md:hidden">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
+        >
+          <Menu className="size-5" />
+        </button>
+        <span className="text-sm font-semibold">DevGuide AI</span>
+      </div>
+      {sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close menu"
+          className="fixed inset-0 z-30 cursor-default bg-black/50 md:hidden"
+        />
+      )}
       <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         chats={chats}
         activeId={onSettings ? null : activeId}
         onSettings={onSettings}

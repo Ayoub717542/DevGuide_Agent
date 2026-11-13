@@ -23,16 +23,16 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
 
   return (
     <div className="relative">
-      <button onClick={toggle} aria-expanded={open}
+      <button onClick={toggle} aria-expanded={open} aria-label="Files"
               className="inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-card hover:text-foreground aria-expanded:bg-card aria-expanded:text-foreground">
-        <FileText className="size-4" /> Files
+        <FileText className="size-4" /> <span className="hidden sm:inline">Files</span>
         <span className="text-xs text-muted-foreground">{pdfs.length}</span>
       </button>
 
       {open && (
         <>
           <button aria-label="Close files" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-80 rounded-xl border bg-card p-2 text-sm shadow-xl">
+          <div className="fixed inset-x-3 top-28 z-20 rounded-xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 border bg-card p-2 text-sm shadow-xl">
             <div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
               <span>PDFs in this chat ({pdfs.length})</span>
               <label className="cursor-pointer text-link hover:underline">

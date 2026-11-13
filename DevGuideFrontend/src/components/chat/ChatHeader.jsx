@@ -17,17 +17,17 @@ export default function ChatHeader({
   onToggleRail,
 }) {
   return (
-    <div className="flex h-14 items-center gap-3 border-b px-6">
+    <div className="flex h-14 items-center gap-3 border-b px-4 sm:px-6">
       <h1 className="truncate text-[15px] font-semibold tracking-tight">{chat.title}</h1>
-      <div className="ml-auto flex gap-1">
+      <div className="ml-auto flex shrink-0 gap-1">
         <FilesMenu chatId={chat.id} pdfs={pdfs} uploading={uploading} onUpload={onUpload} onDelete={onDeletePdf} />
-        <button onClick={onQuiz} disabled={loading !== null} className={buttonStyle}>
+        <button onClick={onQuiz} disabled={loading !== null} aria-label="Quiz me" className={buttonStyle}>
           <CircleHelp className="size-4" />
-          {loading === "quiz" ? "Making quiz…" : "Quiz me"}
+          <span className="hidden sm:inline">{loading === "quiz" ? "Making quiz…" : "Quiz me"}</span>
         </button>
-        <button onClick={onChallenge} disabled={loading !== null} className={buttonStyle}>
+        <button onClick={onChallenge} disabled={loading !== null} aria-label="Challenge" className={buttonStyle}>
           <Code className="size-4" />
-          {loading === "challenge" ? "Making challenge…" : "Challenge"}
+          <span className="hidden sm:inline">{loading === "challenge" ? "Making challenge…" : "Challenge"}</span>
         </button>
         <button
           onClick={onToggleRail}
