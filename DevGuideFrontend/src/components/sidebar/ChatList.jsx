@@ -23,7 +23,7 @@ export default function ChatList({ chats, activeId, onSelect, onRename, onDelete
 
         return (
           <div key={group}>
-            <div className="px-2.5 pt-4 pb-1.5 text-[11px] font-medium text-muted-foreground">{group}</div>
+            <div className="px-2.5 pt-4 pb-1.5 text-[0.6875rem] font-medium text-muted-foreground">{group}</div>
             {groupChats.map((chat) => (
               <ChatRow
                 key={chat.id}

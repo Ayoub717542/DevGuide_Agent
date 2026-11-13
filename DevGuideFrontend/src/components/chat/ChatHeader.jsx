@@ -2,7 +2,7 @@ import { CircleHelp, Code, PanelRight } from "lucide-react";
 import FilesMenu from "./FilesMenu";
 
 const buttonStyle =
-  "inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-50";
+  "inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[0.8125rem] font-medium text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-50";
 
 export default function ChatHeader({
   chat,
@@ -18,7 +18,7 @@ export default function ChatHeader({
 }) {
   return (
     <div className="flex h-14 items-center gap-3 border-b px-4 sm:px-6">
-      <h1 className="truncate text-[15px] font-semibold tracking-tight">{chat.title}</h1>
+      <h1 className="truncate text-[0.9375rem] font-semibold tracking-tight">{chat.title}</h1>
       <div className="ml-auto flex shrink-0 gap-1">
         <FilesMenu chatId={chat.id} pdfs={pdfs} uploading={uploading} onUpload={onUpload} onDelete={onDeletePdf} />
         <button onClick={onQuiz} disabled={loading !== null} aria-label="Quiz me" className={buttonStyle}>

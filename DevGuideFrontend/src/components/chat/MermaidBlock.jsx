@@ -41,7 +41,7 @@ export default function MermaidBlock({ code }) {
 
   return (
     <div
-      className="my-3 overflow-auto rounded-[10px] border bg-secondary p-4 [&_svg]:mx-auto"
+      className="my-3 overflow-auto rounded-lg border bg-secondary p-4 [&_svg]:mx-auto"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

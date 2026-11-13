@@ -45,12 +45,12 @@ export default function ChallengeCard({ challenge, onScoreSaved }) {
       <div className="px-4.5 py-3.5">
         <div className="flex items-center gap-2">
           <b className="font-semibold">Challenge: {challenge.title}</b>
-          <span className="rounded-md border bg-card px-1.5 py-0.5 text-[11px] text-muted-foreground">
+          <span className="rounded-md border bg-card px-1.5 py-0.5 text-[0.6875rem] text-muted-foreground">
             {LANGUAGES[challenge.language] || "Java"}
           </span>
         </div>
-        <span className="text-[13px] whitespace-pre-wrap text-muted-foreground">{challenge.task}</span>
-        <p className="mt-2 text-[13px] text-muted-foreground">
+        <span className="text-[0.8125rem] whitespace-pre-wrap text-muted-foreground">{challenge.task}</span>
+        <p className="mt-2 text-[0.8125rem] text-muted-foreground">
           Write your code in the box. Click "Run tests" to check if it works.
         </p>
       </div>
@@ -61,11 +61,11 @@ export default function ChallengeCard({ challenge, onScoreSaved }) {
         spellCheck={false}
         rows={Math.max(6, code.split("\n").length + 1)}
         aria-label="Your code"
-        className="block w-full resize-y border-y bg-[#0A0D12] px-4.5 py-3.5 font-mono text-[13px] leading-relaxed outline-none"
+        className="block w-full resize-y border-y bg-[#0A0D12] px-4.5 py-3.5 font-mono text-[0.8125rem] leading-relaxed outline-none"
       />
 
       {result && (
-        <div className="border-b px-4.5 py-3 text-[13px]">
+        <div className="border-b px-4.5 py-3 text-[0.8125rem]">
           <b className={passed ? "text-success" : "text-destructive"}>
             {resultText(result)}
           </b>
@@ -76,7 +76,7 @@ export default function ChallengeCard({ challenge, onScoreSaved }) {
       )}
 
       <div className="flex justify-end px-4.5 py-2.5">
-        <button onClick={run} disabled={running} className="h-8.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground disabled:opacity-50">
+        <button onClick={run} disabled={running} className="h-8.5 rounded-lg bg-primary px-3.5 text-[0.8125rem] font-semibold text-primary-foreground disabled:opacity-50">
           {running ? "Running…" : "Run tests"}
         </button>
       </div>

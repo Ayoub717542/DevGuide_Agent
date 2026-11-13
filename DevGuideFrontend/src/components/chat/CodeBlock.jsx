@@ -17,7 +17,7 @@ export default function CodeBlock({ language, code }) {
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="overflow-auto px-4 py-3.5 font-mono text-[13px] leading-relaxed">
+      <pre className="overflow-auto px-4 py-3.5 font-mono text-[0.8125rem] leading-relaxed">
         <code>{code}</code>
       </pre>
     </div>

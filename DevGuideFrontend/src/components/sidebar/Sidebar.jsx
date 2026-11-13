@@ -19,7 +19,7 @@ export default function Sidebar({ open, onClose, chats, activeId, onSettings, on
         open ? "flex" : "hidden"
       }`}
     >
-      <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[15px] font-semibold">
+      <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[0.9375rem] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
         DevGuide AI
       </div>
@@ -37,7 +37,7 @@ export default function Sidebar({ open, onClose, chats, activeId, onSettings, on
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search chats"
-          className="w-full bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          className="w-full bg-transparent text-[0.8125rem] text-foreground outline-none placeholder:text-muted-foreground"
         />
       </label>
 
@@ -50,7 +50,7 @@ export default function Sidebar({ open, onClose, chats, activeId, onSettings, on
       />
 
       <div className="flex items-center gap-2.5 border-t px-3 py-3">
-        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-card text-[13px] font-semibold">
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-card text-[0.8125rem] font-semibold">
           {name[0].toUpperCase()}
         </div>
         <div className="min-w-0 text-sm">

@@ -8,7 +8,7 @@ export default function Message({ message, pdfs }) {
       <div className="flex max-w-[90%] flex-col sm:max-w-[76%] items-end gap-1.5 self-end">
         {message.imageUrl && (
           <a href={message.imageUrl} target="_blank" rel="noreferrer">
-            <img src={message.imageUrl} alt="Attached" className="max-h-48 rounded-[10px] border" />
+            <img src={message.imageUrl} alt="Attached" className="max-h-48 rounded-lg border" />
           </a>
         )}
         {message.fileName && <FileLabel name={message.fileName} />}
@@ -30,7 +30,7 @@ export default function Message({ message, pdfs }) {
 
 function Thinking() {
   return (
-    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
       <span className="flex gap-0.75">
         <i className="size-1.25 animate-pulse rounded-full bg-muted-foreground" />
         <i className="size-1.25 animate-pulse rounded-full bg-muted-foreground [animation-delay:150ms]" />

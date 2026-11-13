@@ -70,18 +70,18 @@ export default function Composer({ busy, onSend, onStop, onUploadPdf }) {
           className="block max-h-48 w-full resize-none overflow-y-auto bg-transparent px-1 leading-6 outline-none placeholder:text-muted-foreground"
         />
         <div className="mt-2 flex items-center gap-1.5">
-          <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground">
+          <label className="inline-flex h-7.5 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-[0.78125rem] text-muted-foreground hover:bg-foreground/5 hover:text-foreground">
             <Paperclip className="size-4" /> <span className="hidden sm:inline">Attach</span>
             <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" hidden onChange={attach} />
           </label>
           <Toggle icon={Lightbulb} label="Hint mode" on={hintMode} onClick={() => setHintMode(!hintMode)} />
           <Toggle icon={Terminal} label="Dev mode" on={devMode} onClick={() => setDevMode(!devMode)} />
           {busy ? (
-            <button onClick={onStop} aria-label="Stop" className="ml-auto grid size-8.5 place-items-center rounded-[9px] bg-primary text-primary-foreground">
+            <button onClick={onStop} aria-label="Stop" className="ml-auto grid size-8.5 place-items-center rounded-[0.5625rem] bg-primary text-primary-foreground">
               <Square className="size-3.5 fill-current" />
             </button>
           ) : (
-            <button onClick={send} disabled={!text.trim() || uploading} aria-label="Send" className="ml-auto grid size-8.5 place-items-center rounded-[9px] bg-primary text-primary-foreground disabled:opacity-40">
+            <button onClick={send} disabled={!text.trim() || uploading} aria-label="Send" className="ml-auto grid size-8.5 place-items-center rounded-[0.5625rem] bg-primary text-primary-foreground disabled:opacity-40">
               <ArrowUp className="size-4" />
             </button>
           )}
@@ -98,7 +98,7 @@ function Toggle({ icon: Icon, label, on, onClick }) {
       aria-pressed={on}
       aria-label={label}
       title={label}
-      className={`inline-flex h-7.5 items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] ${
+      className={`inline-flex h-7.5 items-center gap-1.5 rounded-lg border px-2.5 text-[0.78125rem] ${
         on ? "border-border bg-foreground/5 text-foreground" : "border-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
       }`}
     >

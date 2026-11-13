@@ -24,7 +24,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
   return (
     <div className="relative">
       <button onClick={toggle} aria-expanded={open} aria-label="Files"
-              className="inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-card hover:text-foreground aria-expanded:bg-card aria-expanded:text-foreground">
+              className="inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[0.8125rem] font-medium text-muted-foreground hover:bg-card hover:text-foreground aria-expanded:bg-card aria-expanded:text-foreground">
         <FileText className="size-4" /> <span className="hidden sm:inline">Files</span>
         <span className="text-xs text-muted-foreground">{pdfs.length}</span>
       </button>
@@ -68,7 +68,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
 function FileRow({ label, title, detail, href, action, actionLabel, onAction }) {
   return (
     <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-secondary">
-      <span className="grid h-7 w-9 shrink-0 place-items-center rounded border bg-secondary font-mono text-[9px] font-semibold text-muted-foreground">
+      <span className="grid h-7 w-9 shrink-0 place-items-center rounded border bg-secondary font-mono text-[0.5625rem] font-semibold text-muted-foreground">
         {label}
       </span>
       <div className="min-w-0 flex-1">

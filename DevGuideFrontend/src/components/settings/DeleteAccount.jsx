@@ -48,7 +48,7 @@ export default function DeleteAccount() {
             aria-modal="true"
             aria-labelledby="delete-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-110 rounded-[0.875rem] border bg-secondary shadow-2xl"
+            className="w-full max-w-110 rounded-xl border bg-secondary shadow-2xl"
           >
             <h2 id="delete-title" className="px-5.5 pt-5 pb-1.5 text-base font-semibold">Delete your account?</h2>
             <div className="grid gap-3 px-5.5 pb-4 text-[0.8125rem] text-muted-foreground">
