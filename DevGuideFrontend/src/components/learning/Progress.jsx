@@ -1,3 +1,5 @@
+import LearningSection from "./LearningSection";
+
 const percent = (result) => (result.total > 0 ? (result.score / result.total) * 100 : 0);
 
 function linePoints(results) {
@@ -14,13 +16,11 @@ export default function Progress({ results }) {
   const end = points[points.length - 1];
 
   return (
-    <section className="mb-6.5">
-      <h2 className="mb-2.5 text-[0.78125rem] font-medium text-muted-foreground">Progress</h2>
-
+    <LearningSection title="Progress">
       {recent.length === 0 ? (
-        <p className="text-[0.8125rem] text-muted-foreground">No quiz results yet.</p>
+        <p className="py-1 text-[0.8125rem] text-muted-foreground">No quiz results yet.</p>
       ) : (
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3.5 py-1.5">
           <div>
             <b className="block text-xl leading-tight font-semibold tracking-tight">{average}%</b>
             <small className="text-xs text-muted-foreground">
@@ -41,6 +41,6 @@ export default function Progress({ results }) {
           )}
         </div>
       )}
-    </section>
+    </LearningSection>
   );
 }

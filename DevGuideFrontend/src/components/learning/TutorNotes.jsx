@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { forgetNote, getNotes } from "../../api/learning";
+import LearningSection from "./LearningSection";
 
 export default function TutorNotes() {
   const [notes, setNotes] = useState([]);
@@ -17,11 +18,9 @@ export default function TutorNotes() {
   };
 
   return (
-    <section className="mb-6.5">
-      <h2 className="mb-2.5 text-[0.78125rem] font-medium text-muted-foreground">Your tutor remembers</h2>
-
+    <LearningSection title="Your tutor remembers">
       {notes.length === 0 && (
-        <p className="text-[0.8125rem] text-muted-foreground">Nothing yet. Your tutor learns as you chat.</p>
+        <p className="py-1 text-[0.8125rem] text-muted-foreground">Nothing yet. Your tutor learns as you chat.</p>
       )}
 
       {notes.map((note) => (
@@ -37,6 +36,6 @@ export default function TutorNotes() {
           </button>
         </div>
       ))}
-    </section>
+    </LearningSection>
   );
 }

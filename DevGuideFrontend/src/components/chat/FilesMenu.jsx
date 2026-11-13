@@ -24,7 +24,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
   return (
     <div className="relative">
       <button onClick={toggle} aria-expanded={open}
-              className="inline-flex h-8 items-center gap-1.75 rounded-lg border bg-secondary px-3 text-[13px] font-medium hover:border-muted-foreground/40">
+              className="inline-flex h-8 items-center gap-1.75 rounded-lg px-2.5 text-[13px] font-medium text-muted-foreground hover:bg-card hover:text-foreground aria-expanded:bg-card aria-expanded:text-foreground">
         <FileText className="size-4" /> Files
         <span className="text-xs text-muted-foreground">{pdfs.length}</span>
       </button>

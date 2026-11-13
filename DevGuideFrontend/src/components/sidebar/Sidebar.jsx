@@ -14,7 +14,7 @@ export default function Sidebar({ chats, activeId, onSettings, onSelect, onNew, 
   const name = user.name || user.email;
 
   return (
-    <aside className="flex min-h-0 flex-col border-r bg-secondary">
+    <aside className="flex min-h-0 flex-col bg-secondary">
       <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[15px] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
         DevGuide AI
