@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getPreferences, updatePreferences } from "../api/user";
+import { useAuth } from "../context/AuthContext";
 import { AdvancedAvatar, BeginnerAvatar, IntermediateAvatar } from "../components/welcome/LevelAvatars";
+import { markWelcomeSeen } from "../components/welcome/welcomeSeen";
 
 const LEVELS = [
   {
@@ -46,10 +49,29 @@ function LevelCard({ level, checked, onPick }) {
 }
 
 export default function Welcome() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [level, setLevel] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const finish = () => {
+    markWelcomeSeen(user.email);
+    navigate("/", { replace: true });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const preferences = await getPreferences();
+      await updatePreferences({ ...preferences, experienceLevel: level });
+      finish();
+    } catch {
+      setError("Could not save your level. Try again");
+      setSaving(false);
+    }
   };
 
   return (
@@ -78,8 +100,11 @@ export default function Welcome() {
           </fieldset>
 
           <div className="grid w-full max-w-80 justify-items-center gap-4">
-            <Button type="submit" className="h-10 w-full" disabled={!level}>Continue</Button>
-            <Link to="/" className="rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ring">
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="h-10 w-full" disabled={!level || saving}>
+              {saving ? "Saving…" : "Continue"}
+            </Button>
+            <Link to="/" replace onClick={() => markWelcomeSeen(user.email)} className="rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-ring">
               Skip for now
             </Link>
           </div>
