@@ -21,6 +21,7 @@ export default function StudyDesk() {
   const [learningVersion, setLearningVersion] = useState(0);
   const [chatsFailed, setChatsFailed] = useState(false);
   const [chatsAttempt, setChatsAttempt] = useState(0);
+  const [chatError, setChatError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -45,9 +46,14 @@ export default function StudyDesk() {
   };
 
   const newChat = async () => {
-    const chat = await chatsApi.createChat("New chat");
-    setChats([chat, ...chats]);
-    openChat(chat.id);
+    setChatError("");
+    try {
+      const chat = await chatsApi.createChat("New chat");
+      setChats([chat, ...chats]);
+      openChat(chat.id);
+    } catch {
+      setChatError("Could not create a new chat. Try again.");
+    }
   };
 
   const reviewTopic = async (concept) => {
@@ -59,14 +65,24 @@ export default function StudyDesk() {
   };
 
   const renameChat = async (id, title) => {
-    const updated = await chatsApi.renameChat(id, title);
-    setChats(chats.map((chat) => (chat.id === id ? updated : chat)));
+    setChatError("");
+    try {
+      const updated = await chatsApi.renameChat(id, title);
+      setChats(chats.map((chat) => (chat.id === id ? updated : chat)));
+    } catch {
+      setChatError("Could not rename this chat. Try again.");
+    }
   };
 
   const deleteChat = async (id) => {
-    await chatsApi.deleteChat(id);
-    setChats(chats.filter((chat) => chat.id !== id));
-    if (activeId === id) setActiveId(null);
+    setChatError("");
+    try {
+      await chatsApi.deleteChat(id);
+      setChats(chats.filter((chat) => chat.id !== id));
+      if (activeId === id) setActiveId(null);
+    } catch {
+      setChatError("Could not delete this chat. Try again.");
+    }
   };
 
   const activeChat = chats.find((chat) => chat.id === activeId);
@@ -108,6 +124,7 @@ export default function StudyDesk() {
         chats={chats}
         chatsFailed={chatsFailed}
         onRetryChats={retryChats}
+        chatError={chatError}
         activeId={onSettings ? null : activeId}
         onSettings={onSettings}
         onSelect={openChat}

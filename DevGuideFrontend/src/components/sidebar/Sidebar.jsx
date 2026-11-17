@@ -4,7 +4,7 @@ import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
-export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChats, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
+export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChats, chatError, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
 
@@ -40,6 +40,8 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChat
           className="w-full bg-transparent text-[0.8125rem] text-foreground outline-none placeholder:text-muted-foreground"
         />
       </label>
+
+      {chatError && <p className="mx-4.5 py-1 text-[0.8125rem] text-destructive">{chatError}</p>}
 
       <ChatList
         chats={shownChats}
