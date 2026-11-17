@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getReviews } from "../../api/learning";
+import { Skeleton } from "@/components/ui/skeleton";
+import LoadError from "./LoadError";
 import LearningSection from "./LearningSection";
 import { topicName } from "./topicName";
 
@@ -12,18 +14,64 @@ function withLabel(review, now) {
   return { ...review, label: `${score}, next review in ${days} ${days === 1 ? "day" : "days"}` };
 }
 
+function ReviewSkeleton() {
+  return (
+    <div aria-busy="true">
+      <span className="sr-only">Loading reviews…</span>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex items-center gap-2.5 border-b py-2.25 last:border-0">
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3.5 w-2/3" />
+            <Skeleton className="h-3 w-5/6" />
+          </div>
+          {i === 0 && <Skeleton className="h-7 w-20 shrink-0" />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ReviewToday({ onReview }) {
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let ignore = false;
     getReviews()
       .then((list) => {
+        if (ignore) return;
         const now = Date.now();
         const dueFirst = [...list].sort((a, b) => b.due - a.due);
         setReviews(dueFirst.slice(0, 5).map((review) => withLabel(review, now)));
       })
-      .catch(() => setReviews([]));
-  }, []);
+      .catch(() => !ignore && setFailed(true));
+    return () => {
+      ignore = true;
+    };
+  }, [attempt]);
+
+  const retry = () => {
+    setFailed(false);
+    setReviews(null);
+    setAttempt((n) => n + 1);
+  };
+
+  if (failed) {
+    return (
+      <LearningSection title="Review today">
+        <LoadError what="your reviews" onRetry={retry} />
+      </LearningSection>
+    );
+  }
+
+  if (!reviews) {
+    return (
+      <LearningSection title="Review today">
+        <ReviewSkeleton />
+      </LearningSection>
+    );
+  }
 
   return (
     <LearningSection title="Review today">
