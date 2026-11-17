@@ -1,4 +1,6 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import LearningSection from "./LearningSection";
+import LoadError from "./LoadError";
 
 const percent = (result) => (result.total > 0 ? (result.score / result.total) * 100 : 0);
 
@@ -7,7 +9,36 @@ function linePoints(results) {
   return results.map((result, i) => ({ x: (i / last) * 100, y: 26 - (percent(result) * 24) / 100 }));
 }
 
-export default function Progress({ results }) {
+function ProgressSkeleton() {
+  return (
+    <div aria-busy="true" className="flex items-center gap-3.5 py-1.5">
+      <span className="sr-only">Loading progress…</span>
+      <div className="space-y-1.5">
+        <Skeleton className="h-6 w-12" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <Skeleton className="h-7 flex-1" />
+    </div>
+  );
+}
+
+export default function Progress({ results, failed, onRetry }) {
+  if (failed) {
+    return (
+      <LearningSection title="Progress">
+        <LoadError what="your progress" onRetry={onRetry} />
+      </LearningSection>
+    );
+  }
+
+  if (!results) {
+    return (
+      <LearningSection title="Progress">
+        <ProgressSkeleton />
+      </LearningSection>
+    );
+  }
+
   const recent = results.slice(0, 9).reverse();
   const score = recent.reduce((sum, r) => sum + r.score, 0);
   const total = recent.reduce((sum, r) => sum + r.total, 0);

@@ -7,13 +7,25 @@ import ReviewToday from "./ReviewToday";
 import TutorNotes from "./TutorNotes";
 
 export default function LearningRail({ onReview, onClose }) {
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let ignore = false;
     getProgress()
-      .then(setResults)
-      .catch(() => setResults([]));
-  }, []);
+      .then((list) => !ignore && setResults(list))
+      .catch(() => !ignore && setFailed(true));
+    return () => {
+      ignore = true;
+    };
+  }, [attempt]);
+
+  const retry = () => {
+    setFailed(false);
+    setResults(null);
+    setAttempt((n) => n + 1);
+  };
 
   return (
     <aside className="fixed inset-y-0 right-0 z-40 min-h-0 w-78 max-w-full overflow-auto bg-secondary px-4.5 py-5 duration-200 slide-in-from-right max-[68.75rem]:motion-safe:animate-in min-[68.75rem]:static min-[68.75rem]:w-auto">
@@ -28,8 +40,8 @@ export default function LearningRail({ onReview, onClose }) {
         </button>
       </div>
       <ReviewToday onReview={onReview} />
-      <Progress results={results} />
-      <NeedsPractice results={results} />
+      <Progress results={results} failed={failed} onRetry={retry} />
+      <NeedsPractice results={results} failed={failed} onRetry={retry} />
       <TutorNotes />
     </aside>
   );

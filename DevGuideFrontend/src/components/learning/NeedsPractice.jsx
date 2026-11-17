@@ -1,4 +1,6 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import LearningSection from "./LearningSection";
+import LoadError from "./LoadError";
 import { topicName } from "./topicName";
 
 function weakestTopics(results) {
@@ -12,7 +14,38 @@ function weakestTopics(results) {
     .slice(0, 3);
 }
 
-export default function NeedsPractice({ results }) {
+function NeedsPracticeSkeleton() {
+  return (
+    <div aria-busy="true">
+      <span className="sr-only">Loading topics…</span>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="grid grid-cols-[1fr_3.75rem_1.875rem] items-center gap-2.5 py-2">
+          <Skeleton className="h-3 w-3/4" />
+          <Skeleton className="h-1" />
+          <Skeleton className="h-3" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function NeedsPractice({ results, failed, onRetry }) {
+  if (failed) {
+    return (
+      <LearningSection title="Needs more practice">
+        <LoadError what="your topics" onRetry={onRetry} />
+      </LearningSection>
+    );
+  }
+
+  if (!results) {
+    return (
+      <LearningSection title="Needs more practice">
+        <NeedsPracticeSkeleton />
+      </LearningSection>
+    );
+  }
+
   const weakest = weakestTopics(results);
 
   return (
