@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import CodeBlock from "./CodeBlock";
 
 let mermaidPromise = null;
@@ -11,6 +11,13 @@ const FLOW_CLASSES = {
 };
 
 const FLOWCHART_START = /^\s*(?:---[\s\S]*?---\s*)?(?:%%.*\s*)*(?:flowchart|graph)\b/;
+
+const MIN_PHONE_SCALE = 0.75;
+
+const isNarrow = () => window.matchMedia("(max-width: 40rem)").matches;
+
+const toVertical = (code) =>
+  code.replace(/^(\s*(?:---[\s\S]*?---\s*)?(?:%%.*\s*)*(?:flowchart|graph))\s+(?:LR|RL)\b/, "$1 TD");
 
 const quote = (label) => `"${label.replace(/"/g, "#quot;")}"`;
 
@@ -108,6 +115,7 @@ function loadMermaid() {
 export default function MermaidBlock({ code }) {
   const id = "mermaid-" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const [svg, setSvg] = useState("");
+  const boxRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,9 +123,10 @@ export default function MermaidBlock({ code }) {
     const draw = async () => {
       try {
         const mermaid = await loadMermaid();
-        let diagram = addFlowColors(code);
+        const source = isNarrow() ? toVertical(code) : code;
+        let diagram = addFlowColors(source);
         if (!(await mermaid.parse(diagram, { suppressErrors: true }))) {
-          diagram = addFlowColors(quoteLabels(code));
+          diagram = addFlowColors(quoteLabels(source));
         }
         const valid = await mermaid.parse(diagram, { suppressErrors: true });
         if (valid) diagram = await addRoleColors(mermaid, diagram);
@@ -134,10 +143,22 @@ export default function MermaidBlock({ code }) {
     };
   }, [code, id]);
 
+  useEffect(() => {
+    const box = boxRef.current;
+    const drawing = box?.querySelector("svg");
+    if (!drawing || !isNarrow()) return;
+    const natural = drawing.viewBox.baseVal.width;
+    const padding = parseFloat(getComputedStyle(box).paddingLeft) * 2;
+    const width = Math.max(natural * MIN_PHONE_SCALE, Math.min(natural, box.clientWidth - padding));
+    drawing.style.width = `${width / 16}rem`;
+    drawing.style.height = "auto";
+  }, [svg]);
+
   if (!svg) return <CodeBlock language="mermaid" code={code} />;
 
   return (
     <div
+      ref={boxRef}
       className="my-3 overflow-auto rounded-lg border bg-secondary p-4 [&_svg]:mx-auto"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
