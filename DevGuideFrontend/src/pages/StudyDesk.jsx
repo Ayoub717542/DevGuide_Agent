@@ -19,10 +19,24 @@ export default function StudyDesk() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [firstQuestion, setFirstQuestion] = useState(null);
   const [learningVersion, setLearningVersion] = useState(0);
+  const [chatsFailed, setChatsFailed] = useState(false);
+  const [chatsAttempt, setChatsAttempt] = useState(0);
 
   useEffect(() => {
-    chatsApi.getChats().then(setChats);
-  }, []);
+    let ignore = false;
+    chatsApi
+      .getChats()
+      .then((list) => !ignore && setChats(list))
+      .catch(() => !ignore && setChatsFailed(true));
+    return () => {
+      ignore = true;
+    };
+  }, [chatsAttempt]);
+
+  const retryChats = () => {
+    setChatsFailed(false);
+    setChatsAttempt((n) => n + 1);
+  };
 
   const openChat = (id) => {
     setActiveId(id);
@@ -92,6 +106,8 @@ export default function StudyDesk() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         chats={chats}
+        chatsFailed={chatsFailed}
+        onRetryChats={retryChats}
         activeId={onSettings ? null : activeId}
         onSettings={onSettings}
         onSelect={openChat}

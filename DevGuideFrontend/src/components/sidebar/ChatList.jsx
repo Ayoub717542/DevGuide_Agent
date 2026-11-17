@@ -1,3 +1,4 @@
+import LoadError from "../learning/LoadError";
 import ChatRow from "./ChatRow";
 
 const GROUPS = ["Today", "This week", "Older"];
@@ -10,7 +11,15 @@ function groupOf(createdAt) {
   return "Older";
 }
 
-export default function ChatList({ chats, activeId, onSelect, onRename, onDelete }) {
+export default function ChatList({ chats, failed, onRetry, activeId, onSelect, onRename, onDelete }) {
+  if (failed) {
+    return (
+      <div className="flex-1 px-4.5 py-2">
+        <LoadError what="your chats" onRetry={onRetry} />
+      </div>
+    );
+  }
+
   if (chats.length === 0) {
     return <p className="flex-1 px-4.5 py-3 text-sm text-muted-foreground">No chats yet.</p>;
   }
