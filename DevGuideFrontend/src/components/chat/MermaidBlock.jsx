@@ -29,6 +29,30 @@ function addFlowColors(code) {
   return [code, ...missing.map(([name, style]) => `classDef ${name} ${style}`)].join("\n");
 }
 
+async function addRoleColors(mermaid, diagram) {
+  if (!FLOWCHART_START.test(diagram)) return diagram;
+  try {
+    const { db } = await mermaid.mermaidAPI.getDiagramFromText(diagram);
+    const all = db.getVertices();
+    const vertices = all instanceof Map ? [...all.values()] : Object.values(all);
+    const edges = db.getEdges();
+    const sources = new Set(edges.map((edge) => edge.start));
+    const targets = new Set(edges.map((edge) => edge.end));
+    const roleOf = (vertex) => {
+      if (vertex.type === "diamond") return "decision";
+      if (sources.has(vertex.id) && !targets.has(vertex.id)) return "start";
+      return "step";
+    };
+    const lines = vertices
+      .filter((vertex) => vertex.classes.length === 0)
+      .map((vertex) => `class ${vertex.id} ${roleOf(vertex)}`);
+    const colored = [diagram, ...lines].join("\n");
+    return (await mermaid.parse(colored, { suppressErrors: true })) ? colored : diagram;
+  } catch {
+    return diagram;
+  }
+}
+
 function loadMermaid() {
   if (!mermaidPromise) {
     mermaidPromise = import("mermaid").then(({ default: mermaid }) => {
@@ -96,6 +120,7 @@ export default function MermaidBlock({ code }) {
           diagram = addFlowColors(quoteLabels(code));
         }
         const valid = await mermaid.parse(diagram, { suppressErrors: true });
+        if (valid) diagram = await addRoleColors(mermaid, diagram);
         const result = valid ? await mermaid.render(id, diagram) : null;
         if (!cancelled) setSvg(result ? result.svg : "");
       } catch {
