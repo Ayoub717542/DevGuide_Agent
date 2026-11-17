@@ -127,8 +127,13 @@ export default function ChatView({
   };
 
   const deletePdf = async (documentId) => {
-    await documentsApi.deletePdf(documentId);
-    await loadPdfs();
+    setError("");
+    try {
+      await documentsApi.deletePdf(documentId);
+      await loadPdfs();
+    } catch {
+      setError("Could not delete this PDF. Try again.");
+    }
   };
 
   return (
