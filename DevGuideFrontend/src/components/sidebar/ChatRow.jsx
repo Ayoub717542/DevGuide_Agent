@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ChatRow({ chat, active, onSelect, onRename, onDelete }) {
   const [editing, setEditing] = useState(false);
@@ -52,12 +53,12 @@ export default function ChatRow({ chat, active, onSelect, onRename, onDelete }) 
         {chat.title}
       </button>
       <span className="absolute top-1/2 right-1.5 flex -translate-y-1/2 gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
-        <button onClick={startEditing} aria-label="Rename chat" className="rounded p-1 pointer-coarse:p-1.5text-muted-foreground hover:bg-border hover:text-foreground">
-          <Pencil className="size-3.5" />
-        </button>
-        <button onClick={remove} aria-label="Delete chat" className="rounded p-1 pointer-coarse:p-1.5text-muted-foreground hover:bg-border hover:text-destructive">
-          <Trash2 className="size-3.5" />
-        </button>
+        <Button variant="ghost" size="icon-xs" onClick={startEditing} aria-label={`Rename "${chat.title}"`} className="text-muted-foreground hover:bg-border pointer-coarse:size-8">
+          <Pencil className="size-3.5" aria-hidden="true" />
+        </Button>
+        <Button variant="ghost" size="icon-xs" onClick={remove} aria-label={`Delete "${chat.title}"`} className="text-muted-foreground hover:bg-border hover:text-destructive pointer-coarse:size-8">
+          <Trash2 className="size-3.5" aria-hidden="true" />
+        </Button>
       </span>
     </div>
   );
