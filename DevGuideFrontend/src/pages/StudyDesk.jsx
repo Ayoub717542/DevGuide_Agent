@@ -148,7 +148,7 @@ export default function StudyDesk() {
         <main className="grid place-items-center p-6 text-center">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">What do you want to learn today?</h2>
-            <p className="mt-1.5 text-muted-foreground">Pick a chat on the left or start a new one.</p>
+            <p className="mt-1.5 text-muted-foreground">Pick a chat or start a new one</p>
           </div>
         </main>
       )}

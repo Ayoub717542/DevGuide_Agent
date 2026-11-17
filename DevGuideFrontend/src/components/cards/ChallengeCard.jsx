@@ -2,7 +2,7 @@ import { useState } from "react";
 import { submitChallenge } from "../../api/chats";
 
 const MESSAGES = {
-  ok: "Correct! Your code works.",
+  ok: "Correct. Your code works.",
   error: "Your code has an error. Read the message below and fix it.",
   timeout: "Your code took too long. Check for a loop that never ends.",
 };

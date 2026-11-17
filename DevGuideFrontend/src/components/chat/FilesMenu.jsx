@@ -46,7 +46,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
                          href={pdf.fileUrl} action={<X className="size-3.5" />} actionLabel={`Delete ${pdf.filename}`}
                          onAction={() => remove(pdf)} />
               ))}
-              {pdfs.length === 0 && <p className="px-2 py-1.5 text-muted-foreground">No PDFs yet.</p>}
+              {pdfs.length === 0 && <p className="px-2 py-1.5 text-muted-foreground">No PDFs yet</p>}
 
               <div className="px-2 pt-3 pb-1.5 text-xs text-muted-foreground">Made by your tutor ({madeFiles.length})</div>
               {madeFiles.map((file) => (

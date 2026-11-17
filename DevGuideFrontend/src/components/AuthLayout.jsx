@@ -88,7 +88,7 @@ export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, foo
         </form>
 
         <div className="hidden flex-col justify-end gap-4 border-l bg-secondary p-8 md:flex">
-          <h2 className="text-xl font-semibold">Your AI pair for learning to code.</h2>
+          <h2 className="text-xl font-semibold">Your AI pair for learning to code</h2>
           <ul className="grid gap-3 text-sm text-muted-foreground">
             {FEATURES.map((feature) => (
               <li key={feature} className="flex gap-2">

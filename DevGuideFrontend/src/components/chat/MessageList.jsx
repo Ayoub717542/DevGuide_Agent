@@ -47,7 +47,7 @@ export default function MessageList({
         {empty && (
           <div className="pt-[12vh] text-center">
             <h2 className="text-[1.375rem] font-semibold tracking-tight">What do you want to learn today?</h2>
-            <p className="mt-1.5 mb-5.5 text-muted-foreground">Ask about your code, a concept, or your GitHub repo.</p>
+            <p className="mt-1.5 mb-5.5 text-muted-foreground">Ask about your code, a concept, or your GitHub repo</p>
             <div className="flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((text) => (
                 <button

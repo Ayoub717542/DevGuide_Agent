@@ -21,7 +21,7 @@ export default function AccountTab() {
         </div>
       </div>
 
-      <Block title="Profile" lead="Your tutor uses your name when it talks to you.">
+      <Block title="Profile" lead="Your tutor uses your name when it talks to you">
         <NameRow />
         <EmailRow />
       </Block>

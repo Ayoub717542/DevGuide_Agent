@@ -77,7 +77,7 @@ export default function AppsTab() {
           connected={user.githubConnected}
           text={
             user.githubConnected
-              ? "Your tutor can read your repositories when you ask."
+              ? "Your tutor can read your repositories when you ask"
               : "Log in with GitHub to connect. It must use the same email as this account."
           }
         >
@@ -98,7 +98,7 @@ export default function AppsTab() {
           connected={user.trelloConnected}
           text={
             user.trelloConnected
-              ? "Your tutor can create cards and checklists when you ask."
+              ? "Your tutor can create cards and checklists when you ask"
               : "You need a Trello workspace. New to Trello? Create one at trello.com first."
           }
         >
