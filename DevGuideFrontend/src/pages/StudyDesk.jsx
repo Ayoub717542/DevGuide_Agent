@@ -22,13 +22,15 @@ export default function StudyDesk() {
   const [chatsFailed, setChatsFailed] = useState(false);
   const [chatsAttempt, setChatsAttempt] = useState(0);
   const [chatError, setChatError] = useState("");
+  const [chatsLoading, setChatsLoading] = useState(true);
 
   useEffect(() => {
     let ignore = false;
     chatsApi
       .getChats()
       .then((list) => !ignore && setChats(list))
-      .catch(() => !ignore && setChatsFailed(true));
+      .catch(() => !ignore && setChatsFailed(true))
+      .finally(() => !ignore && setChatsLoading(false));
     return () => {
       ignore = true;
     };
@@ -36,6 +38,7 @@ export default function StudyDesk() {
 
   const retryChats = () => {
     setChatsFailed(false);
+    setChatsLoading(true);
     setChatsAttempt((n) => n + 1);
   };
 
@@ -123,6 +126,7 @@ export default function StudyDesk() {
         onClose={() => setSidebarOpen(false)}
         chats={chats}
         chatsFailed={chatsFailed}
+        chatsLoading={chatsLoading}
         onRetryChats={retryChats}
         chatError={chatError}
         activeId={onSettings ? null : activeId}
