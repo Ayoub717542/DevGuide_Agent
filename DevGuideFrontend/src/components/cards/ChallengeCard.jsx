@@ -61,7 +61,7 @@ export default function ChallengeCard({ challenge, onScoreSaved }) {
         spellCheck={false}
         rows={Math.max(6, code.split("\n").length + 1)}
         aria-label="Your code"
-        className="block w-full resize-y border-y bg-[#0A0D12] px-4.5 py-3.5 font-mono text-[0.8125rem] leading-relaxed outline-none"
+        className="block w-full resize-y border-y bg-code px-4.5 py-3.5 font-mono text-[0.8125rem] leading-relaxed outline-none"
       />
 
       {result && (
