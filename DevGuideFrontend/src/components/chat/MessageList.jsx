@@ -35,6 +35,10 @@ export default function MessageList({
     if (nearBottomRef.current || justAsked) endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, answer, pending]);
 
+  useEffect(() => {
+    if (error) endRef.current?.scrollIntoView({ block: "end" });
+  }, [error]);
+
   const empty = messages.length === 0 && answer === null;
 
   return (
