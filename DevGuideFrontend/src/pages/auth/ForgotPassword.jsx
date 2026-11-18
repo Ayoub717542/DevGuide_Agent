@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import * as client from "../../api/Client";
 import AuthLayout, { Field } from "../../components/AuthLayout";
 
@@ -21,7 +20,7 @@ export default function ForgotPassword() {
       onSubmit={handleSubmit}
       social={false}
       notice={sent ? "If this email has an account, we sent a reset link. Check your inbox." : ""}
-      footer={<>Remembered it? <Link to="/login" className="text-link hover:underline">Log in</Link></>}
+      topLink={{ text: "Remembered it?", label: "Log in", to: "/login" }}
     >
       <Field id="email" label="Email" type="email" placeholder="you@example.com"
              value={email} onChange={(e) => setEmail(e.target.value)} />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import * as client from "../../api/Client";
 import AuthLayout, { Field } from "../../components/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
@@ -25,7 +25,7 @@ export default function Register() {
       subtitle="Start learning from your own code"
       submitLabel="Create account"
       onSubmit={handleSubmit}
-      footer={<>Have an account? <Link to="/login" className="text-link hover:underline">Log in</Link></>}
+      topLink={{ text: "Have an account?", label: "Log in", to: "/login" }}
     >
       <Field id="name" label="Name" minLength={2}
              value={name} onChange={(e) => setName(e.target.value)} />

@@ -25,13 +25,13 @@ export default function Login() {
       onSubmit={handleSubmit}
       initialError={location.state?.error}
       notice={location.state?.notice}
-      footer={<>No account? <Link to="/register" className="text-link hover:underline">Create one</Link></>}
+      topLink={{ text: "Don't have an account?", label: "Sign up", to: "/register" }}
     >
       <Field id="email" label="Email" type="email" placeholder="you@example.com"
              value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field id="password" label="Password" type="password"
              value={password} onChange={(e) => setPassword(e.target.value)} />
-      <Link to="/forgot-password" className="-mt-2 text-sm text-link hover:underline">Forgot password?</Link>
+      <Link to="/forgot-password" className="text-center text-sm text-link hover:underline">Forgot password?</Link>
     </AuthLayout>
   );
 }
