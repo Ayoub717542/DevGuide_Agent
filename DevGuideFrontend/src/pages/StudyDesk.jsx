@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, PanelRight } from "lucide-react";
 import AuthBackground from "../components/AuthBackground";
 import ChatView from "../components/chat/ChatView";
 import Composer from "../components/chat/Composer";
@@ -37,6 +37,16 @@ export default function StudyDesk() {
       ignore = true;
     };
   }, [chatsAttempt]);
+
+  useEffect(() => {
+    const closeOnEscape = (e) => {
+      if (e.key !== "Escape") return;
+      setSidebarOpen(false);
+      if (!isWide()) setRailOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
   const retryChats = () => {
     setChatsFailed(false);
@@ -106,37 +116,52 @@ export default function StudyDesk() {
 
   const activeChat = chats.find((chat) => chat.id === activeId);
   const showRail = railOpen && !onSettings;
+  const isEmpty = !onSettings && !activeChat;
 
   return (
     <div
-      className={`grid h-dvh grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
-        showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
-      }`}
+      className={`relative grid h-dvh grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
+        isEmpty ? "grid-rows-[minmax(0,1fr)]" : "grid-rows-[auto_minmax(0,1fr)]"
+      } ${showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""}`}
     >
-      <div className="flex h-12 items-center gap-2 border-b px-2 md:hidden">
+      <div
+        className={`flex h-12 items-center px-2 ${
+          isEmpty ? "pointer-events-none absolute inset-x-0 top-0 z-20 min-[68.75rem]:hidden" : "border-b md:hidden"
+        }`}
+      >
         <button
           onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
+          aria-label="Open chat list"
+          aria-expanded={sidebarOpen}
+          className="pointer-events-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground md:hidden"
         >
           <Menu className="size-5" />
         </button>
-        <span className="text-sm font-semibold">DevGuide</span>
+        {isEmpty && (
+          <button
+            onClick={() => setRailOpen(true)}
+            aria-label="Open My learning"
+            aria-expanded={showRail}
+            className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          >
+            <PanelRight className="size-5" />
+          </button>
+        )}
       </div>
-      {sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(false)}
-          aria-label="Close menu"
-          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in md:hidden"
-        />
-      )}
-      {showRail && (
-        <button
-          onClick={() => setRailOpen(false)}
-          aria-label="Close My learning"
-          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in min-[68.75rem]:hidden"
-        />
-      )}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity duration-200 motion-reduce:transition-none md:hidden ${
+          sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <div
+        onClick={() => setRailOpen(false)}
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity duration-200 motion-reduce:transition-none min-[68.75rem]:hidden ${
+          showRail ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -178,8 +203,8 @@ export default function StudyDesk() {
           </div>
         </main>
       )}
-      {showRail && (
-        <LearningRail key={learningVersion} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
+      {!onSettings && (
+        <LearningRail key={learningVersion} open={showRail} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
       )}
     </div>
   );
