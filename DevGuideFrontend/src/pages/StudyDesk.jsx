@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 import AuthBackground from "../components/AuthBackground";
 import ChatView from "../components/chat/ChatView";
+import Composer from "../components/chat/Composer";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
 import Sidebar from "../components/sidebar/Sidebar";
@@ -60,10 +61,24 @@ export default function StudyDesk() {
     }
   };
 
+  const startChat = async ({ content, hintMode, devMode }) => {
+    setChatError("");
+    try {
+      const chat = await chatsApi.createChat(content.slice(0, 40));
+      setChats([chat, ...chats]);
+      setFirstQuestion({ content, hintMode, devMode });
+      openChat(chat.id);
+      return true;
+    } catch {
+      setChatError("Could not start a new chat. Try again.");
+      return false;
+    }
+  };
+
   const reviewTopic = async (concept) => {
     const chat = await chatsApi.createChat(`Review: ${topicName(concept)}`);
     setChats([chat, ...chats]);
-    setFirstQuestion(`Quiz me on ${topicName(concept)}`);
+    setFirstQuestion({ content: `Quiz me on ${topicName(concept)}` });
     setActiveId(chat.id);
     if (!isWide()) setRailOpen(false);
   };
@@ -150,11 +165,16 @@ export default function StudyDesk() {
           onScoreSaved={() => setLearningVersion((v) => v + 1)}
         />
       ) : (
-        <main className="relative grid place-items-center overflow-hidden p-6 text-center">
+        <main className="relative grid place-items-center overflow-hidden px-2 py-6">
           <AuthBackground className="absolute opacity-30 lg:opacity-45" />
-          <div className="relative">
-            <h2 className="text-2xl font-medium">What do you want to learn today?</h2>
-            <p className="mt-1.5 text-muted-foreground">Pick a chat or start a new one</p>
+          <div className="relative w-full">
+            <div className="px-4 text-center">
+              <h2 className="text-2xl font-medium">What do you want to learn today?</h2>
+              <p className="mt-1.5 text-muted-foreground">Ask a question or pick a chat</p>
+            </div>
+            <div className="mt-4">
+              <Composer onSend={startChat} />
+            </div>
           </div>
         </main>
       )}

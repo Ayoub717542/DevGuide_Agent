@@ -73,7 +73,7 @@ export default function ChatView({
   const askFirstQuestion = useEffectEvent(() => {
     if (!firstQuestion) return;
     onFirstQuestionSent();
-    send({ content: firstQuestion });
+    send(firstQuestion);
   });
 
   useEffect(() => {
