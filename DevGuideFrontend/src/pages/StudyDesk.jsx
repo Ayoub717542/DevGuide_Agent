@@ -120,16 +120,12 @@ export default function StudyDesk() {
 
   return (
     <div
-      className={`relative grid h-dvh grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
-        onSettings ? "grid-rows-[auto_minmax(0,1fr)]" : "grid-rows-[minmax(0,1fr)]"
-      } ${showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""}`}
+      className={`relative grid h-dvh grid-cols-1 grid-rows-[minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] ${
+        showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
+      }`}
     >
-      {(isEmpty || onSettings) && (
-        <div
-          className={`flex h-12 items-center px-2 ${
-            isEmpty ? "pointer-events-none absolute inset-x-0 top-0 z-20 min-[68.75rem]:hidden" : "border-b md:hidden"
-          }`}
-        >
+      {isEmpty && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-12 items-center px-2 min-[68.75rem]:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open chat list"
@@ -138,16 +134,14 @@ export default function StudyDesk() {
           >
             <Menu className="size-5" />
           </button>
-          {isEmpty && (
-            <button
-              onClick={() => setRailOpen(true)}
-              aria-label="Open My learning"
-              aria-expanded={showRail}
-              className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
-            >
-              <PanelRight className="size-5" />
-            </button>
-          )}
+          <button
+            onClick={() => setRailOpen(true)}
+            aria-label="Open My learning"
+            aria-expanded={showRail}
+            className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          >
+            <PanelRight className="size-5" />
+          </button>
         </div>
       )}
       <div
@@ -180,7 +174,7 @@ export default function StudyDesk() {
         onDelete={deleteChat}
       />
       {onSettings ? (
-        <Settings />
+        <Settings menuOpen={sidebarOpen} onOpenMenu={() => setSidebarOpen(true)} />
       ) : activeChat ? (
         <ChatView
           key={activeChat.id}
