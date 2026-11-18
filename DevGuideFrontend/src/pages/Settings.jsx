@@ -25,17 +25,17 @@ export default function Settings({ menuOpen, onOpenMenu }) {
           >
             <Menu className="size-5" />
           </button>
-          <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
+          <h1 className="text-xl font-medium">Settings</h1>
         </div>
 
-        <div role="tablist" aria-label="Settings" className="mt-4.5 flex gap-1 border-b">
+        <div role="tablist" aria-label="Settings" className="mt-4 flex gap-1 border-b">
           {TABS.map((item) => (
             <button
               key={item.id}
               role="tab"
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              className={`relative px-3 pt-2.5 pb-3 text-[0.84375rem] font-medium ${
+              className={`relative px-3 py-3 text-sm font-medium ${
                 tab === item.id
                   ? "text-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-sm after:bg-success"
                   : "text-muted-foreground hover:text-foreground"

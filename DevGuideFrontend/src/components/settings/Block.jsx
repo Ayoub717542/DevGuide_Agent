@@ -1,8 +1,8 @@
 export function Block({ title, lead, danger, children }) {
   return (
     <div className="mb-10">
-      <h2 className="text-[0.9375rem] font-semibold">{title}</h2>
-      <p className="mt-0.5 mb-3.5 max-w-[62ch] text-[0.84375rem] text-muted-foreground">{lead}</p>
+      <h2 className="text-[0.9375rem] font-medium">{title}</h2>
+      <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground">{lead}</p>
       <div className={`rounded-xl border bg-secondary ${danger ? "border-destructive/30" : ""}`}>{children}</div>
     </div>
   );

@@ -50,7 +50,7 @@ export default function PasswordBlock() {
       </Row>
 
       {open && (
-        <div className="grid gap-3 rounded-b-xl border-t bg-background px-5 pt-4 pb-4.5">
+        <div className="grid gap-3 rounded-b-xl border-t bg-background px-5 pt-4 pb-5">
           <label className="grid max-w-80 gap-1.5 text-[0.8125rem] text-muted-foreground">
             Current password
             <Input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />

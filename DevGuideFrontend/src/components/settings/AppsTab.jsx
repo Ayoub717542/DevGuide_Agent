@@ -64,8 +64,8 @@ export default function AppsTab() {
 
   return (
     <div>
-      <h2 className="text-[0.9375rem] font-semibold">Connected apps</h2>
-      <p className="mt-0.5 mb-3.5 max-w-[62ch] text-[0.84375rem] text-muted-foreground">
+      <h2 className="text-[0.9375rem] font-medium">Connected apps</h2>
+      <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground">
         Your tutor uses these only when you ask about them.
       </p>
       {message && <p className="mb-3 text-[0.8125rem]">{message}</p>}
@@ -114,7 +114,7 @@ export default function AppsTab() {
         </AppRow>
       </div>
 
-      <p className="mt-3.5 rounded-xl border bg-secondary px-4 py-3 text-[0.8125rem] text-muted-foreground">
+      <p className="mt-4 rounded-xl border bg-secondary px-4 py-3 text-[0.8125rem] text-muted-foreground">
         Your tutor never changes your Trello board on its own. Each change waits in the chat until you approve it.
       </p>
     </div>

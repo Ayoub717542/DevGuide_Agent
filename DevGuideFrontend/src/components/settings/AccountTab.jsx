@@ -11,13 +11,13 @@ export default function AccountTab() {
 
   return (
     <>
-      <div className="mb-5.5 flex items-center gap-4">
-        <div className="grid size-14 place-items-center rounded-full border bg-card text-[1.375rem] font-semibold">
+      <div className="mb-6 flex items-center gap-4">
+        <div className="grid size-14 place-items-center rounded-full border bg-card text-xl font-medium">
           {name[0].toUpperCase()}
         </div>
         <div>
-          <b className="block text-[1.0625rem] font-semibold">{name}</b>
-          <span className="text-[0.84375rem] text-muted-foreground">{user.email}</span>
+          <b className="block text-base font-medium">{name}</b>
+          <span className="text-sm text-muted-foreground">{user.email}</span>
         </div>
       </div>
 
