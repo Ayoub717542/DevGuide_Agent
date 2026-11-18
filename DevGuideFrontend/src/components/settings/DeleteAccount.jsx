@@ -37,7 +37,7 @@ export default function DeleteAccount() {
 
   return (
     <Block title="Delete account" lead="Removes your account and everything in it. This can't be undone." danger>
-      <Row title="Delete my account" help={help}>
+      <Row help={help}>
         <Button variant="destructive" onClick={() => setOpen(true)}>Delete account</Button>
       </Row>
 

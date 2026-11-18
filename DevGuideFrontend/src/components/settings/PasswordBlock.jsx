@@ -41,7 +41,7 @@ export default function PasswordBlock() {
 
   return (
     <Block title="Password" lead="Use at least 8 characters. You stay logged in after changing it.">
-      <Row title="Password" help={help}>
+      <Row help={help}>
         {!open && (
           <Button variant="outline" onClick={() => { setOpen(true); setDone(false); }}>
             Change password

@@ -12,10 +12,25 @@ export function Row({ title, help, children }) {
   return (
     <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,auto)] sm:items-center sm:gap-6 sm:px-5 [&+&]:border-t">
       <div>
-        <h3 className="text-sm font-medium">{title}</h3>
+        {title && <h3 className="text-sm font-medium">{title}</h3>}
         {help}
       </div>
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">{children}</div>
     </div>
+  );
+}
+
+const STATUS_DOT = {
+  success: "bg-success",
+  warning: "bg-warning",
+  muted: "bg-muted-foreground/60",
+};
+
+export function Status({ tone, children }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap text-muted-foreground">
+      <span className={`size-1.5 rounded-full ${STATUS_DOT[tone]}`} />
+      {children}
+    </span>
   );
 }
