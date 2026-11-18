@@ -9,7 +9,7 @@ export default function ChoiceRow({ title, options, value, onChange }) {
 
   return (
     <div className="px-5 py-4 [&+&]:border-t">
-      <h3 className="mb-3 text-sm font-medium">{title}</h3>
+      <h3 className="mb-3 text-sm font-medium lg:text-base">{title}</h3>
       <div
         role="group"
         aria-label={title}
@@ -20,7 +20,7 @@ export default function ChoiceRow({ title, options, value, onChange }) {
             key={choice.label}
             aria-pressed={value === choice.value}
             onClick={() => onChange(choice.value)}
-            className={`h-9 rounded-lg px-3 text-[0.8125rem] transition-colors lg:h-auto lg:rounded-md lg:px-2.75 lg:py-1.25 lg:text-xs ${buttonStyle(value === choice.value, choice.value === null)}`}
+            className={`h-9 rounded-lg px-3 text-[0.8125rem] transition-colors lg:h-auto lg:rounded-md lg:px-3 lg:py-1.5 lg:text-sm ${buttonStyle(value === choice.value, choice.value === null)}`}
           >
             {choice.label}
           </button>

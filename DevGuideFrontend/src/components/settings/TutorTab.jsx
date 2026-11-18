@@ -94,8 +94,8 @@ export default function TutorTab() {
 
   return (
     <div>
-      <h2 className="text-[0.9375rem] font-medium">How your tutor answers</h2>
-      <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground">
+      <h2 className="text-[0.9375rem] font-medium lg:text-lg">How your tutor answers</h2>
+      <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground lg:text-[0.9375rem]">
         Auto lets your tutor learn this from your chats. Pick a value to decide yourself.
       </p>
 

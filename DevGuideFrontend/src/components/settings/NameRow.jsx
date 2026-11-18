@@ -28,7 +28,7 @@ export default function NameRow() {
 
   const help = (
     <>
-      <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">2 to 100 characters</p>
+      <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">2 to 100 characters</p>
       {changed && tooShort && <p className="mt-1.5 text-xs text-destructive">Enter at least 2 characters</p>}
       {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </>

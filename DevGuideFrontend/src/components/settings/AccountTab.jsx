@@ -16,8 +16,8 @@ export default function AccountTab() {
           {name[0].toUpperCase()}
         </div>
         <div>
-          <b className="block text-base font-medium">{name}</b>
-          <span className="text-sm text-muted-foreground">{user.email}</span>
+          <b className="block text-base font-medium lg:text-lg">{name}</b>
+          <span className="text-sm text-muted-foreground lg:text-[0.9375rem]">{user.email}</span>
         </div>
       </div>
 

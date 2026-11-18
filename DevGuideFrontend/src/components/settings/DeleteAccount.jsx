@@ -30,7 +30,7 @@ export default function DeleteAccount() {
   };
 
   const help = (
-    <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">
+    <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">
       All chats, PDFs, files made by your tutor, quiz results and notes are deleted. Trello is disconnected.
     </p>
   );
@@ -51,7 +51,7 @@ export default function DeleteAccount() {
             className="w-full max-w-110 rounded-xl border bg-secondary shadow-2xl"
           >
             <h2 id="delete-title" className="px-5 pt-5 pb-2 text-base font-medium">Delete your account?</h2>
-            <div className="grid gap-3 px-5 pb-4 text-[0.8125rem] text-muted-foreground">
+            <div className="grid gap-3 px-5 pb-4 text-[0.8125rem] lg:text-sm text-muted-foreground">
               <p>This permanently deletes your chats, PDFs, files, quiz results, notes and your Trello connection.</p>
               <label className="grid gap-1.5">
                 <span>

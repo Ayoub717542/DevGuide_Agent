@@ -7,11 +7,11 @@ export default function AppRow({ logo, name, connected, text, children }) {
         <img src={logo} alt="" className="size-5" />
       </span>
       <div className="min-w-0">
-        <h3 className="flex flex-wrap items-center gap-2 text-sm font-medium whitespace-nowrap">
+        <h3 className="flex flex-wrap items-center gap-2 text-sm font-medium whitespace-nowrap lg:text-base">
           {name}
           {connected ? <Status tone="success">Connected</Status> : <Status tone="muted">Not connected</Status>}
         </h3>
-        <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">{text}</p>
+        <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">{text}</p>
       </div>
       <div className="ml-auto shrink-0">{children}</div>
     </div>

@@ -25,7 +25,7 @@ export default function Settings({ menuOpen, onOpenMenu }) {
           >
             <Menu className="size-5" />
           </button>
-          <h1 className="text-xl font-medium">Settings</h1>
+          <h1 className="text-xl font-medium lg:text-2xl">Settings</h1>
         </div>
 
         <div role="tablist" aria-label="Settings" className="mt-4 flex gap-1 border-b">
@@ -35,7 +35,7 @@ export default function Settings({ menuOpen, onOpenMenu }) {
               role="tab"
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              className={`relative px-3 py-3 text-sm font-medium ${
+              className={`relative px-3 py-3 text-sm font-medium lg:text-base ${
                 tab === item.id
                   ? "text-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-sm after:bg-success"
                   : "text-muted-foreground hover:text-foreground"

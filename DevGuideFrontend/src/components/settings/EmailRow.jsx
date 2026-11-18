@@ -15,7 +15,7 @@ export default function EmailRow() {
   };
 
   const help = (
-    <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">
+    <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">
       {user.emailVerified ? "Used to log in. It can't be changed." : "Check your inbox and click the link to verify it."}
     </p>
   );
