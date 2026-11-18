@@ -1,3 +1,5 @@
+import { cn } from "cn";
+
 const GLOWS = [
   { color: "rgb(35 134 54 / 75%)", width: "60rem", height: "34rem", left: "-14rem", top: "-14rem", drift: "auth-drift-1 22s" },
   { color: "rgb(108 164 248 / 60%)", width: "56rem", height: "32rem", right: "-12rem", top: "-12rem", drift: "auth-drift-2 26s" },
@@ -6,11 +8,11 @@ const GLOWS = [
 
 const FADE = "linear-gradient(to bottom, #000 35%, transparent 100%)";
 
-export default function AuthBackground() {
+export default function AuthBackground({ className }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 h-[34rem] overflow-hidden opacity-60 lg:opacity-100"
+      className={cn("pointer-events-none fixed inset-x-0 top-0 h-[34rem] overflow-hidden opacity-60 lg:opacity-100", className)}
       style={{ maskImage: FADE, WebkitMaskImage: FADE }}
     >
       {GLOWS.map(({ color, drift, ...position }) => (

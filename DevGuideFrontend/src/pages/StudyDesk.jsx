@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
+import AuthBackground from "../components/AuthBackground";
 import ChatView from "../components/chat/ChatView";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
@@ -149,9 +150,10 @@ export default function StudyDesk() {
           onScoreSaved={() => setLearningVersion((v) => v + 1)}
         />
       ) : (
-        <main className="grid place-items-center p-6 text-center">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">What do you want to learn today?</h2>
+        <main className="relative grid place-items-center overflow-hidden p-6 text-center">
+          <AuthBackground className="absolute opacity-30 lg:opacity-45" />
+          <div className="relative">
+            <h2 className="text-2xl font-medium">What do you want to learn today?</h2>
             <p className="mt-1.5 text-muted-foreground">Pick a chat or start a new one</p>
           </div>
         </main>
