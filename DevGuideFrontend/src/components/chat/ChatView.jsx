@@ -13,6 +13,8 @@ export default function ChatView({
   chat,
   railOpen,
   onToggleRail,
+  menuOpen,
+  onOpenMenu,
   firstQuestion,
   onFirstQuestionSent,
   onScoreSaved,
@@ -149,6 +151,8 @@ export default function ChatView({
         onChallenge={() => addCard("challenge", chatsApi.createChallenge)}
         railOpen={railOpen}
         onToggleRail={onToggleRail}
+        menuOpen={menuOpen}
+        onOpenMenu={onOpenMenu}
       />
       <MessageList
         chatId={chat.id}

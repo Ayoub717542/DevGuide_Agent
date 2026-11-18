@@ -121,33 +121,35 @@ export default function StudyDesk() {
   return (
     <div
       className={`relative grid h-dvh grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
-        isEmpty ? "grid-rows-[minmax(0,1fr)]" : "grid-rows-[auto_minmax(0,1fr)]"
+        onSettings ? "grid-rows-[auto_minmax(0,1fr)]" : "grid-rows-[minmax(0,1fr)]"
       } ${showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""}`}
     >
-      <div
-        className={`flex h-12 items-center px-2 ${
-          isEmpty ? "pointer-events-none absolute inset-x-0 top-0 z-20 min-[68.75rem]:hidden" : "border-b md:hidden"
-        }`}
-      >
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open chat list"
-          aria-expanded={sidebarOpen}
-          className="pointer-events-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground md:hidden"
+      {(isEmpty || onSettings) && (
+        <div
+          className={`flex h-12 items-center px-2 ${
+            isEmpty ? "pointer-events-none absolute inset-x-0 top-0 z-20 min-[68.75rem]:hidden" : "border-b md:hidden"
+          }`}
         >
-          <Menu className="size-5" />
-        </button>
-        {isEmpty && (
           <button
-            onClick={() => setRailOpen(true)}
-            aria-label="Open My learning"
-            aria-expanded={showRail}
-            className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open chat list"
+            aria-expanded={sidebarOpen}
+            className="pointer-events-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground md:hidden"
           >
-            <PanelRight className="size-5" />
+            <Menu className="size-5" />
           </button>
-        )}
-      </div>
+          {isEmpty && (
+            <button
+              onClick={() => setRailOpen(true)}
+              aria-label="Open My learning"
+              aria-expanded={showRail}
+              className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            >
+              <PanelRight className="size-5" />
+            </button>
+          )}
+        </div>
+      )}
       <div
         onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
@@ -185,6 +187,8 @@ export default function StudyDesk() {
           chat={activeChat}
           railOpen={railOpen}
           onToggleRail={() => setRailOpen(!railOpen)}
+          menuOpen={sidebarOpen}
+          onOpenMenu={() => setSidebarOpen(true)}
           firstQuestion={firstQuestion}
           onFirstQuestionSent={() => setFirstQuestion(null)}
           onScoreSaved={() => setLearningVersion((v) => v + 1)}
