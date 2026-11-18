@@ -78,7 +78,7 @@ export default function Welcome() {
     <div className="grid min-h-screen grid-rows-[auto_1fr]">
       <div className="flex items-center gap-2 px-12 py-8 font-semibold max-sm:p-6">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
-        DevGuide AI
+        DevGuide
       </div>
 
       <main className="grid place-items-center px-6 pt-4 pb-20 max-sm:place-items-start max-sm:px-4 max-sm:pt-2 max-sm:pb-8">

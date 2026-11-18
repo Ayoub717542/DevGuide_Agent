@@ -21,7 +21,7 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, chatsLoadin
     >
       <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[0.9375rem] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
-        DevGuide AI
+        DevGuide
       </div>
 
       <button

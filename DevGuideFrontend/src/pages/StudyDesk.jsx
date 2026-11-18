@@ -105,7 +105,7 @@ export default function StudyDesk() {
         >
           <Menu className="size-5" />
         </button>
-        <span className="text-sm font-semibold">DevGuide AI</span>
+        <span className="text-sm font-semibold">DevGuide</span>
       </div>
       {sidebarOpen && (
         <button
