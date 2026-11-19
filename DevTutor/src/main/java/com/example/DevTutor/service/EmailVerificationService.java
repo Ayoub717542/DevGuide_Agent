@@ -48,7 +48,7 @@ public class EmailVerificationService {
     private final String resetUrl;
     private final String fromAddress;
     private final String emailTemplate;
-    private final SecureRandom random = new SecureRandom();
+    private static final SecureRandom random = new SecureRandom();
     private final Map<String, Deque<Instant>> recentRequests = new HashMap<>();
 
     public EmailVerificationService(UserRepository userRepository,
@@ -202,7 +202,7 @@ public class EmailVerificationService {
         return true;
     }
 
-    private String randomToken() {
+    static String randomToken() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
