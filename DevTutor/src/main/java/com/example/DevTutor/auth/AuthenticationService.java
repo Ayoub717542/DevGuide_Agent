@@ -9,14 +9,16 @@ import com.example.DevTutor.mapper.UserMapper;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.security.JwtService;
 import com.example.DevTutor.service.EmailVerificationService;
+import com.example.DevTutor.service.RefreshTokenService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,6 +33,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
+    private final RefreshTokenService refreshTokenService;
 
     public UserResponse register(RegisterRequoestDTO request) {
         String email = request.getEmail();
@@ -67,7 +70,8 @@ public class AuthenticationService {
         return userMapper.toResponse(saved);
     }
 
-    public AuthenticationResponceDTO login(AuthenticationRequestDTO request, String clientIp) {
+    public AuthenticationResponceDTO login(AuthenticationRequestDTO request, String clientIp,
+                                           HttpServletResponse response) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
@@ -87,8 +91,29 @@ public class AuthenticationService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtService.generateToken(userDetails);
+        User user = (User) authentication.getPrincipal();
+        return issueTokens(user, refreshTokenService.create(user), response);
+    }
+
+    public AuthenticationResponceDTO refresh(String refreshToken, HttpServletResponse response) {
+        RefreshTokenService.Rotated rotated;
+        try {
+            rotated = refreshTokenService.rotate(refreshToken);
+        } catch (ResponseStatusException e) {
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.clearCookie().toString());
+            throw e;
+        }
+        return issueTokens(rotated.user(), rotated.token(), response);
+    }
+
+    public void logout(String refreshToken, HttpServletResponse response) {
+        refreshTokenService.delete(refreshToken);
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.clearCookie().toString());
+    }
+
+    private AuthenticationResponceDTO issueTokens(User user, String refreshToken, HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.cookie(refreshToken).toString());
+        String token = jwtService.generateToken(user);
         return new AuthenticationResponceDTO(token, "Bearer", jwtService.getExpirationSeconds());
     }
 }

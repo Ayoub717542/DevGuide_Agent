@@ -7,12 +7,14 @@ import com.example.DevTutor.dto.auth.RegisterRequoestDTO;
 import com.example.DevTutor.dto.auth.ResendVerificationRequestDTO;
 import com.example.DevTutor.dto.auth.ResetPasswordRequestDTO;
 import com.example.DevTutor.service.EmailVerificationService;
+import com.example.DevTutor.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,8 +46,24 @@ public class AuthenticationContoller {
 
     @PostMapping("/login")
     public AuthenticationResponceDTO login(@Valid @RequestBody AuthenticationRequestDTO request,
-                                           HttpServletRequest httpRequest) {
-        return authenticationService.login(request, httpRequest.getRemoteAddr());
+                                           HttpServletRequest httpRequest,
+                                           HttpServletResponse httpResponse) {
+        return authenticationService.login(request, httpRequest.getRemoteAddr(), httpResponse);
+    }
+
+    @PostMapping("/refresh")
+    public AuthenticationResponceDTO refresh(
+            @CookieValue(name = RefreshTokenService.COOKIE_NAME, required = false) String refreshToken,
+            HttpServletResponse httpResponse) {
+        return authenticationService.refresh(refreshToken, httpResponse);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(
+            @CookieValue(name = RefreshTokenService.COOKIE_NAME, required = false) String refreshToken,
+            HttpServletResponse httpResponse) {
+        authenticationService.logout(refreshToken, httpResponse);
     }
 
     @GetMapping("/verify-email")

@@ -1,6 +1,7 @@
 package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.User;
+import com.example.DevTutor.repository.RefreshTokenRepository;
 import com.example.DevTutor.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -42,22 +43,25 @@ public class EmailVerificationService {
     private static final int MAX_PER_IP = 10;
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final ObjectProvider<JavaMailSender> mailSender;
     private final PasswordEncoder passwordEncoder;
     private final String verifyUrl;
     private final String resetUrl;
     private final String fromAddress;
     private final String emailTemplate;
-    private final SecureRandom random = new SecureRandom();
+    private static final SecureRandom random = new SecureRandom();
     private final Map<String, Deque<Instant>> recentRequests = new HashMap<>();
 
     public EmailVerificationService(UserRepository userRepository,
+                                    RefreshTokenRepository refreshTokenRepository,
                                     ObjectProvider<JavaMailSender> mailSender,
                                     PasswordEncoder passwordEncoder,
                                     @Value("${app.email-verification.url:http://localhost:8081/api/auth/verify-email}") String verifyUrl,
                                     @Value("${app.password-reset.url:http://localhost:5173/reset-password}") String resetUrl,
                                     @Value("${spring.mail.username:}") String fromAddress) {
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.mailSender = mailSender;
         this.passwordEncoder = passwordEncoder;
         this.verifyUrl = verifyUrl;
@@ -120,6 +124,7 @@ public class EmailVerificationService {
         user.setResetTokenExpiresAt(null);
         if (!expired) {
             user.setPassword(passwordEncoder.encode(newPassword));
+            refreshTokenRepository.deleteByUser(user);
         }
         userRepository.save(user);
         return !expired;
@@ -202,7 +207,7 @@ public class EmailVerificationService {
         return true;
     }
 
-    private String randomToken() {
+    static String randomToken() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);

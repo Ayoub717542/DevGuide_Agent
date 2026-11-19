@@ -3,10 +3,12 @@ package com.example.DevTutor.security;
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.service.EmailVerificationService;
+import com.example.DevTutor.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -28,8 +30,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.oauth2.redirect-url:http://localhost:5173/oauth/callback}")
     private String redirectUrl;
@@ -77,7 +79,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
         userRepository.save(user);
 
-        response.sendRedirect(redirectUrl + "#token=" + jwtService.generateToken(user));
+        String refreshToken = refreshTokenService.create(user);
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.cookie(refreshToken).toString());
+        response.sendRedirect(redirectUrl);
     }
 
     private static String displayName(OAuth2User profile) {

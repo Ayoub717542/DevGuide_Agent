@@ -1,6 +1,7 @@
 package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.User;
+import com.example.DevTutor.repository.RefreshTokenRepository;
 import com.example.DevTutor.repository.UserRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +39,8 @@ class EmailVerificationServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+    @Mock
     private ObjectProvider<JavaMailSender> mailSenderProvider;
     @Mock
     private JavaMailSender mailSender;
@@ -46,7 +50,7 @@ class EmailVerificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EmailVerificationService(userRepository, mailSenderProvider, new BCryptPasswordEncoder(),
+        service = new EmailVerificationService(userRepository, refreshTokenRepository, mailSenderProvider, new BCryptPasswordEncoder(),
                 "http://localhost:8081/api/auth/verify-email", "http://localhost:5173/reset-password",
                 "devtutor@mail.com");
         user = new User();
@@ -120,5 +124,25 @@ class EmailVerificationServiceTest {
         }
 
         verify(userRepository, times(3)).save(any(User.class));
+    }
+
+    @Test
+    void passwordResetLogsOutAllDevices() {
+        user.setResetTokenHash(EmailVerificationService.hash("reset-token"));
+        user.setResetTokenExpiresAt(Instant.now().plusSeconds(60));
+        when(userRepository.findByResetTokenHash(user.getResetTokenHash())).thenReturn(Optional.of(user));
+
+        assertTrue(service.resetPassword("reset-token", "NewPassword1!"));
+        verify(refreshTokenRepository).deleteByUser(user);
+    }
+
+    @Test
+    void expiredResetLinkKeepsDevicesLoggedIn() {
+        user.setResetTokenHash(EmailVerificationService.hash("reset-token"));
+        user.setResetTokenExpiresAt(Instant.now().minusSeconds(1));
+        when(userRepository.findByResetTokenHash(user.getResetTokenHash())).thenReturn(Optional.of(user));
+
+        assertFalse(service.resetPassword("reset-token", "NewPassword1!"));
+        verify(refreshTokenRepository, never()).deleteByUser(any());
     }
 }

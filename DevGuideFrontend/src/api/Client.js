@@ -15,7 +15,6 @@ export const forgotPassword = (email) =>
 export const resetPassword = (token, newPassword) =>
   axiosApi.post("/api/auth/reset-password", { token, newPassword }).then((res) => res.data);
 
-export const getMe = (token) =>
-  axiosApi
-    .get("/api/users/me", token ? { headers: { Authorization: `Bearer ${token}` } } : undefined)
-    .then((res) => res.data);
+export const logout = () => axiosApi.post("/api/auth/logout");
+
+export const getMe = () => axiosApi.get("/api/users/me").then((res) => res.data);
