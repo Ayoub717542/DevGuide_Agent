@@ -22,8 +22,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const { token } = await client.login(email, password);
-    setAccessToken(token);
+    const { accessToken } = await client.login(email, password);
+    setAccessToken(accessToken);
     setUser(await client.getMe());
   };
 

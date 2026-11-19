@@ -30,7 +30,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
     private final RefreshTokenService refreshTokenService;
 
@@ -82,7 +81,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String refreshToken = refreshTokenService.create(user);
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.cookie(refreshToken).toString());
-        response.sendRedirect(redirectUrl + "#token=" + jwtService.generateToken(user));
+        response.sendRedirect(redirectUrl);
     }
 
     private static String displayName(OAuth2User profile) {

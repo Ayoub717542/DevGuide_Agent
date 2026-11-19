@@ -16,7 +16,7 @@ export const refreshAccessToken = () => {
     refreshing = axios
       .post(`${API_URL}/api/auth/refresh`, null, { withCredentials: true })
       .then((res) => {
-        accessToken = res.data.token;
+        accessToken = res.data.accessToken;
         return accessToken;
       })
       .finally(() => {

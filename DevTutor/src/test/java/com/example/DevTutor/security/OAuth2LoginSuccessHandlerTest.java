@@ -49,8 +49,6 @@ class OAuth2LoginSuccessHandlerTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private JwtService jwtService;
-    @Mock
     private EmailVerificationService emailVerificationService;
     @Mock
     private RefreshTokenService refreshTokenService;
@@ -87,7 +85,6 @@ class OAuth2LoginSuccessHandlerTest {
 
         assertEquals(REDIRECT + "#error=verify_email_first", response.getRedirectedUrl());
         verify(userRepository, never()).save(any());
-        verify(jwtService, never()).generateToken(any());
         verify(refreshTokenService, never()).create(any());
         verify(emailVerificationService).resend(EMAIL, "127.0.0.1");
     }
@@ -105,14 +102,13 @@ class OAuth2LoginSuccessHandlerTest {
     @Test
     void newOAuthUserIsMarkedVerified() throws Exception {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        when(jwtService.generateToken(any())).thenReturn("jwt");
         when(refreshTokenService.create(any())).thenReturn("refresh");
         when(refreshTokenService.cookie("refresh")).thenReturn(ResponseCookie.from("refresh_token", "refresh").build());
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         handler.onAuthenticationSuccess(new MockHttpServletRequest(), response, googleLogin(true));
 
-        assertEquals(REDIRECT + "#token=jwt", response.getRedirectedUrl());
+        assertEquals(REDIRECT, response.getRedirectedUrl());
         assertEquals("refresh_token=refresh", response.getHeader(HttpHeaders.SET_COOKIE));
         verify(userRepository).save(argThat(User::isEmailVerified));
     }
