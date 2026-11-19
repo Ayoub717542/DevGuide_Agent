@@ -16,6 +16,7 @@ import com.example.DevTutor.repository.ConversationRepository;
 import com.example.DevTutor.repository.LearnerNoteRepository;
 import com.example.DevTutor.repository.LearnerPreferencesRepository;
 import com.example.DevTutor.repository.QuizResultRepository;
+import com.example.DevTutor.repository.RefreshTokenRepository;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.service.LearnerPreferencesService;
 import com.example.DevTutor.service.ReviewScheduler;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserServiceInterface {
     private final ChallengeRepository challengeRepository;
     private final TrelloOAuthService trelloOAuthService;
     private final TrelloMcpService trelloMcpService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -99,6 +101,7 @@ public class UserServiceImpl implements UserServiceInterface {
         learnerNoteRepository.deleteByUserEmail(email);
         learnerPreferencesRepository.deleteByUserEmail(email);
         quizResultRepository.deleteByUserEmail(email);
+        refreshTokenRepository.deleteByUser(user);
         userRepository.delete(user);
     }
 
@@ -167,6 +170,7 @@ public class UserServiceImpl implements UserServiceInterface {
     public void deleteUser(Long id) {
         User user = findUser(id);
         try {
+            refreshTokenRepository.deleteByUser(user);
             userRepository.delete(user);
         } catch (DataIntegrityViolationException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
