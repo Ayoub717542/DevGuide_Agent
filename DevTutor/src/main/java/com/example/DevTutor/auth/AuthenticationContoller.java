@@ -8,8 +8,10 @@ import com.example.DevTutor.dto.auth.ResendVerificationRequestDTO;
 import com.example.DevTutor.dto.auth.ResetPasswordRequestDTO;
 import com.example.DevTutor.service.EmailVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -29,6 +32,9 @@ public class AuthenticationContoller {
 
     private final AuthenticationService authenticationService;
     private final EmailVerificationService emailVerificationService;
+
+    @Value("${app.email-verification.login-url:http://localhost:5173/login}")
+    private String loginUrl;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -42,11 +48,10 @@ public class AuthenticationContoller {
     }
 
     @GetMapping("/verify-email")
-    public Map<String, String> verifyEmail(@RequestParam(required = false) String token) {
-        if (!emailVerificationService.verify(token)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This link is invalid or expired. Ask for a new one.");
-        }
-        return Map.of("message", "Email verified. You can now link GitHub or Google.");
+    public void verifyEmail(@RequestParam(required = false) String token,
+                            HttpServletResponse response) throws IOException {
+        String result = emailVerificationService.verify(token) ? "ok" : "expired";
+        response.sendRedirect(loginUrl + "#verified=" + result);
     }
 
     @PostMapping("/resend-verification")
