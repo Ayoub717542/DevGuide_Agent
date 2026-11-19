@@ -5,6 +5,7 @@ import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,6 +18,7 @@ import java.time.Instant;
 public class RefreshTokenService {
 
     public static final Duration LIFETIME = Duration.ofDays(7);
+    public static final String COOKIE_NAME = "refresh_token";
 
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -46,6 +48,16 @@ public class RefreshTokenService {
         }
         User user = saved.getUser();
         return new Rotated(user, create(user));
+    }
+
+    public ResponseCookie cookie(String rawToken) {
+        return ResponseCookie.from(COOKIE_NAME, rawToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/api/auth")
+                .maxAge(LIFETIME)
+                .build();
     }
 
     public void delete(String rawToken) {

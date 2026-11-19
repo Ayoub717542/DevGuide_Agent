@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +59,19 @@ class RefreshTokenServiceTest {
         assertNotEquals(rawToken, saved.getTokenHash());
         assertEquals(EmailVerificationService.hash(rawToken), saved.getTokenHash());
         assertSame(user, saved.getUser());
+    }
+
+    @Test
+    void cookieIsHiddenFromJavaScriptAndOnlySentToAuthEndpoints() {
+        ResponseCookie cookie = service.cookie("abc");
+
+        assertEquals("refresh_token", cookie.getName());
+        assertEquals("abc", cookie.getValue());
+        assertTrue(cookie.isHttpOnly());
+        assertTrue(cookie.isSecure());
+        assertEquals("Lax", cookie.getSameSite());
+        assertEquals("/api/auth", cookie.getPath());
+        assertEquals(RefreshTokenService.LIFETIME, cookie.getMaxAge());
     }
 
     @Test
