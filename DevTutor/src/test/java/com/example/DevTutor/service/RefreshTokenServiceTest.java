@@ -75,6 +75,16 @@ class RefreshTokenServiceTest {
     }
 
     @Test
+    void clearCookieTellsBrowserToRemoveIt() {
+        ResponseCookie cookie = service.clearCookie();
+
+        assertEquals("refresh_token", cookie.getName());
+        assertEquals("", cookie.getValue());
+        assertEquals("/api/auth", cookie.getPath());
+        assertTrue(cookie.getMaxAge().isZero());
+    }
+
+    @Test
     void rotateDeletesOldTokenAndReturnsNewOne() {
         RefreshToken old = savedToken("old-token", Instant.now().plus(RefreshTokenService.LIFETIME));
         when(refreshTokenRepository.findByTokenHash(EmailVerificationService.hash("old-token")))

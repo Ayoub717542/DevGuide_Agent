@@ -51,12 +51,20 @@ public class RefreshTokenService {
     }
 
     public ResponseCookie cookie(String rawToken) {
-        return ResponseCookie.from(COOKIE_NAME, rawToken)
+        return buildCookie(rawToken, LIFETIME);
+    }
+
+    public ResponseCookie clearCookie() {
+        return buildCookie("", Duration.ZERO);
+    }
+
+    private ResponseCookie buildCookie(String value, Duration maxAge) {
+        return ResponseCookie.from(COOKIE_NAME, value)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Lax")
                 .path("/api/auth")
-                .maxAge(LIFETIME)
+                .maxAge(maxAge)
                 .build();
     }
 

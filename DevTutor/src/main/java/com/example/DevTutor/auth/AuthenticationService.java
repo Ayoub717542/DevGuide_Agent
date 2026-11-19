@@ -92,7 +92,26 @@ public class AuthenticationService {
         }
 
         User user = (User) authentication.getPrincipal();
-        String refreshToken = refreshTokenService.create(user);
+        return issueTokens(user, refreshTokenService.create(user), response);
+    }
+
+    public AuthenticationResponceDTO refresh(String refreshToken, HttpServletResponse response) {
+        RefreshTokenService.Rotated rotated;
+        try {
+            rotated = refreshTokenService.rotate(refreshToken);
+        } catch (ResponseStatusException e) {
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.clearCookie().toString());
+            throw e;
+        }
+        return issueTokens(rotated.user(), rotated.token(), response);
+    }
+
+    public void logout(String refreshToken, HttpServletResponse response) {
+        refreshTokenService.delete(refreshToken);
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.clearCookie().toString());
+    }
+
+    private AuthenticationResponceDTO issueTokens(User user, String refreshToken, HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenService.cookie(refreshToken).toString());
         String token = jwtService.generateToken(user);
         return new AuthenticationResponceDTO(token, "Bearer", jwtService.getExpirationSeconds());
