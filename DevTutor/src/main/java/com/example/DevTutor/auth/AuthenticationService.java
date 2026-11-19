@@ -67,7 +67,7 @@ public class AuthenticationService {
         return userMapper.toResponse(saved);
     }
 
-    public AuthenticationResponceDTO login(AuthenticationRequestDTO request) {
+    public AuthenticationResponceDTO login(AuthenticationRequestDTO request, String clientIp) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
@@ -78,8 +78,9 @@ public class AuthenticationService {
                     .map(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
                     .orElse(false);
             if (passwordCorrect) {
+                emailVerificationService.resend(request.getEmail(), clientIp);
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Please verify your email first. Check your inbox for the link.");
+                        "Please verify your email first. We just sent a new link to your inbox.");
             }
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         } catch (AuthenticationException e) {
