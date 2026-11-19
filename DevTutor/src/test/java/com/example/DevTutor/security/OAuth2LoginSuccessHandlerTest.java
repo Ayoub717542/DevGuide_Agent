@@ -3,12 +3,15 @@ package com.example.DevTutor.security;
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.UserRepository;
 import com.example.DevTutor.service.EmailVerificationService;
+import com.example.DevTutor.service.RefreshTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -49,6 +52,8 @@ class OAuth2LoginSuccessHandlerTest {
     private JwtService jwtService;
     @Mock
     private EmailVerificationService emailVerificationService;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private OAuth2LoginSuccessHandler handler;
@@ -83,6 +88,7 @@ class OAuth2LoginSuccessHandlerTest {
         assertEquals(REDIRECT + "#error=verify_email_first", response.getRedirectedUrl());
         verify(userRepository, never()).save(any());
         verify(jwtService, never()).generateToken(any());
+        verify(refreshTokenService, never()).create(any());
         verify(emailVerificationService).resend(EMAIL, "127.0.0.1");
     }
 
@@ -100,11 +106,14 @@ class OAuth2LoginSuccessHandlerTest {
     void newOAuthUserIsMarkedVerified() throws Exception {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(jwtService.generateToken(any())).thenReturn("jwt");
+        when(refreshTokenService.create(any())).thenReturn("refresh");
+        when(refreshTokenService.cookie("refresh")).thenReturn(ResponseCookie.from("refresh_token", "refresh").build());
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         handler.onAuthenticationSuccess(new MockHttpServletRequest(), response, googleLogin(true));
 
         assertEquals(REDIRECT + "#token=jwt", response.getRedirectedUrl());
+        assertEquals("refresh_token=refresh", response.getHeader(HttpHeaders.SET_COOKIE));
         verify(userRepository).save(argThat(User::isEmailVerified));
     }
 }
