@@ -1,41 +1,40 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { TOKEN_KEY } from "../api/axiosApi";
+import { refreshAccessToken, setAccessToken } from "../api/axiosApi";
 import * as client from "../api/Client";
 
 const AuthContext = createContext(null);
-const JWT_PATTERN = /^[\w-]+\.[\w-]+\.[\w-]+$/;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!localStorage.getItem(TOKEN_KEY)) return;
-    client.getMe()
-      .then(setUser)
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
-      .finally(() => setLoading(false));
+  const restoreSession = useCallback(async () => {
+    await refreshAccessToken();
+    setUser(await client.getMe());
   }, []);
 
-  const loginWithToken = useCallback(async (token) => {
-    if (!JWT_PATTERN.test(token)) throw new Error("Invalid token");
-    const me = await client.getMe(token);
-    localStorage.setItem(TOKEN_KEY, token);
-    setUser(me);
+  useEffect(() => {
+    refreshAccessToken()
+      .then(() => client.getMe())
+      .then(setUser)
+      .catch(() => setAccessToken(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
     const { token } = await client.login(email, password);
-    await loginWithToken(token);
+    setAccessToken(token);
+    setUser(await client.getMe());
   };
 
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
+  const logout = async () => {
+    await client.logout().catch(() => {});
+    setAccessToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, loginWithToken, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, restoreSession, logout }}>
       {children}
     </AuthContext.Provider>
   );

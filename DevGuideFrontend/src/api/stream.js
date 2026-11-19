@@ -1,4 +1,4 @@
-import { API_URL, TOKEN_KEY, goToLogin } from "./axiosApi";
+import { API_URL, getAccessToken, goToLogin } from "./axiosApi";
 
 export async function streamReply(question, handlers, signal) {
   const form = new FormData();
@@ -10,7 +10,7 @@ export async function streamReply(question, handlers, signal) {
 
   const response = await fetch(`${API_URL}/api/chat/stream`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
     body: form,
     signal,
   });
