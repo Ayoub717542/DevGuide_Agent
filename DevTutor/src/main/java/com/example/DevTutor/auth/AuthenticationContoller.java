@@ -44,8 +44,9 @@ public class AuthenticationContoller {
 
     @PostMapping("/login")
     public AuthenticationResponceDTO login(@Valid @RequestBody AuthenticationRequestDTO request,
-                                           HttpServletRequest httpRequest) {
-        return authenticationService.login(request, httpRequest.getRemoteAddr());
+                                           HttpServletRequest httpRequest,
+                                           HttpServletResponse httpResponse) {
+        return authenticationService.login(request, httpRequest.getRemoteAddr(), httpResponse);
     }
 
     @GetMapping("/verify-email")
