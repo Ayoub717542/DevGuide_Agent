@@ -9,6 +9,7 @@ export default function Login() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [verified] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get("verified"));
 
   if (user) return <Navigate to="/" replace />;
 
@@ -23,15 +24,15 @@ export default function Login() {
       subtitle="Log in to your study desk"
       submitLabel="Log in"
       onSubmit={handleSubmit}
-      initialError={location.state?.error}
-      notice={location.state?.notice}
-      footer={<>No account? <Link to="/register" className="text-link hover:underline">Create one</Link></>}
+      initialError={verified === "expired" ? "This link is invalid or expired. Ask for a new one." : location.state?.error}
+      notice={verified === "ok" ? "Email verified. You can log in now." : location.state?.notice}
+      topLink={{ text: "Don't have an account?", label: "Sign up", to: "/register" }}
     >
       <Field id="email" label="Email" type="email" placeholder="you@example.com"
              value={email} onChange={(e) => setEmail(e.target.value)} />
       <Field id="password" label="Password" type="password"
              value={password} onChange={(e) => setPassword(e.target.value)} />
-      <Link to="/forgot-password" className="-mt-2 text-sm text-link hover:underline">Forgot password?</Link>
+      <Link to="/forgot-password" className="text-center text-sm text-link hover:underline">Forgot password?</Link>
     </AuthLayout>
   );
 }

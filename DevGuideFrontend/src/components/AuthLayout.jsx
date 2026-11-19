@@ -1,30 +1,32 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, LockKeyhole, Mail, User } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "cn";
 import { API_URL } from "../api/axiosApi";
+import AuthBackground from "./AuthBackground";
 
 const PROVIDERS = [
-  { id: "github", name: "GitHub" },
   { id: "google", name: "Google" },
+  { id: "github", name: "GitHub" },
 ];
 
-const FEATURES = [
-  "Explains your repo step by step",
-  "Quizzes you on what you learned",
-  "Connects GitHub & Trello",
-];
+const FIELD_ICONS = { email: Mail, password: LockKeyhole };
 
-export function Field({ id, label, ...inputProps }) {
+export function Field({ id, label, type = "text", ...inputProps }) {
+  const Icon = FIELD_ICONS[type] || User;
   return (
-    <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} className="h-10" required {...inputProps} />
+    <div className="relative">
+      <Label htmlFor={id} className="sr-only">{label}</Label>
+      <Icon className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
+      <Input id={id} type={type} placeholder={label} className="h-11 rounded-xl pl-11" required {...inputProps} />
     </div>
   );
 }
 
-export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, footer, initialError = "", notice = "", social = true, children }) {
+export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, topLink, initialError = "", notice = "", social = true, children }) {
   const [error, setError] = useState(initialError);
   const [sending, setSending] = useState(false);
 
@@ -42,63 +44,55 @@ export default function AuthLayout({ title, subtitle, submitLabel, onSubmit, foo
   };
 
   return (
-    <div className="grid min-h-screen place-items-center p-4">
-      <div className="grid w-full max-w-3xl overflow-hidden rounded-xl border bg-card md:grid-cols-2">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-8">
-          <div className="flex items-center gap-2 font-semibold">
-            <img src="/devguide-logo.svg" alt="" className="size-7" />
-            DevGuide AI
-          </div>
+    <div className="relative min-h-svh overflow-hidden">
+      <AuthBackground />
 
-          <div className="grid gap-1">
-            <h1 className="text-2xl font-bold">{title}</h1>
+      <header className="relative flex items-center justify-between px-6 py-7 text-sm sm:px-12">
+        <Link to="/login" className="flex items-center gap-2.5 text-base font-medium">
+          <img src="/devguide-logo.svg" alt="" className="size-8" />
+          DevGuide
+        </Link>
+        {topLink && (
+          <div className="flex items-center gap-2 leading-none">
+            <span className="hidden text-muted-foreground sm:inline">{topLink.text}</span>
+            <Link to={topLink.to} className="group inline-flex items-center gap-1 font-medium transition-colors hover:text-white">
+              {topLink.label}
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+            </Link>
+          </div>
+        )}
+      </header>
+
+      <main className="relative grid min-h-[calc(100svh-6rem)] place-items-center px-4 pb-24">
+        <form onSubmit={handleSubmit} className="flex w-full max-w-88 flex-col gap-3.5">
+          <div className="mb-3 grid gap-1.5 text-center">
+            <h1 className="text-2xl font-medium">{title}</h1>
             <p className="text-muted-foreground">{subtitle}</p>
           </div>
 
           {social && (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                {PROVIDERS.map((provider) => (
-                  <a key={provider.id} href={`${API_URL}/oauth2/authorization/${provider.id}`}
-                     className={buttonVariants({ variant: "outline", className: "h-10 gap-2" })}>
-                    <img src={`/${provider.id}.svg`} alt="" className="size-4" />
-                    {provider.name}
-                  </a>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="h-px flex-1 bg-border" />
-                or continue with email
-                <span className="h-px flex-1 bg-border" />
-              </div>
+              {PROVIDERS.map((provider) => (
+                <a key={provider.id} href={`${API_URL}/oauth2/authorization/${provider.id}`}
+                   className={cn(buttonVariants({ variant: "outline", className: "h-11 gap-2.5 rounded-full" }))}>
+                  <img src={`/${provider.id}.svg`} alt="" className="size-4.5" />
+                  Continue with {provider.name}
+                </a>
+              ))}
+              <p className="my-1 text-center text-sm text-muted-foreground">or</p>
             </>
           )}
 
           {children}
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {notice && !error && <p className="text-sm text-success">{notice}</p>}
+          {error && <p className="text-center text-sm text-destructive">{error}</p>}
+          {notice && !error && <p className="text-center text-sm text-success">{notice}</p>}
 
-          <Button type="submit" className="h-10" disabled={sending}>
+          <Button type="submit" className="mt-2 h-11 rounded-full" disabled={sending}>
             {sending ? "Please wait…" : submitLabel}
           </Button>
-
-          <p className="text-sm text-muted-foreground">{footer}</p>
         </form>
-
-        <div className="hidden flex-col justify-end gap-4 border-l bg-secondary p-8 md:flex">
-          <h2 className="text-xl font-semibold">Your AI pair for learning to code.</h2>
-          <ul className="grid gap-3 text-sm text-muted-foreground">
-            {FEATURES.map((feature) => (
-              <li key={feature} className="flex gap-2">
-                <span className="text-brand">→</span>
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

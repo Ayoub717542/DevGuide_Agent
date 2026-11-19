@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as client from "../../api/Client";
 import AuthLayout, { Field } from "../../components/AuthLayout";
 
@@ -24,7 +24,7 @@ export default function ResetPassword() {
       onSubmit={handleSubmit}
       social={false}
       initialError={token ? "" : "This link is invalid or expired. Ask for a new one."}
-      footer={<>Need a new link? <Link to="/forgot-password" className="text-link hover:underline">Ask again</Link></>}
+      topLink={{ text: "Need a new link?", label: "Ask again", to: "/forgot-password" }}
     >
       <Field id="password" label="New password" type="password" minLength={8} placeholder="At least 8 characters"
              value={password} onChange={(e) => setPassword(e.target.value)} />

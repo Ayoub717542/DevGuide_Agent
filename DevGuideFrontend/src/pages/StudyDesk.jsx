@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, PanelRight } from "lucide-react";
+import AuthBackground from "../components/AuthBackground";
 import ChatView from "../components/chat/ChatView";
+import Composer from "../components/chat/Composer";
 import LearningRail from "../components/learning/LearningRail";
 import { topicName } from "../components/learning/topicName";
 import Sidebar from "../components/sidebar/Sidebar";
@@ -22,20 +24,33 @@ export default function StudyDesk() {
   const [chatsFailed, setChatsFailed] = useState(false);
   const [chatsAttempt, setChatsAttempt] = useState(0);
   const [chatError, setChatError] = useState("");
+  const [chatsLoading, setChatsLoading] = useState(true);
 
   useEffect(() => {
     let ignore = false;
     chatsApi
       .getChats()
       .then((list) => !ignore && setChats(list))
-      .catch(() => !ignore && setChatsFailed(true));
+      .catch(() => !ignore && setChatsFailed(true))
+      .finally(() => !ignore && setChatsLoading(false));
     return () => {
       ignore = true;
     };
   }, [chatsAttempt]);
 
+  useEffect(() => {
+    const closeOnEscape = (e) => {
+      if (e.key !== "Escape") return;
+      setSidebarOpen(false);
+      if (!isWide()) setRailOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
+
   const retryChats = () => {
     setChatsFailed(false);
+    setChatsLoading(true);
     setChatsAttempt((n) => n + 1);
   };
 
@@ -56,10 +71,24 @@ export default function StudyDesk() {
     }
   };
 
+  const startChat = async ({ content, hintMode, devMode }) => {
+    setChatError("");
+    try {
+      const chat = await chatsApi.createChat(content.slice(0, 40));
+      setChats([chat, ...chats]);
+      setFirstQuestion({ content, hintMode, devMode });
+      openChat(chat.id);
+      return true;
+    } catch {
+      setChatError("Could not start a new chat. Try again.");
+      return false;
+    }
+  };
+
   const reviewTopic = async (concept) => {
     const chat = await chatsApi.createChat(`Review: ${topicName(concept)}`);
     setChats([chat, ...chats]);
-    setFirstQuestion(`Quiz me on ${topicName(concept)}`);
+    setFirstQuestion({ content: `Quiz me on ${topicName(concept)}` });
     setActiveId(chat.id);
     if (!isWide()) setRailOpen(false);
   };
@@ -87,42 +116,54 @@ export default function StudyDesk() {
 
   const activeChat = chats.find((chat) => chat.id === activeId);
   const showRail = railOpen && !onSettings;
+  const isEmpty = !onSettings && !activeChat;
 
   return (
     <div
-      className={`grid h-dvh grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] md:grid-rows-none ${
+      className={`relative grid h-dvh grid-cols-1 grid-rows-[minmax(0,1fr)] md:grid-cols-[16rem_minmax(0,1fr)] ${
         showRail ? "min-[68.75rem]:grid-cols-[16rem_minmax(0,1fr)_19.5rem]" : ""
       }`}
     >
-      <div className="flex h-12 items-center gap-2 border-b px-2 md:hidden">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
-        >
-          <Menu className="size-5" />
-        </button>
-        <span className="text-sm font-semibold">DevGuide AI</span>
-      </div>
-      {sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(false)}
-          aria-label="Close menu"
-          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in md:hidden"
-        />
+      {isEmpty && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-12 items-center px-2 min-[68.75rem]:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open chat list"
+            aria-expanded={sidebarOpen}
+            className="pointer-events-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground md:hidden"
+          >
+            <Menu className="size-5" />
+          </button>
+          <button
+            onClick={() => setRailOpen(true)}
+            aria-label="Open My learning"
+            aria-expanded={showRail}
+            className="pointer-events-auto ml-auto grid size-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          >
+            <PanelRight className="size-5" />
+          </button>
+        </div>
       )}
-      {showRail && (
-        <button
-          onClick={() => setRailOpen(false)}
-          aria-label="Close My learning"
-          className="fixed inset-0 z-30 cursor-default bg-black/50 duration-200 fade-in motion-safe:animate-in min-[68.75rem]:hidden"
-        />
-      )}
+      <div
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity duration-200 motion-reduce:transition-none md:hidden ${
+          sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <div
+        onClick={() => setRailOpen(false)}
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity duration-200 motion-reduce:transition-none min-[68.75rem]:hidden ${
+          showRail ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         chats={chats}
         chatsFailed={chatsFailed}
+        chatsLoading={chatsLoading}
         onRetryChats={retryChats}
         chatError={chatError}
         activeId={onSettings ? null : activeId}
@@ -133,27 +174,35 @@ export default function StudyDesk() {
         onDelete={deleteChat}
       />
       {onSettings ? (
-        <Settings />
+        <Settings menuOpen={sidebarOpen} onOpenMenu={() => setSidebarOpen(true)} />
       ) : activeChat ? (
         <ChatView
           key={activeChat.id}
           chat={activeChat}
           railOpen={railOpen}
           onToggleRail={() => setRailOpen(!railOpen)}
+          menuOpen={sidebarOpen}
+          onOpenMenu={() => setSidebarOpen(true)}
           firstQuestion={firstQuestion}
           onFirstQuestionSent={() => setFirstQuestion(null)}
           onScoreSaved={() => setLearningVersion((v) => v + 1)}
         />
       ) : (
-        <main className="grid place-items-center p-6 text-center">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">What do you want to learn today?</h2>
-            <p className="mt-1.5 text-muted-foreground">Pick a chat on the left or start a new one.</p>
+        <main className="relative grid place-items-center overflow-hidden px-2 py-6">
+          <AuthBackground className="absolute opacity-30 lg:opacity-45" />
+          <div className="relative w-full">
+            <div className="px-4 text-center">
+              <h2 className="text-2xl font-medium">What do you want to learn today?</h2>
+              <p className="mt-1.5 text-muted-foreground">Ask a question or pick a chat</p>
+            </div>
+            <div className="mt-4">
+              <Composer onSend={startChat} />
+            </div>
           </div>
         </main>
       )}
-      {showRail && (
-        <LearningRail key={learningVersion} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
+      {!onSettings && (
+        <LearningRail key={learningVersion} open={showRail} onReview={reviewTopic} onClose={() => setRailOpen(false)} />
       )}
     </div>
   );

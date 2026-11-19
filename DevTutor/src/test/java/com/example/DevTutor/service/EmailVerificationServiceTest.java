@@ -2,6 +2,10 @@ package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.UserRepository;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,7 +13,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -51,17 +54,32 @@ class EmailVerificationServiceTest {
         user.setName("Ali");
     }
 
-    private String sendAndCaptureToken() {
+    private String sendAndCaptureToken() throws Exception {
         when(mailSenderProvider.getIfAvailable()).thenReturn(mailSender);
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage((Session) null));
         service.sendVerification(user);
-        ArgumentCaptor<SimpleMailMessage> mail = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        ArgumentCaptor<MimeMessage> mail = ArgumentCaptor.forClass(MimeMessage.class);
         verify(mailSender).send(mail.capture());
-        String text = mail.getValue().getText();
+        String text = plainText(mail.getValue());
         return text.substring(text.indexOf("token=") + 6).split("\\s")[0];
     }
 
+    private static String plainText(Part part) throws Exception {
+        Object content = part.getContent();
+        if (content instanceof Multipart multipart) {
+            for (int i = 0; i < multipart.getCount(); i++) {
+                String text = plainText(multipart.getBodyPart(i));
+                if (text != null) {
+                    return text;
+                }
+            }
+            return null;
+        }
+        return part.isMimeType("text/plain") ? (String) content : null;
+    }
+
     @Test
-    void storesOnlyTheHashOfTheToken() {
+    void storesOnlyTheHashOfTheToken() throws Exception {
         String rawToken = sendAndCaptureToken();
 
         assertNotEquals(rawToken, user.getVerificationTokenHash());
@@ -70,7 +88,7 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    void validTokenVerifiesOnceOnly() {
+    void validTokenVerifiesOnceOnly() throws Exception {
         String rawToken = sendAndCaptureToken();
         String hash = user.getVerificationTokenHash();
         when(userRepository.findByVerificationTokenHash(hash)).thenReturn(Optional.of(user));
@@ -84,7 +102,7 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    void expiredTokenIsRejected() {
+    void expiredTokenIsRejected() throws Exception {
         String rawToken = sendAndCaptureToken();
         user.setVerificationTokenExpiresAt(Instant.now().minusSeconds(1));
         when(userRepository.findByVerificationTokenHash(user.getVerificationTokenHash())).thenReturn(Optional.of(user));

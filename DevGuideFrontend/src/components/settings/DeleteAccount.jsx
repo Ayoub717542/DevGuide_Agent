@@ -30,14 +30,14 @@ export default function DeleteAccount() {
   };
 
   const help = (
-    <p className="mt-0.5 text-[0.8125rem] text-muted-foreground">
+    <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">
       All chats, PDFs, files made by your tutor, quiz results and notes are deleted. Trello is disconnected.
     </p>
   );
 
   return (
     <Block title="Delete account" lead="Removes your account and everything in it. This can't be undone." danger>
-      <Row title="Delete my account" help={help}>
+      <Row help={help}>
         <Button variant="destructive" onClick={() => setOpen(true)}>Delete account</Button>
       </Row>
 
@@ -50,8 +50,8 @@ export default function DeleteAccount() {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-110 rounded-xl border bg-secondary shadow-2xl"
           >
-            <h2 id="delete-title" className="px-5.5 pt-5 pb-1.5 text-base font-semibold">Delete your account?</h2>
-            <div className="grid gap-3 px-5.5 pb-4 text-[0.8125rem] text-muted-foreground">
+            <h2 id="delete-title" className="px-5 pt-5 pb-2 text-base font-medium">Delete your account?</h2>
+            <div className="grid gap-3 px-5 pb-4 text-[0.8125rem] lg:text-sm text-muted-foreground">
               <p>This permanently deletes your chats, PDFs, files, quiz results, notes and your Trello connection.</p>
               <label className="grid gap-1.5">
                 <span>
@@ -61,7 +61,7 @@ export default function DeleteAccount() {
               </label>
               {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
-            <footer className="flex justify-end gap-2 border-t px-5.5 py-3.5">
+            <footer className="flex justify-end gap-2 border-t px-5 py-4">
               <Button variant="ghost" onClick={close}>Cancel</Button>
               <Button
                 onClick={confirm}

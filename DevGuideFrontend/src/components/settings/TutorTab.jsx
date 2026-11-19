@@ -94,8 +94,8 @@ export default function TutorTab() {
 
   return (
     <div>
-      <h2 className="text-[0.9375rem] font-semibold">How your tutor answers</h2>
-      <p className="mt-0.5 mb-3.5 max-w-[62ch] text-[0.84375rem] text-muted-foreground">
+      <h2 className="text-[0.9375rem] font-medium lg:text-lg">How your tutor answers</h2>
+      <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground lg:text-[0.9375rem]">
         Auto lets your tutor learn this from your chats. Pick a value to decide yourself.
       </p>
 
@@ -123,7 +123,7 @@ export default function TutorTab() {
           Cancel
         </Button>
         {done && !changed && (
-          <span className="inline-flex items-center gap-1 text-[0.78125rem] text-success">
+          <span className="inline-flex items-center gap-1 text-xs text-success">
             <Check className="size-3.25" /> Saved
           </span>
         )}

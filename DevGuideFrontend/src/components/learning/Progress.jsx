@@ -49,7 +49,7 @@ export default function Progress({ results, failed, onRetry }) {
   return (
     <LearningSection title="Progress">
       {recent.length === 0 ? (
-        <p className="py-1 text-[0.8125rem] text-muted-foreground">No quiz results yet.</p>
+        <p className="py-1 text-[0.8125rem] text-muted-foreground">No quiz results yet</p>
       ) : (
         <div className="flex items-center gap-3.5 py-1.5">
           <div>

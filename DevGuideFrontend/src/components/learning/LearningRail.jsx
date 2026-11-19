@@ -6,7 +6,7 @@ import Progress from "./Progress";
 import ReviewToday from "./ReviewToday";
 import TutorNotes from "./TutorNotes";
 
-export default function LearningRail({ onReview, onClose }) {
+export default function LearningRail({ open, onReview, onClose }) {
   const [results, setResults] = useState(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -28,7 +28,11 @@ export default function LearningRail({ onReview, onClose }) {
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 min-h-0 w-78 max-w-full overflow-auto bg-secondary px-4.5 py-5 duration-200 slide-in-from-right max-[68.75rem]:motion-safe:animate-in min-[68.75rem]:static min-[68.75rem]:w-auto">
+    <aside
+      className={`fixed top-0 right-0 z-40 h-dvh min-h-0 w-78 max-w-full overflow-auto bg-secondary px-4.5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] transition-[translate,visibility] duration-200 ease-out motion-reduce:transition-none min-[68.75rem]:static min-[68.75rem]:h-auto min-[68.75rem]:w-auto min-[68.75rem]:translate-x-0 ${
+        open ? "translate-x-0" : "invisible translate-x-full min-[68.75rem]:hidden"
+      }`}
+    >
       <div className="mb-4.5 flex items-center justify-between">
         <h3 className="text-[0.9375rem] font-semibold">My learning</h3>
         <button

@@ -12,6 +12,7 @@ import com.example.DevTutor.service.EmailVerificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -66,11 +67,22 @@ public class AuthenticationService {
         return userMapper.toResponse(saved);
     }
 
-    public AuthenticationResponceDTO login(AuthenticationRequestDTO request) {
+    public AuthenticationResponceDTO login(AuthenticationRequestDTO request, String clientIp) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        } catch (DisabledException e) {
+            boolean passwordCorrect = request.getEmail() != null && request.getPassword() != null
+                    && userRepository.findByEmail(request.getEmail().trim().toLowerCase())
+                    .map(user -> passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                    .orElse(false);
+            if (passwordCorrect) {
+                emailVerificationService.resend(request.getEmail(), clientIp);
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Please verify your email first. We just sent a new link to your inbox.");
+            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         } catch (AuthenticationException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }

@@ -1,12 +1,111 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import CodeBlock from "./CodeBlock";
 
 let mermaidPromise = null;
 
+const FLOW_CLASSES = {
+  start: "fill:#3FB95026,stroke:#3FB950,color:#E6EDF3",
+  step: "fill:#6CA4F826,stroke:#6CA4F8,color:#E6EDF3",
+  decision: "fill:#D2992226,stroke:#D29922,color:#E6EDF3",
+  error: "fill:#F0716A26,stroke:#F0716A,color:#E6EDF3",
+};
+
+const FLOWCHART_START = /^\s*(?:---[\s\S]*?---\s*)?(?:%%.*\s*)*(?:flowchart|graph)\b/;
+
+const MIN_PHONE_SCALE = 0.75;
+
+const isNarrow = () => window.matchMedia("(max-width: 40rem)").matches;
+
+const toVertical = (code) =>
+  code.replace(/^(\s*(?:---[\s\S]*?---\s*)?(?:%%.*\s*)*(?:flowchart|graph))\s+(?:LR|RL)\b/, "$1 TD");
+
+const quote = (label) => `"${label.replace(/"/g, "#quot;")}"`;
+
+function quoteLabels(code) {
+  if (!FLOWCHART_START.test(code)) return code;
+  return code
+    .replace(/\[(?![("])([^[\]\n]*[()][^[\]\n]*)\]/g, (_, label) => `[${quote(label)}]`)
+    .replace(/\{(?![{"])([^{}\n]*[()][^{}\n]*)\}/g, (_, label) => `{${quote(label)}}`);
+}
+
+function addFlowColors(code) {
+  if (!FLOWCHART_START.test(code)) return code;
+  const missing = Object.entries(FLOW_CLASSES).filter(
+    ([name]) => !new RegExp(`^\\s*classDef\\s+(?:[\\w-]+\\s*,\\s*)*${name}\\b`, "m").test(code)
+  );
+  return [code, ...missing.map(([name, style]) => `classDef ${name} ${style}`)].join("\n");
+}
+
+async function addRoleColors(mermaid, diagram) {
+  if (!FLOWCHART_START.test(diagram)) return diagram;
+  try {
+    const { db } = await mermaid.mermaidAPI.getDiagramFromText(diagram);
+    const all = db.getVertices();
+    const vertices = all instanceof Map ? [...all.values()] : Object.values(all);
+    const edges = db.getEdges();
+    const sources = new Set(edges.map((edge) => edge.start));
+    const targets = new Set(edges.map((edge) => edge.end));
+    const roleOf = (vertex) => {
+      if (vertex.type === "diamond") return "decision";
+      if (sources.has(vertex.id) && !targets.has(vertex.id)) return "start";
+      return "step";
+    };
+    const lines = vertices
+      .filter((vertex) => vertex.classes.length === 0)
+      .map((vertex) => `class ${vertex.id} ${roleOf(vertex)}`);
+    const colored = [diagram, ...lines].join("\n");
+    return (await mermaid.parse(colored, { suppressErrors: true })) ? colored : diagram;
+  } catch {
+    return diagram;
+  }
+}
+
 function loadMermaid() {
   if (!mermaidPromise) {
     mermaidPromise = import("mermaid").then(({ default: mermaid }) => {
-      mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" });
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        flowchart: { useMaxWidth: false },
+        theme: "base",
+        themeVariables: {
+          darkMode: true,
+          background: "#13171E",
+          primaryColor: "#191E26",
+          primaryTextColor: "#E6EDF3",
+          primaryBorderColor: "#2A313C",
+          lineColor: "#9198A1",
+          secondaryColor: "#191E26",
+          tertiaryColor: "#13171E",
+          edgeLabelBackground: "#13171E",
+          useGradient: false,
+          dropShadow: "none",
+          pie1: "#3FB950",
+          pie2: "#6CA4F8",
+          pie3: "#D29922",
+          pie4: "#F0716A",
+          pieSectionTextColor: "#0E1117",
+          pieStrokeColor: "#13171E",
+          cScale0: "#3FB950",
+          cScale1: "#6CA4F8",
+          cScale2: "#D29922",
+          cScale3: "#F0716A",
+          cScaleLabel0: "#0E1117",
+          cScaleLabel1: "#0E1117",
+          cScaleLabel2: "#0E1117",
+          cScaleLabel3: "#0E1117",
+          git0: "#3FB950",
+          git1: "#6CA4F8",
+          git2: "#D29922",
+          git3: "#F0716A",
+          gitBranchLabel0: "#0E1117",
+          gitBranchLabel1: "#0E1117",
+          gitBranchLabel2: "#0E1117",
+          gitBranchLabel3: "#0E1117",
+          xyChart: { plotColorPalette: "#3FB950,#6CA4F8,#D29922,#F0716A" },
+          fontFamily: '"Geist Variable", system-ui, sans-serif',
+        },
+      });
       return mermaid;
     });
   }
@@ -16,6 +115,7 @@ function loadMermaid() {
 export default function MermaidBlock({ code }) {
   const id = "mermaid-" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const [svg, setSvg] = useState("");
+  const boxRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,8 +123,14 @@ export default function MermaidBlock({ code }) {
     const draw = async () => {
       try {
         const mermaid = await loadMermaid();
-        const valid = await mermaid.parse(code, { suppressErrors: true });
-        const result = valid ? await mermaid.render(id, code) : null;
+        const source = isNarrow() ? toVertical(code) : code;
+        let diagram = addFlowColors(source);
+        if (!(await mermaid.parse(diagram, { suppressErrors: true }))) {
+          diagram = addFlowColors(quoteLabels(source));
+        }
+        const valid = await mermaid.parse(diagram, { suppressErrors: true });
+        if (valid) diagram = await addRoleColors(mermaid, diagram);
+        const result = valid ? await mermaid.render(id, diagram) : null;
         if (!cancelled) setSvg(result ? result.svg : "");
       } catch {
         if (!cancelled) setSvg("");
@@ -37,10 +143,22 @@ export default function MermaidBlock({ code }) {
     };
   }, [code, id]);
 
+  useEffect(() => {
+    const box = boxRef.current;
+    const drawing = box?.querySelector("svg");
+    if (!drawing || !isNarrow()) return;
+    const natural = drawing.viewBox.baseVal.width;
+    const padding = parseFloat(getComputedStyle(box).paddingLeft) * 2;
+    const width = Math.max(natural * MIN_PHONE_SCALE, Math.min(natural, box.clientWidth - padding));
+    drawing.style.width = `${width / 16}rem`;
+    drawing.style.height = "auto";
+  }, [svg]);
+
   if (!svg) return <CodeBlock language="mermaid" code={code} />;
 
   return (
     <div
+      ref={boxRef}
       className="my-3 overflow-auto rounded-lg border bg-secondary p-4 [&_svg]:mx-auto"
       dangerouslySetInnerHTML={{ __html: svg }}
     />

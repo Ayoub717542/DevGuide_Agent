@@ -2,16 +2,22 @@ package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.User;
 import com.example.DevTutor.repository.UserRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +47,7 @@ public class EmailVerificationService {
     private final String verifyUrl;
     private final String resetUrl;
     private final String fromAddress;
+    private final String emailTemplate;
     private final SecureRandom random = new SecureRandom();
     private final Map<String, Deque<Instant>> recentRequests = new HashMap<>();
 
@@ -56,6 +63,11 @@ public class EmailVerificationService {
         this.verifyUrl = verifyUrl;
         this.resetUrl = resetUrl;
         this.fromAddress = fromAddress;
+        try {
+            this.emailTemplate = new ClassPathResource("email/action-email.html").getContentAsString(StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public void sendVerification(User user) {
@@ -68,9 +80,9 @@ public class EmailVerificationService {
                 .queryParam("token", rawToken)
                 .toUriString();
 
-        sendMail(user, "Verify your DevTutor email", "Hi " + user.getName()
-                + ",\n\nClick this link to verify your email (valid for 24 hours):\n"
-                + link + "\n\nIf you did not create a DevTutor account, ignore this email.", link);
+        sendMail(user, "Verify your DevGuide email", "Verify your email",
+                "Click the button below to verify your email. The link works for 24 hours.",
+                "Verify email", link);
     }
 
     public void sendPasswordReset(String email, String clientIp) {
@@ -88,9 +100,9 @@ public class EmailVerificationService {
         userRepository.save(user);
 
         String link = resetUrl + "#token=" + rawToken;
-        sendMail(user, "Reset your DevTutor password", "Hi " + user.getName()
-                + ",\n\nClick this link to choose a new password (valid for 1 hour):\n"
-                + link + "\n\nIf you did not ask for this, ignore this email.", link);
+        sendMail(user, "Reset your DevGuide password", "Reset your password",
+                "Click the button below to choose a new password. The link works for 1 hour.",
+                "Reset password", link);
     }
 
     public boolean resetPassword(String rawToken, String newPassword) {
@@ -113,23 +125,33 @@ public class EmailVerificationService {
         return !expired;
     }
 
-    private void sendMail(User user, String subject, String text, String link) {
+    private void sendMail(User user, String subject, String title, String text, String buttonLabel, String link) {
         JavaMailSender sender = mailSender.getIfAvailable();
         if (sender == null) {
             log.info("Email sending is not configured. {} link for {}: {}", subject, user.getEmail(), link);
             return;
         }
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        if (!fromAddress.isBlank()) {
-            message.setFrom(fromAddress);
-        }
-        message.setTo(user.getEmail());
-        message.setSubject(subject);
-        message.setText(text);
+        String plainText = "Hi " + user.getName() + ",\n\n" + text + "\n\n" + link
+                + "\n\nIf you didn't ask for this, you can ignore this email.";
+        String html = emailTemplate
+                .replace("{{title}}", HtmlUtils.htmlEscape(title))
+                .replace("{{name}}", HtmlUtils.htmlEscape(user.getName()))
+                .replace("{{text}}", HtmlUtils.htmlEscape(text))
+                .replace("{{buttonLabel}}", HtmlUtils.htmlEscape(buttonLabel))
+                .replace("{{link}}", HtmlUtils.htmlEscape(link));
+
         try {
+            MimeMessage message = sender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            if (!fromAddress.isBlank()) {
+                helper.setFrom(fromAddress);
+            }
+            helper.setTo(user.getEmail());
+            helper.setSubject(subject);
+            helper.setText(plainText, html);
             sender.send(message);
-        } catch (MailException e) {
+        } catch (MailException | MessagingException e) {
             log.warn("Could not send email to {}: {}", user.getEmail(), e.getMessage());
         }
     }

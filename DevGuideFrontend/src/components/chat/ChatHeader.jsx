@@ -1,4 +1,4 @@
-import { CircleHelp, Code, PanelRight } from "lucide-react";
+import { CircleHelp, Code, Menu, PanelRight } from "lucide-react";
 import FilesMenu from "./FilesMenu";
 
 const buttonStyle =
@@ -15,10 +15,20 @@ export default function ChatHeader({
   onChallenge,
   railOpen,
   onToggleRail,
+  menuOpen,
+  onOpenMenu,
 }) {
   return (
-    <div className="flex h-14 items-center gap-3 border-b px-4 sm:px-6">
-      <h1 className="truncate text-[0.9375rem] font-semibold tracking-tight">{chat.title}</h1>
+    <div className="flex h-14 items-center gap-2 border-b pr-4 pl-2 sm:pr-6 md:gap-3 md:pl-6">
+      <button
+        onClick={onOpenMenu}
+        aria-label="Open chat list"
+        aria-expanded={menuOpen}
+        className="grid size-10 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card hover:text-foreground md:hidden"
+      >
+        <Menu className="size-5" />
+      </button>
+      <h1 className="min-w-0 truncate text-[0.9375rem] font-semibold tracking-tight">{chat.title}</h1>
       <div className="ml-auto flex shrink-0 gap-1">
         <FilesMenu chatId={chat.id} pdfs={pdfs} uploading={uploading} onUpload={onUpload} onDelete={onDeletePdf} />
         <button onClick={onQuiz} disabled={loading !== null} aria-label="Quiz me" className={buttonStyle}>

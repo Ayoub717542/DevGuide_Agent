@@ -9,6 +9,7 @@
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
+  --code: oklch(0.97 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -65,6 +66,21 @@ body {
   padding: 1rem;
 }
 
+.auth-glow {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  animation: var(--drift) ease-in-out infinite alternate;
+}
+
+@keyframes auth-drift-1 { to { transform: translate(18rem, 4rem) scale(1.1); } }
+@keyframes auth-drift-2 { to { transform: translate(-16rem, 5rem) scale(1.15); } }
+@keyframes auth-drift-3 { to { transform: translate(-10rem, 3rem) scale(0.9); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow { animation: none; }
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -83,6 +99,7 @@ body {
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-link: var(--link);
+  --color-code: var(--code);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-brand: var(--brand);
@@ -116,6 +133,7 @@ body {
   --background: #0E1117;
   --foreground: #E6EDF3;
   --card: #191E26;
+  --code: #0A0D12;
   --card-foreground: #E6EDF3;
   --popover: #1F252E;
   --popover-foreground: #E6EDF3;

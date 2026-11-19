@@ -4,7 +4,7 @@ import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ChatList from "./ChatList";
 
-export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChats, chatError, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
+export default function Sidebar({ open, onClose, chats, chatsFailed, chatsLoading, onRetryChats, chatError, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
 
@@ -15,13 +15,13 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChat
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 min-h-0 w-64 flex-col bg-secondary duration-200 slide-in-from-left max-md:motion-safe:animate-in md:static md:flex md:w-auto ${
-        open ? "flex" : "hidden"
+      className={`fixed top-0 left-0 z-40 flex h-dvh min-h-0 w-64 flex-col bg-secondary pb-[env(safe-area-inset-bottom)] transition-[translate,visibility] duration-200 ease-out motion-reduce:transition-none md:visible md:static md:h-auto md:w-auto md:translate-x-0 ${
+        open ? "translate-x-0" : "invisible -translate-x-full"
       }`}
     >
       <div className="flex items-center gap-2.5 px-4.5 pt-4.5 pb-3.5 text-[0.9375rem] font-semibold">
         <img src="/devguide-logo.svg" alt="" className="size-7" />
-        DevGuide AI
+        DevGuide
       </div>
 
       <button
@@ -46,6 +46,7 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, onRetryChat
       <ChatList
         chats={shownChats}
         failed={chatsFailed}
+        loading={chatsLoading}
         onRetry={onRetryChats}
         activeId={activeId}
         onSelect={onSelect}
