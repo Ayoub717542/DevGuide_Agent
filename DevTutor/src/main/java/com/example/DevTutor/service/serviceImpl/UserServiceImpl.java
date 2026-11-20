@@ -149,21 +149,20 @@ public class UserServiceImpl implements UserServiceInterface {
     }
 
     @Override
-    public UserResponse updateUser(Long id, UpdateUserRequest request) {
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request, String adminEmail) {
         User user = findUser(id);
 
         if (request.getName() != null && !request.getName().isBlank()) {
             user.setName(request.getName().trim());
         }
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            String email = request.getEmail().trim().toLowerCase();
-            if (!email.equals(user.getEmail()) && userRepository.existsByEmail(email)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+        if (request.getRole() != null && request.getRole() != user.getRole()) {
+            if (user.getEmail().equals(adminEmail)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "You can't change your own role");
             }
-            user.setEmail(email);
-        }
-        if (request.getRole() != null) {
             user.setRole(request.getRole());
+            refreshTokenRepository.deleteByUser(user);
         }
 
         return userMapper.toResponse(userRepository.save(user));

@@ -38,7 +38,7 @@ public interface UserServiceInterface {
 
     PreferencesResponse updatePreferences(String email, PreferencesRequest request);
 
-    UserResponse updateUser(Long id, UpdateUserRequest request);
+    UserResponse updateUser(Long id, UpdateUserRequest request, String adminEmail);
 
     void deleteUser(Long id, String adminEmail);
 }

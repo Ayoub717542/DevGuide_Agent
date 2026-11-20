@@ -106,8 +106,9 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse updateUser(@PathVariable Long id,
-                                   @Valid @RequestBody UpdateUserRequest request) {
-        return userServiceInterface.updateUser(id, request);
+                                   @Valid @RequestBody UpdateUserRequest request,
+                                   Authentication authentication) {
+        return userServiceInterface.updateUser(id, request, authentication.getName());
     }
 
     @DeleteMapping("/{id}")
