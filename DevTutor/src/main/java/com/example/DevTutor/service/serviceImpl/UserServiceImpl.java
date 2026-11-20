@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserServiceInterface {
         trelloMcpService.forget(email);
         trelloOAuthService.disconnect(email);
         conversationRepository.findByCreatedByEmailOrderByCreatedAtDesc(email)
-                .forEach(conversation -> conversationService.deleteConversation(conversation.getId()));
+                .forEach(conversationService::deleteConversation);
         challengeRepository.deleteByUserEmail(email);
         learnerNoteRepository.deleteByUserEmail(email);
         learnerPreferencesRepository.deleteByUserEmail(email);

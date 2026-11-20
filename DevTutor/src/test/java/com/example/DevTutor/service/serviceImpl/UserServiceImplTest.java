@@ -87,7 +87,7 @@ class UserServiceImplTest {
         service.deleteUser(2L, ADMIN_EMAIL);
 
         verify(trelloOAuthService).disconnect("sara@mail.com");
-        verify(conversationService).deleteConversation(10L);
+        verify(conversationService).deleteConversation(conversation);
         verify(challengeRepository).deleteByUserEmail("sara@mail.com");
         verify(learnerNoteRepository).deleteByUserEmail("sara@mail.com");
         verify(learnerPreferencesRepository).deleteByUserEmail("sara@mail.com");
