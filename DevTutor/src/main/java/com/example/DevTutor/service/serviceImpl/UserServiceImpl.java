@@ -25,7 +25,6 @@ import com.example.DevTutor.service.TrelloOAuthService;
 import com.example.DevTutor.service.serviceInterface.ConversationService;
 import com.example.DevTutor.service.serviceInterface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -92,7 +91,11 @@ public class UserServiceImpl implements UserServiceInterface {
     @Override
     @Transactional
     public void deleteMyAccount(String email) {
-        User user = findUser(email);
+        deleteAccount(findUser(email));
+    }
+
+    private void deleteAccount(User user) {
+        String email = user.getEmail();
         trelloMcpService.forget(email);
         trelloOAuthService.disconnect(email);
         conversationRepository.findByCreatedByEmailOrderByCreatedAtDesc(email)
@@ -167,15 +170,14 @@ public class UserServiceImpl implements UserServiceInterface {
     }
 
     @Override
-    public void deleteUser(Long id) {
+    @Transactional
+    public void deleteUser(Long id, String adminEmail) {
         User user = findUser(id);
-        try {
-            refreshTokenRepository.deleteByUser(user);
-            userRepository.delete(user);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "User has conversations and cannot be deleted");
+        if (user.getEmail().equals(adminEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "You can't delete your own account here");
         }
+        deleteAccount(user);
     }
 
     private User findUser(Long id) {

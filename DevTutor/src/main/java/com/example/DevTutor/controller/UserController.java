@@ -113,7 +113,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
-        userServiceInterface.deleteUser(id);
+    public void deleteUser(@PathVariable Long id, Authentication authentication) {
+        userServiceInterface.deleteUser(id, authentication.getName());
     }
 }

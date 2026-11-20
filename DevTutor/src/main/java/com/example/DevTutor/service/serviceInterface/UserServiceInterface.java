@@ -40,5 +40,5 @@ public interface UserServiceInterface {
 
     UserResponse updateUser(Long id, UpdateUserRequest request);
 
-    void deleteUser(Long id);
+    void deleteUser(Long id, String adminEmail);
 }
