@@ -1,7 +1,7 @@
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Button, buttonVariants } from "./button";
 
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = "Delete", onConfirm }) {
+export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = "Delete", danger = true, onConfirm }) {
   const confirm = () => {
     onOpenChange(false);
     onConfirm();
@@ -20,7 +20,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
           </AlertDialog.Description>
           <footer className="flex justify-end gap-2 border-t px-5 py-4">
             <AlertDialog.Close className={buttonVariants({ variant: "ghost" })}>Cancel</AlertDialog.Close>
-            <Button onClick={confirm} className="bg-destructive text-white hover:bg-destructive/90">
+            <Button onClick={confirm} className={danger ? "bg-destructive text-white hover:bg-destructive/90" : ""}>
               {confirmLabel}
             </Button>
           </footer>

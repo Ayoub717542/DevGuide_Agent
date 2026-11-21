@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Plus, Search, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { ConfirmDialog } from "../ui/confirm-dialog";
 import ChatList from "./ChatList";
 
 export default function Sidebar({ open, onClose, chats, chatsFailed, chatsLoading, onRetryChats, chatError, activeId, onSettings, onSelect, onNew, onRename, onDelete }) {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   const shownChats = chats.filter((chat) =>
     chat.title.toLowerCase().includes(search.toLowerCase())
@@ -75,7 +77,7 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, chatsLoadin
             <Settings className="size-4" />
           </Link>
           <button
-            onClick={logout}
+            onClick={() => setConfirmingLogout(true)}
             aria-label="Log out"
             className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
           >
@@ -83,6 +85,15 @@ export default function Sidebar({ open, onClose, chats, chatsFailed, chatsLoadin
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmingLogout}
+        onOpenChange={setConfirmingLogout}
+        title="Log out?"
+        description="You'll need to log in again to see your chats."
+        confirmLabel="Log out"
+        danger={false}
+        onConfirm={logout}
+      />
     </aside>
   );
 }
