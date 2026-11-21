@@ -95,12 +95,12 @@ export default function StudyDesk() {
   };
 
   const renameChat = async (id, title) => {
-    setChatError("");
     try {
       const updated = await chatsApi.renameChat(id, title);
-      setChats(chats.map((chat) => (chat.id === id ? updated : chat)));
+      setChats((list) => list.map((chat) => (chat.id === id ? updated : chat)));
+      toast.success("Chat renamed");
     } catch {
-      setChatError("Could not rename this chat. Try again.");
+      toast.error("Could not rename this chat", { description: "Try again" });
     }
   };
 
