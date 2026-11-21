@@ -3,6 +3,8 @@ import { Menu } from "lucide-react";
 import AccountTab from "../components/settings/AccountTab";
 import AppsTab from "../components/settings/AppsTab";
 import TutorTab from "../components/settings/TutorTab";
+import UsersTab from "../components/settings/UsersTab";
+import { useAuth } from "../context/AuthContext";
 
 const TABS = [
   { id: "account", label: "Account" },
@@ -11,7 +13,9 @@ const TABS = [
 ];
 
 export default function Settings({ menuOpen, onOpenMenu }) {
-  const [tab, setTab] = useState(() => (window.location.hash.includes("trello") ? "apps" : "account"));
+  const { user } = useAuth();
+  const [tab, setTab] = useState(() => (/trello|apps/.test(window.location.hash) ? "apps" : "account"));
+  const tabs = user.role === "ADMIN" ? [...TABS, { id: "users", label: "Users" }] : TABS;
 
   return (
     <main className="min-w-0 overflow-auto">
@@ -29,7 +33,7 @@ export default function Settings({ menuOpen, onOpenMenu }) {
         </div>
 
         <div role="tablist" aria-label="Settings" className="mt-4 flex gap-1 border-b">
-          {TABS.map((item) => (
+          {tabs.map((item) => (
             <button
               key={item.id}
               role="tab"
@@ -50,6 +54,7 @@ export default function Settings({ menuOpen, onOpenMenu }) {
           {tab === "account" && <AccountTab />}
           {tab === "tutor" && <TutorTab />}
           {tab === "apps" && <AppsTab />}
+          {tab === "users" && user.role === "ADMIN" && <UsersTab />}
         </section>
       </div>
     </main>

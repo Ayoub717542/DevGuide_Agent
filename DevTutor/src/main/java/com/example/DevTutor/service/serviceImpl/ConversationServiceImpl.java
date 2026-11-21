@@ -90,7 +90,13 @@ public class ConversationServiceImpl implements ConversationService {
     @Override
     @Transactional
     public void deleteConversation(Long id) {
-        Conversation conversation = findOwnConversation(id);
+        deleteConversation(findOwnConversation(id));
+    }
+
+    @Override
+    @Transactional
+    public void deleteConversation(Conversation conversation) {
+        Long id = conversation.getId();
         List<Message> messages = messageRepository
                 .findByConversationIdOrderByCreatedAtAscIdAsc(id);
 

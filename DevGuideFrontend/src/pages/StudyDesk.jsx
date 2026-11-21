@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Menu, PanelRight } from "lucide-react";
+import { toast } from "sonner";
 import AuthBackground from "../components/AuthBackground";
 import ChatView from "../components/chat/ChatView";
 import Composer from "../components/chat/Composer";
@@ -94,23 +95,28 @@ export default function StudyDesk() {
   };
 
   const renameChat = async (id, title) => {
-    setChatError("");
     try {
       const updated = await chatsApi.renameChat(id, title);
-      setChats(chats.map((chat) => (chat.id === id ? updated : chat)));
+      setChats((list) => list.map((chat) => (chat.id === id ? updated : chat)));
+      toast.success("Chat renamed");
     } catch {
-      setChatError("Could not rename this chat. Try again.");
+      toast.error("Could not rename this chat", { description: "Try again" });
     }
   };
 
   const deleteChat = async (id) => {
-    setChatError("");
+    const request = chatsApi.deleteChat(id);
+    toast.promise(request, {
+      loading: "Deleting chat…",
+      success: "Chat deleted",
+      error: "Could not delete this chat",
+    });
     try {
-      await chatsApi.deleteChat(id);
-      setChats(chats.filter((chat) => chat.id !== id));
+      await request;
+      setChats((list) => list.filter((chat) => chat.id !== id));
       if (activeId === id) setActiveId(null);
     } catch {
-      setChatError("Could not delete this chat. Try again.");
+      return;
     }
   };
 

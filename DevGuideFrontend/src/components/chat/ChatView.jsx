@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { toast } from "sonner";
 import * as chatsApi from "../../api/chats";
 import * as documentsApi from "../../api/documents";
 import { streamReply } from "../../api/stream";
@@ -129,12 +130,17 @@ export default function ChatView({
   };
 
   const deletePdf = async (documentId) => {
-    setError("");
+    const request = documentsApi.deletePdf(documentId);
+    toast.promise(request, {
+      loading: "Deleting PDF…",
+      success: "PDF deleted",
+      error: "Could not delete this PDF",
+    });
     try {
-      await documentsApi.deletePdf(documentId);
+      await request;
       await loadPdfs();
     } catch {
-      setError("Could not delete this PDF. Try again.");
+      return;
     }
   };
 

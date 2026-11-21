@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { updateName } from "../../api/user";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../ui/button";
@@ -9,18 +10,17 @@ export default function NameRow() {
   const { user, setUser } = useAuth();
   const [name, setName] = useState(user.name || "");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const tooShort = name.trim().length < 2;
   const changed = name.trim() !== (user.name || "");
 
   const save = async () => {
     setSaving(true);
-    setError("");
     try {
       setUser(await updateName(name.trim()));
+      toast.success("Name saved");
     } catch {
-      setError("Could not save your name. Try again.");
+      toast.error("Could not save your name", { description: "Try again" });
     } finally {
       setSaving(false);
     }
@@ -30,7 +30,6 @@ export default function NameRow() {
     <>
       <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">2 to 100 characters</p>
       {changed && tooShort && <p className="mt-1.5 text-xs text-destructive">Enter at least 2 characters</p>}
-      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
     </>
   );
 

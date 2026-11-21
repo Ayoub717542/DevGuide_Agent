@@ -106,14 +106,15 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse updateUser(@PathVariable Long id,
-                                   @Valid @RequestBody UpdateUserRequest request) {
-        return userServiceInterface.updateUser(id, request);
+                                   @Valid @RequestBody UpdateUserRequest request,
+                                   Authentication authentication) {
+        return userServiceInterface.updateUser(id, request, authentication.getName());
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
-        userServiceInterface.deleteUser(id);
+    public void deleteUser(@PathVariable Long id, Authentication authentication) {
+        userServiceInterface.deleteUser(id, authentication.getName());
     }
 }

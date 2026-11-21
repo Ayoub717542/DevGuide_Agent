@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { toast } from "sonner";
 import { API_URL } from "../../api/axiosApi";
 import { getMe } from "../../api/Client";
 import { disconnectTrello, finishConnect, getConnectUrl } from "../../api/trello";
@@ -12,9 +13,6 @@ const trelloReturn = () => new URLSearchParams(window.location.hash.slice(1));
 export default function AppsTab() {
   const { user, setUser } = useAuth();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState(() =>
-    trelloReturn().get("trello") === "error" ? "Trello connection failed. Try again." : ""
-  );
   const finishedRef = useRef(false);
 
   const refreshUser = async () => setUser(await getMe());
@@ -26,14 +24,20 @@ export default function AppsTab() {
     if (finishedRef.current || (!code && !params.get("trello"))) return;
     finishedRef.current = true;
     window.history.replaceState(null, "", "/settings");
-    if (!code) return;
+    if (!code) {
+      if (params.get("trello") === "error") toast.error("Trello connection failed", { description: "Try again" });
+      return;
+    }
 
-    finishConnect(code, state)
-      .then((result) => {
-        setMessage(result.connected ? "Trello connected." : "Trello connection failed. Try again.");
-        return refreshUser();
-      })
-      .catch(() => setMessage("Trello connection failed. Try again."));
+    const request = finishConnect(code, state).then((result) => {
+      if (!result.connected) throw new Error("not connected");
+      return refreshUser();
+    });
+    toast.promise(request, {
+      loading: "Connecting Trello…",
+      success: "Trello connected",
+      error: "Trello connection failed",
+    });
   });
 
   useEffect(() => finishTrello(), []);
@@ -44,19 +48,23 @@ export default function AppsTab() {
       const { url } = await getConnectUrl();
       window.location.href = url;
     } catch {
-      setMessage("Could not open Trello. Try again.");
+      toast.error("Could not open Trello", { description: "Try again" });
       setBusy(false);
     }
   };
 
   const disconnect = async (action, name) => {
     setBusy(true);
+    const request = action().then(refreshUser);
+    toast.promise(request, {
+      loading: `Disconnecting ${name}…`,
+      success: `${name} disconnected`,
+      error: `Could not disconnect ${name}`,
+    });
     try {
-      await action();
-      await refreshUser();
-      setMessage(`${name} disconnected.`);
+      await request;
     } catch {
-      setMessage(`Could not disconnect ${name}. Try again.`);
+      return;
     } finally {
       setBusy(false);
     }
@@ -68,7 +76,6 @@ export default function AppsTab() {
       <p className="mt-0.5 mb-4 max-w-[62ch] text-sm text-muted-foreground lg:text-[0.9375rem]">
         Your tutor uses these only when you ask about them.
       </p>
-      {message && <p className="mb-3 text-[0.8125rem] lg:text-sm">{message}</p>}
 
       <div className="rounded-xl border bg-secondary">
         <AppRow
@@ -86,7 +93,11 @@ export default function AppsTab() {
               Disconnect
             </Button>
           ) : (
-            <a href={`${API_URL}/oauth2/authorization/github`} className={buttonVariants({ variant: "outline" })}>
+            <a
+              href={`${API_URL}/oauth2/authorization/github`}
+              onClick={() => sessionStorage.setItem("connectingGithub", "1")}
+              className={buttonVariants({ variant: "outline" })}
+            >
               Connect
             </a>
           )}

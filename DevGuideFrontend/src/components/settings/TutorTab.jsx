@@ -1,5 +1,5 @@
-import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getPreferences, updatePreferences } from "../../api/user";
 import { Button } from "../ui/button";
 import ChoiceRow from "./ChoiceRow";
@@ -58,7 +58,6 @@ export default function TutorTab() {
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -74,19 +73,17 @@ export default function TutorTab() {
 
   const pick = (key, value) => {
     setDraft({ ...draft, [key]: value });
-    setDone(false);
   };
 
   const save = async () => {
     setSaving(true);
-    setError("");
     try {
       const result = await updatePreferences(draft);
       setSaved(result);
       setDraft(result);
-      setDone(true);
+      toast.success("Tutor settings saved");
     } catch {
-      setError("Could not save. Try again.");
+      toast.error("Could not save your tutor settings", { description: "Try again" });
     } finally {
       setSaving(false);
     }
@@ -122,11 +119,6 @@ export default function TutorTab() {
         <Button variant="ghost" onClick={() => setDraft(saved)} disabled={!changed || saving}>
           Cancel
         </Button>
-        {done && !changed && (
-          <span className="inline-flex items-center gap-1 text-xs text-success">
-            <Check className="size-3.25" /> Saved
-          </span>
-        )}
       </div>
     </div>
   );

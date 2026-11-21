@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Download, FileText, X } from "lucide-react";
 import { downloadFile, getChatFiles } from "../../api/documents";
+import { ConfirmDialog } from "../ui/confirm-dialog";
 
 export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete }) {
   const [open, setOpen] = useState(false);
@@ -17,9 +18,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
     e.target.value = "";
   };
 
-  const remove = (pdf) => {
-    if (window.confirm(`Delete ${pdf.filename}? The tutor will stop using it.`)) onDelete(pdf.documentId);
-  };
+  const [pdfToDelete, setPdfToDelete] = useState(null);
 
   return (
     <div className="relative">
@@ -44,7 +43,7 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
               {pdfs.map((pdf) => (
                 <FileRow key={pdf.documentId} label="PDF" title={pdf.filename} detail={`${pdf.chunksStored} parts`}
                          href={pdf.fileUrl} action={<X className="size-3.5" />} actionLabel={`Delete ${pdf.filename}`}
-                         onAction={() => remove(pdf)} />
+                         onAction={() => setPdfToDelete(pdf)} />
               ))}
               {pdfs.length === 0 && <p className="px-2 py-1.5 text-muted-foreground">No PDFs yet</p>}
 
@@ -61,6 +60,15 @@ export default function FilesMenu({ chatId, pdfs, uploading, onUpload, onDelete 
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={pdfToDelete !== null}
+        onOpenChange={(isOpen) => !isOpen && setPdfToDelete(null)}
+        title={`Delete ${pdfToDelete?.filename}?`}
+        description="The tutor will stop using it in this chat. This can't be undone."
+        confirmLabel="Delete PDF"
+        onConfirm={() => onDelete(pdfToDelete.documentId)}
+      />
     </div>
   );
 }

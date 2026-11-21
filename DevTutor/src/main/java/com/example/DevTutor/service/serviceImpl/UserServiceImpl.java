@@ -25,7 +25,6 @@ import com.example.DevTutor.service.TrelloOAuthService;
 import com.example.DevTutor.service.serviceInterface.ConversationService;
 import com.example.DevTutor.service.serviceInterface.UserServiceInterface;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -92,11 +91,15 @@ public class UserServiceImpl implements UserServiceInterface {
     @Override
     @Transactional
     public void deleteMyAccount(String email) {
-        User user = findUser(email);
+        deleteAccount(findUser(email));
+    }
+
+    private void deleteAccount(User user) {
+        String email = user.getEmail();
         trelloMcpService.forget(email);
         trelloOAuthService.disconnect(email);
         conversationRepository.findByCreatedByEmailOrderByCreatedAtDesc(email)
-                .forEach(conversation -> conversationService.deleteConversation(conversation.getId()));
+                .forEach(conversationService::deleteConversation);
         challengeRepository.deleteByUserEmail(email);
         learnerNoteRepository.deleteByUserEmail(email);
         learnerPreferencesRepository.deleteByUserEmail(email);
@@ -146,36 +149,34 @@ public class UserServiceImpl implements UserServiceInterface {
     }
 
     @Override
-    public UserResponse updateUser(Long id, UpdateUserRequest request) {
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request, String adminEmail) {
         User user = findUser(id);
 
         if (request.getName() != null && !request.getName().isBlank()) {
             user.setName(request.getName().trim());
         }
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            String email = request.getEmail().trim().toLowerCase();
-            if (!email.equals(user.getEmail()) && userRepository.existsByEmail(email)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+        if (request.getRole() != null && request.getRole() != user.getRole()) {
+            if (user.getEmail().equals(adminEmail)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "You can't change your own role");
             }
-            user.setEmail(email);
-        }
-        if (request.getRole() != null) {
             user.setRole(request.getRole());
+            refreshTokenRepository.deleteByUser(user);
         }
 
         return userMapper.toResponse(userRepository.save(user));
     }
 
     @Override
-    public void deleteUser(Long id) {
+    @Transactional
+    public void deleteUser(Long id, String adminEmail) {
         User user = findUser(id);
-        try {
-            refreshTokenRepository.deleteByUser(user);
-            userRepository.delete(user);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "User has conversations and cannot be deleted");
+        if (user.getEmail().equals(adminEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "You can't delete your own account here");
         }
+        deleteAccount(user);
     }
 
     private User findUser(Long id) {
