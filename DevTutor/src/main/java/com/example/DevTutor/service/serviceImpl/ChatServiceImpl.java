@@ -59,6 +59,7 @@ import java.util.Map;
 import com.example.DevTutor.tools.CodeRunnerTools;
 import com.example.DevTutor.tools.DocumentTools;
 import com.example.DevTutor.tools.LearnerNoteTools;
+import com.example.DevTutor.tools.ImageTools;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -173,6 +174,7 @@ public class ChatServiceImpl implements ChatService {
             DocumentTools documentTools,
             CodeRunnerTools codeRunnerTools,
             LearnerNoteTools learnerNoteTools,
+            ImageTools imageTools,
             ChatClient.Builder builder,
             ChatMemory chatMemory,
             VectorStore vectorStore,
@@ -242,7 +244,7 @@ public class ChatServiceImpl implements ChatService {
 
         this.chatClient = builder
                 .defaultSystem(guide)
-                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools)
+                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools, imageTools)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
