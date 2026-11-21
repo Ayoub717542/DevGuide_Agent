@@ -14,7 +14,7 @@ const TABS = [
 
 export default function Settings({ menuOpen, onOpenMenu }) {
   const { user } = useAuth();
-  const [tab, setTab] = useState(() => (window.location.hash.includes("trello") ? "apps" : "account"));
+  const [tab, setTab] = useState(() => (/trello|apps/.test(window.location.hash) ? "apps" : "account"));
   const tabs = user.role === "ADMIN" ? [...TABS, { id: "users", label: "Users" }] : TABS;
 
   return (

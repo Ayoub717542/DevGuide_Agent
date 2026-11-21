@@ -93,7 +93,11 @@ export default function AppsTab() {
               Disconnect
             </Button>
           ) : (
-            <a href={`${API_URL}/oauth2/authorization/github`} className={buttonVariants({ variant: "outline" })}>
+            <a
+              href={`${API_URL}/oauth2/authorization/github`}
+              onClick={() => sessionStorage.setItem("connectingGithub", "1")}
+              className={buttonVariants({ variant: "outline" })}
+            >
               Connect
             </a>
           )}
