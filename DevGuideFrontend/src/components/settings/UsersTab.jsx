@@ -11,7 +11,6 @@ export default function UsersTab() {
   const [users, setUsers] = useState(null);
   const [error, setError] = useState("");
   const [toDelete, setToDelete] = useState(null);
-  const [message, setMessage] = useState("");
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
@@ -32,22 +31,17 @@ export default function UsersTab() {
 
   const replaceUser = (updated) => {
     setUsers((list) => list.map((u) => (u.id === updated.id ? updated : u)));
-    setMessage(`${updated.name || updated.email} is now ${updated.role === "ADMIN" ? "an admin" : "a user"}`);
   };
 
   const removeUser = (id) => {
-    const removed = users.find((u) => u.id === id);
     setUsers((list) => list.filter((u) => u.id !== id));
     setToDelete(null);
-    setMessage(`${removed.name || removed.email} was deleted`);
   };
 
   const lead = "Change who is an admin or remove an account. You can't change or delete your own account here";
 
   return (
     <Block title="Users" lead={lead}>
-      <p role="status" className="sr-only">{message}</p>
-
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
           <p className="text-sm text-destructive">{error}</p>

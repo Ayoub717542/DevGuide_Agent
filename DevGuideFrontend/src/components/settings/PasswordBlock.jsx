@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { changePassword } from "../../api/user";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -10,7 +11,6 @@ export default function PasswordBlock() {
   const [next, setNext] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
 
   const close = () => {
     setOpen(false);
@@ -25,9 +25,13 @@ export default function PasswordBlock() {
     try {
       await changePassword(current, next);
       close();
-      setDone(true);
+      toast.success("Password changed");
     } catch (e) {
-      setError(e.response?.data?.message || "Could not change your password. Try again.");
+      if (e.response?.status === 400) {
+        setError(e.response.data?.message || "Check your current password");
+      } else {
+        toast.error("Could not change your password", { description: "Try again" });
+      }
     } finally {
       setSaving(false);
     }
@@ -35,7 +39,7 @@ export default function PasswordBlock() {
 
   const help = (
     <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground">
-      {done ? "Your password was changed." : "Signed up with Google or GitHub? Then you have no password here."}
+      Signed up with Google or GitHub? Then you have no password here.
     </p>
   );
 
@@ -43,7 +47,7 @@ export default function PasswordBlock() {
     <Block title="Password" lead="Use at least 8 characters. You stay logged in after changing it.">
       <Row help={help}>
         {!open && (
-          <Button variant="outline" onClick={() => { setOpen(true); setDone(false); }}>
+          <Button variant="outline" onClick={() => setOpen(true)}>
             Change password
           </Button>
         )}

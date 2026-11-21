@@ -1,20 +1,23 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { updateRole } from "../../api/admin";
 import { Button } from "../ui/button";
 import { Row } from "./Block";
 
 export default function UserRow({ user, isMe, onChanged, onDelete }) {
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const name = user.name || user.email;
 
   const changeRole = async (role) => {
     setSaving(true);
-    setError("");
     try {
-      onChanged(await updateRole(user.id, role));
+      const updated = await updateRole(user.id, role);
+      onChanged(updated);
+      toast.success("Role changed", {
+        description: `${updated.email} is now ${updated.role === "ADMIN" ? "an admin" : "a user"}`,
+      });
     } catch (e) {
-      setError(e.response?.data?.message || "Could not change the role. Try again.");
+      toast.error("Could not change the role", { description: e.response?.data?.message || "Try again" });
     } finally {
       setSaving(false);
     }
@@ -28,10 +31,7 @@ export default function UserRow({ user, isMe, onChanged, onDelete }) {
   );
 
   const help = (
-    <>
-      <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
-      {error && <p role="alert" className="mt-1.5 text-xs text-destructive">{error}</p>}
-    </>
+    <p className="mt-0.5 text-[0.8125rem] lg:text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
   );
 
   return (

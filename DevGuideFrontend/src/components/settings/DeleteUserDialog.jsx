@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { deleteUser } from "../../api/admin";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -14,6 +15,7 @@ export default function DeleteUserDialog({ user, onClose, onDeleted }) {
     try {
       await deleteUser(user.id);
       onDeleted(user.id);
+      toast.success("User deleted", { description: `${user.email} and all their data were removed` });
     } catch (e) {
       setError(e.response?.data?.message || "Could not delete this user. Try again.");
       setDeleting(false);
