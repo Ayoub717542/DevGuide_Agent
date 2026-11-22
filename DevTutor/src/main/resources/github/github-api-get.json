@@ -1,0 +1,1554 @@
+[
+ {
+  "path": "/issues",
+  "summary": "List issues assigned to the authenticated user",
+  "params": [
+   "filter",
+   "state",
+   "labels",
+   "sort",
+   "direction",
+   "since",
+   "collab",
+   "orgs",
+   "owned",
+   "pulls",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/issues",
+  "summary": "List organization issues assigned to the authenticated user",
+  "params": [
+   "org",
+   "filter",
+   "state",
+   "labels",
+   "type",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/repos",
+  "summary": "List organization repositories",
+  "params": [
+   "org",
+   "type",
+   "sort",
+   "direction",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/rulesets",
+  "summary": "Get all organization repository rulesets",
+  "params": [
+   "org",
+   "per_page",
+   "page",
+   "targets"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/rulesets/rule-suites",
+  "summary": "List organization rule suites",
+  "params": [
+   "org",
+   "ref",
+   "repository_name",
+   "time_period",
+   "actor_name",
+   "rule_suite_result",
+   "evaluate_status",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/rulesets/rule-suites/{rule_suite_id}",
+  "summary": "Get an organization rule suite",
+  "params": [
+   "org",
+   "rule_suite_id",
+   "include_metadata"
+  ]
+ },
+ {
+  "path": "/orgs/{org}/rulesets/{ruleset_id}",
+  "summary": "Get an organization repository ruleset",
+  "params": [
+   "org",
+   "ruleset_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}",
+  "summary": "Get a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/activity",
+  "summary": "List repository activities",
+  "params": [
+   "owner",
+   "repo",
+   "direction",
+   "per_page",
+   "before",
+   "after",
+   "ref",
+   "actor",
+   "time_period",
+   "activity_type"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/assignees",
+  "summary": "List assignees",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/assignees/{assignee}",
+  "summary": "Check if a user can be assigned",
+  "params": [
+   "owner",
+   "repo",
+   "assignee"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/attestations/{subject_digest}",
+  "summary": "List attestations",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "before",
+   "after",
+   "subject_digest",
+   "predicate_type"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/autolinks",
+  "summary": "Get all autolinks of a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/autolinks/{autolink_id}",
+  "summary": "Get an autolink reference of a repository",
+  "params": [
+   "owner",
+   "repo",
+   "autolink_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/automated-security-fixes",
+  "summary": "Check if Dependabot security updates are enabled for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches",
+  "summary": "List branches",
+  "params": [
+   "owner",
+   "repo",
+   "protected",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}",
+  "summary": "Get a branch",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection",
+  "summary": "Get branch protection",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins",
+  "summary": "Get admin branch protection",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews",
+  "summary": "Get pull request review protection",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/required_signatures",
+  "summary": "Get commit signature protection",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks",
+  "summary": "Get status checks protection",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts",
+  "summary": "Get all status check contexts",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions",
+  "summary": "Get access restrictions",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps",
+  "summary": "Get apps with access to the protected branch",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams",
+  "summary": "Get teams with access to the protected branch",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users",
+  "summary": "Get users with access to the protected branch",
+  "params": [
+   "owner",
+   "repo",
+   "branch"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/codeowners/errors",
+  "summary": "List CODEOWNERS errors",
+  "params": [
+   "owner",
+   "repo",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/collaborators",
+  "summary": "List repository collaborators",
+  "params": [
+   "owner",
+   "repo",
+   "affiliation",
+   "permission",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/collaborators/{username}",
+  "summary": "Check if a user is a repository collaborator",
+  "params": [
+   "owner",
+   "repo",
+   "username"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/collaborators/{username}/permission",
+  "summary": "Get repository permissions for a user",
+  "params": [
+   "owner",
+   "repo",
+   "username"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/comments",
+  "summary": "List commit comments for a repository",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/comments/{comment_id}",
+  "summary": "Get a commit comment",
+  "params": [
+   "owner",
+   "repo",
+   "comment_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits",
+  "summary": "List commits",
+  "params": [
+   "owner",
+   "repo",
+   "sha",
+   "path",
+   "author",
+   "committer",
+   "since",
+   "until",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{commit_sha}/branches-where-head",
+  "summary": "List branches for HEAD commit",
+  "params": [
+   "owner",
+   "repo",
+   "commit_sha"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{commit_sha}/comments",
+  "summary": "List commit comments",
+  "params": [
+   "owner",
+   "repo",
+   "commit_sha",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{commit_sha}/pulls",
+  "summary": "List pull requests associated with a commit",
+  "params": [
+   "owner",
+   "repo",
+   "commit_sha",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{ref}",
+  "summary": "Get a commit",
+  "params": [
+   "owner",
+   "repo",
+   "page",
+   "per_page",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{ref}/status",
+  "summary": "Get the combined status for a specific reference",
+  "params": [
+   "owner",
+   "repo",
+   "ref",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/commits/{ref}/statuses",
+  "summary": "List commit statuses for a reference",
+  "params": [
+   "owner",
+   "repo",
+   "ref",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/community/profile",
+  "summary": "Get community profile metrics",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/compare/{basehead}",
+  "summary": "Compare two commits",
+  "params": [
+   "owner",
+   "repo",
+   "page",
+   "per_page",
+   "basehead"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/contents/{path}",
+  "summary": "Get repository content",
+  "params": [
+   "owner",
+   "repo",
+   "path",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/contributors",
+  "summary": "List repository contributors",
+  "params": [
+   "owner",
+   "repo",
+   "anon",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/deployments",
+  "summary": "List deployments",
+  "params": [
+   "owner",
+   "repo",
+   "sha",
+   "ref",
+   "task",
+   "environment",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/deployments/{deployment_id}",
+  "summary": "Get a deployment",
+  "params": [
+   "owner",
+   "repo",
+   "deployment_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/deployments/{deployment_id}/statuses",
+  "summary": "List deployment statuses",
+  "params": [
+   "owner",
+   "repo",
+   "deployment_id",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/deployments/{deployment_id}/statuses/{status_id}",
+  "summary": "Get a deployment status",
+  "params": [
+   "owner",
+   "repo",
+   "deployment_id",
+   "status_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments",
+  "summary": "List environments",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}",
+  "summary": "Get an environment",
+  "params": [
+   "owner",
+   "repo",
+   "environment_name"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies",
+  "summary": "List deployment branch policies",
+  "params": [
+   "owner",
+   "repo",
+   "environment_name",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}",
+  "summary": "Get a deployment branch policy",
+  "params": [
+   "owner",
+   "repo",
+   "environment_name",
+   "branch_policy_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules",
+  "summary": "Get all deployment protection rules for an environment",
+  "params": [
+   "environment_name",
+   "repo",
+   "owner"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/apps",
+  "summary": "List custom deployment rule integrations available for an environment",
+  "params": [
+   "environment_name",
+   "repo",
+   "owner",
+   "page",
+   "per_page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/{protection_rule_id}",
+  "summary": "Get a custom deployment protection rule",
+  "params": [
+   "owner",
+   "repo",
+   "environment_name",
+   "protection_rule_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/forks",
+  "summary": "List forks",
+  "params": [
+   "owner",
+   "repo",
+   "sort",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hash-algorithm",
+  "summary": "Get the hash algorithm for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hooks",
+  "summary": "List repository webhooks",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hooks/{hook_id}",
+  "summary": "Get a repository webhook",
+  "params": [
+   "owner",
+   "repo",
+   "hook_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hooks/{hook_id}/config",
+  "summary": "Get a webhook configuration for a repository",
+  "params": [
+   "owner",
+   "repo",
+   "hook_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hooks/{hook_id}/deliveries",
+  "summary": "List deliveries for a repository webhook",
+  "params": [
+   "owner",
+   "repo",
+   "hook_id",
+   "per_page",
+   "cursor",
+   "status"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/hooks/{hook_id}/deliveries/{delivery_id}",
+  "summary": "Get a delivery for a repository webhook",
+  "params": [
+   "owner",
+   "repo",
+   "hook_id",
+   "delivery_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/immutable-releases",
+  "summary": "Check if immutable releases are enabled for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/invitations",
+  "summary": "List repository invitations",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issue-types",
+  "summary": "List issue types for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues",
+  "summary": "List repository issues",
+  "params": [
+   "owner",
+   "repo",
+   "milestone",
+   "state",
+   "assignee",
+   "type",
+   "creator",
+   "mentioned",
+   "issue_field_values",
+   "labels",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/comments",
+  "summary": "List issue comments for a repository",
+  "params": [
+   "owner",
+   "repo",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/comments/{comment_id}",
+  "summary": "Get an issue comment",
+  "params": [
+   "owner",
+   "repo",
+   "comment_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/events",
+  "summary": "List issue events for a repository",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/events/{event_id}",
+  "summary": "Get an issue event",
+  "params": [
+   "owner",
+   "repo",
+   "event_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}",
+  "summary": "Get an issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/artifacts",
+  "summary": "List issue artifacts",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "type",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/artifacts/{artifact_number}",
+  "summary": "Get an issue artifact",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "artifact_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/assignees/{assignee}",
+  "summary": "Check if a user can be assigned to a issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "assignee"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/comments",
+  "summary": "List issue comments",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by",
+  "summary": "List dependencies an issue is blocked by",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocking",
+  "summary": "List dependencies an issue is blocking",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/events",
+  "summary": "List issue events",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/issue-field-values",
+  "summary": "List issue field values for an issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/labels",
+  "summary": "List labels for an issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/parent",
+  "summary": "Get parent issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/relates_to",
+  "summary": "List issues related to an issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/sub_issues",
+  "summary": "List sub-issues",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/suggestions",
+  "summary": "List issue suggestions",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "state",
+   "action",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/issues/{issue_number}/timeline",
+  "summary": "List timeline events for an issue",
+  "params": [
+   "owner",
+   "repo",
+   "issue_number",
+   "per_page",
+   "page",
+   "exclude"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/keys",
+  "summary": "List deploy keys",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/keys/{key_id}",
+  "summary": "Get a deploy key",
+  "params": [
+   "owner",
+   "repo",
+   "key_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/labels",
+  "summary": "List labels for a repository",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/labels/{name}",
+  "summary": "Get a label",
+  "params": [
+   "owner",
+   "repo",
+   "name"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/languages",
+  "summary": "List repository languages",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/milestones",
+  "summary": "List milestones",
+  "params": [
+   "owner",
+   "repo",
+   "state",
+   "sort",
+   "direction",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/milestones/{milestone_number}",
+  "summary": "Get a milestone",
+  "params": [
+   "owner",
+   "repo",
+   "milestone_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/milestones/{milestone_number}/labels",
+  "summary": "List labels for issues in a milestone",
+  "params": [
+   "owner",
+   "repo",
+   "milestone_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages",
+  "summary": "Get a GitHub Pages site",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages/builds",
+  "summary": "List GitHub Pages builds",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages/builds/latest",
+  "summary": "Get latest Pages build",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages/builds/{build_id}",
+  "summary": "Get GitHub Pages build",
+  "params": [
+   "owner",
+   "repo",
+   "build_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages/deployments/{pages_deployment_id}",
+  "summary": "Get the status of a GitHub Pages deployment",
+  "params": [
+   "owner",
+   "repo",
+   "pages_deployment_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pages/health",
+  "summary": "Get a DNS health check for GitHub Pages",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/planning-statuses",
+  "summary": "List planning statuses for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/private-vulnerability-reporting",
+  "summary": "Check if private vulnerability reporting is enabled for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/properties/values",
+  "summary": "Get all custom property values for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls",
+  "summary": "List pull requests",
+  "params": [
+   "owner",
+   "repo",
+   "state",
+   "head",
+   "base",
+   "sort",
+   "direction",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/comments",
+  "summary": "List review comments in a repository",
+  "params": [
+   "owner",
+   "repo",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/comments/{comment_id}",
+  "summary": "Get a review comment for a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "comment_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}",
+  "summary": "Get a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/comments",
+  "summary": "List review comments on a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/commits",
+  "summary": "List commits on a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/files",
+  "summary": "List pull requests files",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/merge",
+  "summary": "Check if a pull request has been merged",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/merge-async/{uuid}",
+  "summary": "Get the result of an asynchronous merge",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "uuid"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
+  "summary": "Get all requested reviewers for a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
+  "summary": "List reviews for a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}",
+  "summary": "Get a review for a pull request",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "review_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/comments",
+  "summary": "List comments for a pull request review",
+  "params": [
+   "owner",
+   "repo",
+   "pull_number",
+   "review_id",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/readme",
+  "summary": "Get a repository README",
+  "params": [
+   "owner",
+   "repo",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/readme/{dir}",
+  "summary": "Get a repository README for a directory",
+  "params": [
+   "owner",
+   "repo",
+   "dir",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases",
+  "summary": "List releases",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases/assets/{asset_id}",
+  "summary": "Get a release asset",
+  "params": [
+   "owner",
+   "repo",
+   "asset_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases/latest",
+  "summary": "Get the latest release",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases/tags/{tag}",
+  "summary": "Get a release by tag name",
+  "params": [
+   "owner",
+   "repo",
+   "tag"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases/{release_id}",
+  "summary": "Get a release",
+  "params": [
+   "owner",
+   "repo",
+   "release_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/releases/{release_id}/assets",
+  "summary": "List release assets",
+  "params": [
+   "owner",
+   "repo",
+   "release_id",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rules/branches/{branch}",
+  "summary": "Get rules for a branch",
+  "params": [
+   "owner",
+   "repo",
+   "branch",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets",
+  "summary": "Get all repository rulesets",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page",
+   "includes_parents",
+   "targets"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets/rule-suites",
+  "summary": "List repository rule suites",
+  "params": [
+   "owner",
+   "repo",
+   "ref",
+   "time_period",
+   "actor_name",
+   "rule_suite_result",
+   "evaluate_status",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets/rule-suites/{rule_suite_id}",
+  "summary": "Get a repository rule suite",
+  "params": [
+   "owner",
+   "repo",
+   "rule_suite_id",
+   "include_metadata"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets/{ruleset_id}",
+  "summary": "Get a repository ruleset",
+  "params": [
+   "owner",
+   "repo",
+   "ruleset_id",
+   "includes_parents"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets/{ruleset_id}/history",
+  "summary": "Get repository ruleset history",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page",
+   "ruleset_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/rulesets/{ruleset_id}/history/{version_id}",
+  "summary": "Get repository ruleset version",
+  "params": [
+   "owner",
+   "repo",
+   "ruleset_id",
+   "version_id"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stacks",
+  "summary": "List pull request stacks",
+  "params": [
+   "owner",
+   "repo",
+   "pull_request",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stacks/{stack_number}",
+  "summary": "Get a pull request stack",
+  "params": [
+   "owner",
+   "repo",
+   "stack_number"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stats/code_frequency",
+  "summary": "Get the weekly commit activity",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stats/commit_activity",
+  "summary": "Get the last year of commit activity",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stats/contributors",
+  "summary": "Get all contributor commit activity",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stats/participation",
+  "summary": "Get the weekly commit count",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/stats/punch_card",
+  "summary": "Get the hourly commit count for each day",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/tags",
+  "summary": "List repository tags",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/tarball/{ref}",
+  "summary": "Download a repository archive (tar)",
+  "params": [
+   "owner",
+   "repo",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/teams",
+  "summary": "List repository teams",
+  "params": [
+   "owner",
+   "repo",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/topics",
+  "summary": "Get all repository topics",
+  "params": [
+   "owner",
+   "repo",
+   "page",
+   "per_page"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/traffic/clones",
+  "summary": "Get repository clones",
+  "params": [
+   "owner",
+   "repo",
+   "per"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/traffic/popular/paths",
+  "summary": "Get top referral paths",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/traffic/popular/referrers",
+  "summary": "Get top referral sources",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/traffic/views",
+  "summary": "Get page views",
+  "params": [
+   "owner",
+   "repo",
+   "per"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/vulnerability-alerts",
+  "summary": "Check if vulnerability alerts are enabled for a repository",
+  "params": [
+   "owner",
+   "repo"
+  ]
+ },
+ {
+  "path": "/repos/{owner}/{repo}/zipball/{ref}",
+  "summary": "Download a repository archive (zip)",
+  "params": [
+   "owner",
+   "repo",
+   "ref"
+  ]
+ },
+ {
+  "path": "/repositories",
+  "summary": "List public repositories",
+  "params": [
+   "since"
+  ]
+ },
+ {
+  "path": "/user/issues",
+  "summary": "List user account issues assigned to the authenticated user",
+  "params": [
+   "filter",
+   "state",
+   "labels",
+   "sort",
+   "direction",
+   "since",
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/user/repos",
+  "summary": "List repositories for the authenticated user",
+  "params": [
+   "visibility",
+   "affiliation",
+   "type",
+   "sort",
+   "direction",
+   "per_page",
+   "page",
+   "since",
+   "before"
+  ]
+ },
+ {
+  "path": "/user/repository_invitations",
+  "summary": "List repository invitations for the authenticated user",
+  "params": [
+   "per_page",
+   "page"
+  ]
+ },
+ {
+  "path": "/users/{username}/repos",
+  "summary": "List repositories for a user",
+  "params": [
+   "username",
+   "type",
+   "sort",
+   "direction",
+   "per_page",
+   "page"
+  ]
+ }
+]
