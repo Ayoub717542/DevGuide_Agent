@@ -70,6 +70,36 @@ class GithubApiToolsTest {
     }
 
     @Test
+    void shrinksGithubCommitAnswer() {
+        String commit = """
+                [{"sha":"abc123","node_id":"C_kwDO","url":"https://api.github.com/repos/o/r/commits/abc123",
+                  "html_url":"https://github.com/o/r/commit/abc123",
+                  "comments_url":"https://api.github.com/repos/o/r/commits/abc123/comments",
+                  "commit":{"url":"https://api.github.com/x","message":"Fix login",
+                    "author":{"name":"Ayoub","email":"a@b.c","date":"2026-11-20T10:00:00Z"},
+                    "committer":{"name":"GitHub","email":"noreply@github.com","date":"2026-11-20T10:00:00Z"},
+                    "tree":{"sha":"t1","url":"https://api.github.com/t1"},"comment_count":0,
+                    "verification":{"verified":true,"reason":"valid","signature":"-----BEGIN PGP-----","payload":"tree t1"}},
+                  "author":{"login":"ayoub","id":1,"node_id":"U_1","avatar_url":"https://a","gravatar_id":"",
+                    "url":"https://api.github.com/users/ayoub","html_url":"https://github.com/ayoub",
+                    "followers_url":"https://f","following_url":"https://g","gists_url":"https://h",
+                    "starred_url":"https://i","subscriptions_url":"https://j","organizations_url":"https://k",
+                    "repos_url":"https://l","events_url":"https://m","received_events_url":"https://n",
+                    "type":"User","site_admin":false},
+                  "parents":[{"sha":"p1","url":"https://api.github.com/p1","html_url":"https://github.com/p1"}]}]
+                """;
+
+        String small = GithubApiTools.shrink(commit);
+
+        assertTrue(small.contains("\"message\":\"Fix login\""));
+        assertTrue(small.contains("\"author\":\"ayoub\""));
+        assertTrue(small.contains("\"html_url\":\"https://github.com/o/r/commit/abc123\""));
+        assertFalse(small.contains("followers_url"));
+        assertFalse(small.contains("node_id"));
+        assertTrue(small.length() < commit.length() / 2,
+                () -> "before=" + commit.length() + " after=" + small.length());    }
+
+    @Test
     void refusesUnknownParameter() {
         assertThrows(IllegalArgumentException.class,
                 () -> tools.checkedUri("/repos/octocat/hello/issues", Map.of("evil", "1")));

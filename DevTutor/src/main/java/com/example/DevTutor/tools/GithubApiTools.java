@@ -12,11 +12,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +41,10 @@ public class GithubApiTools {
     private static final int MAX_ANSWER_CHARS = 8_000;
     private static final String SAFE_VALUE = "[A-Za-z0-9._-]+";
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{[^}]+}");
+    private static final JsonMapper JSON = JsonMapper.builder().build();
+    private static final Set<String> DROPPED_FIELDS = Set.of(
+            "url", "node_id", "gravatar_id", "_links", "permissions", "reactions",
+            "verification", "tree", "parents", "performed_via_github_app", "sub_issues_summary");
 
     public record Endpoint(String path, String summary, List<String> params) {
     }
@@ -111,7 +120,7 @@ public class GithubApiTools {
                     .header("X-GitHub-Api-Version", "2026-03-10")
                     .retrieve()
                     .body(String.class);
-            String answer = body == null ? "" : body;
+            String answer = body == null ? "" : shrink(body);
             boolean cut = answer.length() > MAX_ANSWER_CHARS;
             return Map.of(
                     "success", true,
@@ -149,6 +158,36 @@ public class GithubApiTools {
                 .path(path);
         query.forEach(builder::queryParam);
         return builder.build().encode().toUri();
+    }
+
+    static String shrink(String json) {
+        try {
+            JsonNode root = JSON.readTree(json);
+            clean(root);
+            return JSON.writeValueAsString(root);
+        } catch (RuntimeException e) {
+            return json;
+        }
+    }
+
+    private static void clean(JsonNode node) {
+        if (node instanceof ArrayNode array) {
+            array.forEach(GithubApiTools::clean);
+            return;
+        }
+        if (!(node instanceof ObjectNode object)) {
+            return;
+        }
+        for (String name : new ArrayList<>(object.propertyNames())) {
+            JsonNode child = object.get(name);
+            if (DROPPED_FIELDS.contains(name) || (name.endsWith("_url") && !name.equals("html_url"))) {
+                object.remove(name);
+            } else if (child.isObject() && child.has("login")) {
+                object.put(name, child.get("login").asString());
+            } else {
+                clean(child);
+            }
+        }
     }
 
     static boolean isMyAccountPath(String path) {
