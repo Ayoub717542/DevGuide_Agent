@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,10 +98,15 @@ public class GithubApiTools {
         } catch (IllegalArgumentException e) {
             return Map.of("success", false, "error", e.getMessage());
         }
+        Optional<String> userToken = userToken(toolContext);
+        if (userToken.isEmpty() && isMyAccountPath(path)) {
+            return Map.of("success", false,
+                    "error", "The student has not connected GitHub. Ask them to connect GitHub in Settings.");
+        }
         try {
             String body = github.get()
                     .uri(uri)
-                    .header("Authorization", "Bearer " + tokenFor(toolContext))
+                    .header("Authorization", "Bearer " + userToken.orElse(sharedToken))
                     .header("Accept", "application/vnd.github+json")
                     .header("X-GitHub-Api-Version", "2026-03-10")
                     .retrieve()
@@ -145,15 +151,18 @@ public class GithubApiTools {
         return builder.build().encode().toUri();
     }
 
-    private String tokenFor(ToolContext toolContext) {
+    static boolean isMyAccountPath(String path) {
+        return path.equals("/issues") || path.equals("/user") || path.startsWith("/user/");
+    }
+
+    private Optional<String> userToken(ToolContext toolContext) {
         Object email = toolContext == null ? null : toolContext.getContext().get("userEmail");
         if (email == null) {
-            return sharedToken;
+            return Optional.empty();
         }
         return userRepository.findByEmail(email.toString())
                 .map(User::getGithubToken)
-                .filter(token -> !token.isBlank())
-                .orElse(sharedToken);
+                .filter(token -> !token.isBlank());
     }
 
     private static int perPage(String value) {

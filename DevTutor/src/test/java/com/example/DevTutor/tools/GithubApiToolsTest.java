@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,6 +51,22 @@ class GithubApiToolsTest {
     @Test
     void refusesEncodedSlashInValue() {
         assertThrows(IllegalArgumentException.class, () -> tools.checkedUri("/repos/octocat%2Fx/hello/issues", null));
+    }
+
+    @Test
+    void refusesMyIssuesWithoutOwnGithubToken() {
+        Map<String, Object> result = tools.callGithubApi("/issues", null, null);
+
+        assertEquals(false, result.get("success"));
+        assertTrue(result.get("error").toString().contains("connect GitHub"));
+    }
+
+    @Test
+    void knowsWhichPathsAreAboutMyAccount() {
+        assertTrue(GithubApiTools.isMyAccountPath("/issues"));
+        assertTrue(GithubApiTools.isMyAccountPath("/user/repos"));
+        assertFalse(GithubApiTools.isMyAccountPath("/users/octocat/repos"));
+        assertFalse(GithubApiTools.isMyAccountPath("/repos/octocat/hello/issues"));
     }
 
     @Test
