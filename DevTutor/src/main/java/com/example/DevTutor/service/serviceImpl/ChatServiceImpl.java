@@ -489,15 +489,17 @@ public class ChatServiceImpl implements ChatService {
 
     private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {
         List<ToolCallback> tools = new ArrayList<>();
-        try {
-            for (ToolCallback tool : mcpTools.getToolCallbacks()) {
-                if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())) {
-                    tools.add(tool);
+        if (!groups.contains(ToolRouter.Group.GITHUB)) {
+            try {
+                for (ToolCallback tool : mcpTools.getToolCallbacks()) {
+                    if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())) {
+                        tools.add(tool);
+                    }
                 }
+            } catch (RuntimeException e) {
+                log.warn("MCP tools unavailable, answering without Context7 tools: {}", e.getMessage());
+                tools.clear();
             }
-        } catch (RuntimeException e) {
-            log.warn("MCP tools unavailable, answering without Context7 tools: {}", e.getMessage());
-            tools.clear();
         }
         if (groups.contains(ToolRouter.Group.GITHUB)) {
             tools.addAll(List.of(ToolCallbacks.from(githubApiTools)));

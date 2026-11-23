@@ -38,7 +38,7 @@ public class GithubApiTools {
 
     private static final int MAX_RESULTS = 5;
     private static final int MAX_PER_PAGE = 10;
-    private static final int MAX_ANSWER_CHARS = 8_000;
+    private static final int MAX_ANSWER_CHARS = 3_000;
     private static final String SAFE_VALUE = "[A-Za-z0-9._-]+";
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{[^}]+}");
     private static final JsonMapper JSON = JsonMapper.builder().build();
