@@ -60,6 +60,8 @@ import com.example.DevTutor.tools.CodeRunnerTools;
 import com.example.DevTutor.tools.DocumentTools;
 import com.example.DevTutor.tools.LearnerNoteTools;
 import com.example.DevTutor.tools.ImageTools;
+import com.example.DevTutor.tools.GithubApiTools;
+import org.springframework.ai.support.ToolCallbacks;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -135,6 +137,7 @@ public class ChatServiceImpl implements ChatService {
     private final ReviewScheduler reviewScheduler;
     private final TrelloMcpService trelloMcpService;
     private final ToolCallbackProvider mcpTools;
+    private final GithubApiTools githubApiTools;
     private final JdbcChatMemoryRepository chatMemoryRepository;
     private final String guide;
 
@@ -175,6 +178,7 @@ public class ChatServiceImpl implements ChatService {
             CodeRunnerTools codeRunnerTools,
             LearnerNoteTools learnerNoteTools,
             ImageTools imageTools,
+            GithubApiTools githubApiTools,
             ChatClient.Builder builder,
             ChatMemory chatMemory,
             VectorStore vectorStore,
@@ -209,6 +213,7 @@ public class ChatServiceImpl implements ChatService {
         this.reviewScheduler = reviewScheduler;
         this.trelloMcpService = trelloMcpService;
         this.mcpTools = mcpTools;
+        this.githubApiTools = githubApiTools;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.messageMapper = messageMapper;
@@ -484,16 +489,20 @@ public class ChatServiceImpl implements ChatService {
 
     private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {
         List<ToolCallback> tools = new ArrayList<>();
-        try {
-            for (ToolCallback tool : mcpTools.getToolCallbacks()) {
-                if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())
-                        || groups.contains(ToolRouter.Group.GITHUB)) {
-                    tools.add(tool);
+        if (!groups.contains(ToolRouter.Group.GITHUB)) {
+            try {
+                for (ToolCallback tool : mcpTools.getToolCallbacks()) {
+                    if (ToolRouter.isContext7Tool(tool.getToolDefinition().name())) {
+                        tools.add(tool);
+                    }
                 }
+            } catch (RuntimeException e) {
+                log.warn("MCP tools unavailable, answering without Context7 tools: {}", e.getMessage());
+                tools.clear();
             }
-        } catch (RuntimeException e) {
-            log.warn("MCP tools unavailable, answering without GitHub/Context7 tools: {}", e.getMessage());
-            tools.clear();
+        }
+        if (groups.contains(ToolRouter.Group.GITHUB)) {
+            tools.addAll(List.of(ToolCallbacks.from(githubApiTools)));
         }
         if (groups.contains(ToolRouter.Group.TRELLO)) {
             tools.addAll(trelloMcpService.toolsFor(currentUserEmail()));
