@@ -89,6 +89,9 @@ public class User implements UserDetails {
         createdAt = LocalDateTime.now();
     }
 
+
+
+
     public boolean hasProAccess() {
         if (role == Roles.ADMIN) {
             return true;
@@ -111,6 +114,8 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
+
+
 
     @Override
     public boolean isEnabled() {

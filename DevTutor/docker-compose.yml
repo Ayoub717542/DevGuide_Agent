@@ -9,7 +9,7 @@ services:
       QDRANT_HOST: qdrant
       PISTON_URL: http://piston:2000
       GOTENBERG_URL: http://gotenberg:3000
-      JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
+      JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true -XX:MaxRAMPercentage=75
     volumes:
       - model_cache:/root/.devtutor/model-cache
     depends_on:
