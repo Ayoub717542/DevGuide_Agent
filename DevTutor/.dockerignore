@@ -1,0 +1,10 @@
+.env
+target/
+.agents/
+.archify/
+.claude/
+evaluation/
+*.log
+HELP.md
+mvnw.cmd
+skills-lock.json
