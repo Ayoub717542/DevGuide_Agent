@@ -140,6 +140,10 @@ public class ChatServiceImpl implements ChatService {
     private final GithubApiTools githubApiTools;
     private final JdbcChatMemoryRepository chatMemoryRepository;
     private final String guide;
+    private final String githubGuide;
+    private final String trelloGuide;
+    private final List<ToolCallback> documentToolCallbacks;
+    private final List<ToolCallback> imageToolCallbacks;
 
     private static final String HINT_MODE = """
 
@@ -170,6 +174,20 @@ public class ChatServiceImpl implements ChatService {
             Trello tools are not attached to this message. This does not mean Trello is disconnected.
             If the student needs Trello, do not guess and never claim a Trello action happened.
             Ask them to mention Trello in their message.
+            """;
+
+    private static final String DOCUMENTS_NOT_ATTACHED = """
+
+
+            Document tools are not attached to this message, so you cannot create a PDF or Word file now.
+            Never claim a file was created. If the student wants a file, ask them to say "PDF" or "Word document" in their message.
+            """;
+
+    private static final String IMAGE_NOT_ATTACHED = """
+
+
+            The picture tool is not attached to this message, so you cannot create a picture now.
+            Never claim a picture was created. If the student wants one, ask them to say "draw" or "picture" in their message.
             """;
 
     public ChatServiceImpl(
@@ -214,12 +232,18 @@ public class ChatServiceImpl implements ChatService {
         this.trelloMcpService = trelloMcpService;
         this.mcpTools = mcpTools;
         this.githubApiTools = githubApiTools;
+        this.documentToolCallbacks = List.of(ToolCallbacks.from(documentTools));
+        this.imageToolCallbacks = List.of(ToolCallbacks.from(imageTools));
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.messageMapper = messageMapper;
         this.cloudinary = cloudinary;
 
         this.guide = new ClassPathResource("devtutor-guide.txt")
+                .getContentAsString(StandardCharsets.UTF_8);
+        this.githubGuide = new ClassPathResource("guide-github.txt")
+                .getContentAsString(StandardCharsets.UTF_8);
+        this.trelloGuide = new ClassPathResource("guide-trello.txt")
                 .getContentAsString(StandardCharsets.UTF_8);
 
         this.questionAnswerAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
@@ -249,7 +273,7 @@ public class ChatServiceImpl implements ChatService {
 
         this.chatClient = builder
                 .defaultSystem(guide)
-                .defaultTools(documentTools, codeRunnerTools, learnerNoteTools, imageTools)
+                .defaultTools(codeRunnerTools, learnerNoteTools)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
@@ -259,7 +283,7 @@ public class ChatServiceImpl implements ChatService {
         Media media = toMedia(file);
         Message userMessage = saveQuestion(request, file, media);
         Conversation conversation = userMessage.getConversation();
-        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
+        Set<ToolRouter.Group> toolGroups = selectTools(conversation.getId());
 
         long aiStart = System.nanoTime();
         ChatClientResponse aiResponse;
@@ -298,7 +322,7 @@ public class ChatServiceImpl implements ChatService {
         Media media = toMedia(file);
         Message userMessage = saveQuestion(request, file, media);
         Conversation conversation = userMessage.getConversation();
-        Set<ToolRouter.Group> toolGroups = ToolRouter.select(userMessages(conversation.getId()));
+        Set<ToolRouter.Group> toolGroups = selectTools(conversation.getId());
         StringBuilder answer = new StringBuilder();
         AtomicReference<ChatClientResponse> lastChunk = new AtomicReference<>();
         AtomicReference<Object> retrieved = new AtomicReference<>();
@@ -432,7 +456,7 @@ public class ChatServiceImpl implements ChatService {
     private ChatClient.ChatClientRequestSpec buildPrompt(
             MessageRequest request, Conversation conversation, Media media, Set<ToolRouter.Group> toolGroups) {
         boolean firstMessage = messageRepository.countByConversationId(conversation.getId()) == 1;
-        List<Advisor> requestAdvisors = uploadedDocumentRepository.existsByConversationId(conversation.getId())
+        List<Advisor> requestAdvisors = toolGroups.contains(ToolRouter.Group.UPLOADED_PDF)
                 ? List.of(questionAnswerAdvisor)
                 : List.of();
         return chatClient.prompt()
@@ -441,8 +465,10 @@ public class ChatServiceImpl implements ChatService {
                         + (firstMessage ? dueReviews(request.getContent()) : "")
                         + (request.isHintMode() ? HINT_MODE : "")
                         + (request.isDevMode() ? DEV_MODE : "")
-                        + (toolGroups.contains(ToolRouter.Group.GITHUB) ? "" : GITHUB_NOT_ATTACHED)
-                        + (toolGroups.contains(ToolRouter.Group.TRELLO) ? "" : TRELLO_NOT_ATTACHED))
+                        + (toolGroups.contains(ToolRouter.Group.GITHUB) ? githubGuide : GITHUB_NOT_ATTACHED)
+                        + (toolGroups.contains(ToolRouter.Group.TRELLO) ? trelloGuide : TRELLO_NOT_ATTACHED)
+                        + (toolGroups.contains(ToolRouter.Group.DOCUMENTS) ? "" : DOCUMENTS_NOT_ATTACHED)
+                        + (toolGroups.contains(ToolRouter.Group.IMAGE) ? "" : IMAGE_NOT_ATTACHED))
                 .user(u -> {
                     u.text(request.getContent());
                     if (media != null) {
@@ -460,7 +486,7 @@ public class ChatServiceImpl implements ChatService {
                                 "conversationId == '" + conversation.getId() + "'"
                         )
                 )
-                .tools(UntrustedToolCallback.wrap(routedTools(toolGroups)))
+                .tools(allTools(toolGroups))
                 .toolContext(Map.of(
                         "conversationId", conversation.getId(),
                         "userEmail", currentUserEmail()));
@@ -485,6 +511,32 @@ public class ChatServiceImpl implements ChatService {
                 .filter(message -> message.getRole() == MessageRole.USER)
                 .map(Message::getContent)
                 .toList();
+    }
+
+    private Set<ToolRouter.Group> selectTools(Long conversationId) {
+        return ToolRouter.select(userMessages(conversationId),
+                uploadedDocumentRepository.existsByConversationId(conversationId));
+    }
+
+    private List<ToolCallback> allTools(Set<ToolRouter.Group> groups) {
+        List<ToolCallback> tools = new ArrayList<>(UntrustedToolCallback.wrap(routedTools(groups)));
+        tools.addAll(localTools(groups));
+        return tools;
+    }
+
+    private List<ToolCallback> localTools(Set<ToolRouter.Group> groups) {
+        List<ToolCallback> tools = new ArrayList<>();
+        for (ToolCallback tool : documentToolCallbacks) {
+            String name = tool.getToolDefinition().name();
+            if ((groups.contains(ToolRouter.Group.DOCUMENTS) && ToolRouter.DOCUMENT_TOOLS.contains(name))
+                    || (groups.contains(ToolRouter.Group.UPLOADED_PDF) && ToolRouter.UPLOADED_PDF_TOOLS.contains(name))) {
+                tools.add(tool);
+            }
+        }
+        if (groups.contains(ToolRouter.Group.IMAGE)) {
+            tools.addAll(imageToolCallbacks);
+        }
+        return tools;
     }
 
     private List<ToolCallback> routedTools(Set<ToolRouter.Group> groups) {

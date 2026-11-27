@@ -64,7 +64,7 @@ class ToolRouterTest {
         assertEquals(ALWAYS, select("Write a card game with a deck of cards"));
         assertEquals(ALWAYS, select("How do I validate a credit card number?"));
         assertEquals(ALWAYS, select("Print the tic-tac-toe board"));
-        assertEquals(ALWAYS, select("Draw a chess board with a 2D array"));
+        assertFalse(select("Draw a chess board with a 2D array").contains(Group.TRELLO));
         assertEquals(ALWAYS, select("My list contains duplicates"));
     }
 
@@ -106,8 +106,8 @@ class ToolRouterTest {
         assertEquals(always(Group.TRELLO), select("What is on my board?"));
         assertEquals(always(Group.TRELLO), select("Add an item to my checklist"));
         assertEquals(always(Group.TRELLO), select("Show my INBOX"));
-        assertEquals(always(Group.TRELLO),
-                select("Create a Trello card for the main topic of my PDF in the first list of my first Trello board."));
+        assertTrue(select("Create a Trello card for the main topic of my PDF in the first list of my first Trello board.")
+                .contains(Group.TRELLO));
     }
 
     @Test
@@ -161,5 +161,62 @@ class ToolRouterTest {
         assertTrue(ToolRouter.isContext7Tool("query_docs"));
         assertFalse(ToolRouter.isContext7Tool("resolve-library-id"));
         assertFalse(ToolRouter.isContext7Tool("get_file_contents"));
+    }
+
+    @Test
+    void documentRequestsSelectDocuments() {
+        assertEquals(always(Group.DOCUMENTS), select("Create a PDF about Java loops"));
+        assertEquals(always(Group.DOCUMENTS), select("Make me a Word document about OOP"));
+        assertEquals(always(Group.DOCUMENTS), select("Can you give me a docx version?"));
+        assertEquals(always(Group.DOCUMENTS), select("I want a cheat sheet for Git commands"));
+        assertEquals(always(Group.DOCUMENTS), select("Make a printable worksheet on arrays"));
+        assertEquals(always(Group.DOCUMENTS), select("Save it as a file please"));
+        assertEquals(always(Group.DOCUMENTS), select("Export this lesson so I can download it"));
+        assertEquals(always(Group.DOCUMENTS), select("Write study notes on recursion that I can keep"));
+        assertEquals(always(Group.DOCUMENTS), select("Turn this into a document"));
+        assertEquals(always(Group.DOCUMENTS), select("Make a handout for my class"));
+    }
+
+    @Test
+    void imageRequestsSelectImage() {
+        assertEquals(always(Group.IMAGE), select("Draw a cat programming in Java"));
+        assertEquals(always(Group.IMAGE), select("Generate a picture of a binary tree"));
+        assertEquals(always(Group.IMAGE), select("Create an illustration of the OSI model"));
+        assertEquals(always(Group.IMAGE), select("Make a logo for my app"));
+        assertEquals(always(Group.IMAGE), select("Sketch a robot"));
+        assertEquals(always(Group.IMAGE), select("Can you make an image for my blog banner?"));
+    }
+
+    @Test
+    void plainTutoringGetsNoDocumentOrImageTools() {
+        assertEquals(ALWAYS, select("What is an interface in Java?"));
+        assertEquals(ALWAYS, select("Explain recursion with an example"));
+        assertEquals(ALWAYS, select("How do I read files line by line in Python?"));
+        assertEquals(ALWAYS, select("Why does my for loop never stop?"));
+    }
+
+    @Test
+    void documentAndImageFollowUpsKeepTheirTools() {
+        assertEquals(always(Group.DOCUMENTS),
+                select("Create a PDF about Java loops", "make it shorter", "add more examples"));
+        assertEquals(always(Group.IMAGE),
+                select("Draw a cat programming in Java", "make it blue"));
+        assertEquals(ALWAYS,
+                select("Create a PDF about Java loops", "thanks", "what is a loop?", "show me an example"));
+    }
+
+    @Test
+    void uploadedPdfAttachesPdfToolsWithoutKeywords() {
+        assertEquals(always(Group.UPLOADED_PDF, Group.DOCUMENTS),
+                ToolRouter.select(List.of("What is on page 3?"), true));
+        assertEquals(always(Group.UPLOADED_PDF, Group.DOCUMENTS),
+                ToolRouter.select(List.of(), true));
+        assertEquals(ALWAYS, ToolRouter.select(List.of("What is on page 3?"), false));
+    }
+
+    @Test
+    void oneMessageCanSelectDocumentsAndTrello() {
+        assertEquals(always(Group.TRELLO, Group.DOCUMENTS),
+                select("Make a PDF of my Trello board"));
     }
 }

@@ -1,0 +1,10 @@
+
+
+## Trello
+Use Trello tools for boards, lists, cards, checklists, Inbox, Planner and workspaces: reading, searching, creating boards and cards, updating, moving, completing and archiving cards, labels, comments and checklists.
+- If Trello tools are unavailable, ask the student to connect Trello.
+- Before creating a board or several cards, present the plan and get confirmation.
+- `trelloReadCard` and `trelloSearch` accept card URLs; write operations need the plain card ID, so look the card up first.
+- Removing a card from a board means archiving it with `trelloWriteCard` and `action=archive`. Archive lists with `trelloWriteList` and `action=archive`.
+- Permanent deletion of cards, lists and boards is not supported: explain this and offer archiving. Custom fields and local file uploads are not supported.
+- Never claim an action succeeded without a successful tool result.

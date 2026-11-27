@@ -10,11 +10,39 @@ import java.util.regex.Pattern;
 
 public final class ToolRouter {
 
-    public enum Group { LOCAL, CONTEXT7, GITHUB, TRELLO }
+    public enum Group { LOCAL, CONTEXT7, GITHUB, TRELLO, DOCUMENTS, IMAGE, UPLOADED_PDF }
 
     public static final int RECENT_USER_MESSAGES = 3;
 
     private static final Set<String> CONTEXT7_TOOLS = Set.of("resolve_library_id", "query_docs");
+
+    public static final Set<String> DOCUMENT_TOOLS = Set.of("createDocument", "findImage");
+
+    public static final Set<String> UPLOADED_PDF_TOOLS = Set.of("readDocument", "rewritePdf");
+
+    private static final List<Pattern> DOCUMENT_HINTS = patterns(
+            "\\bpdfs?\\b",
+            "\\bdocx?\\b",
+            "\\b(ms\\s*)?word\\s+(doc|docs|document|documents|file|files|format|version)\\b",
+            "\\bin\\s+word\\b",
+            "\\bdocuments?\\b",
+            "\\b(a|the|this|that|one|single)\\s+file\\b",
+            "\\bfile\\s+(for|about|with|of)\\b",
+            "\\bdownload(able|s|ed|ing)?\\b",
+            "\\bprint(able|\\s+out|\\s+it)\\b",
+            "\\bexport(s|ed|ing)?\\b",
+            "\\bhand-?outs?\\b",
+            "\\bcheat\\s*-?sheets?\\b",
+            "\\bworksheets?\\b",
+            "\\b(e-?book|booklet|brochure|leaflet|flyer|report|resume|cv)s?\\b",
+            "\\b(study|revision|lecture|course)\\s+notes\\b",
+            "\\b(save|send|give|turn|convert|put)\\s+(it|this|that|them|me)?\\s*(as|into|in)\\s+(a\\s+)?(file|document|pdf|word)\\b");
+
+    private static final List<Pattern> IMAGE_HINTS = patterns(
+            "\\b(draw|drew|drawn|drawing|drawings|sketch|sketches|paint|painting)\\b",
+            "\\b(pictures?|pics?|images?|illustrations?|illustrate|artwork|art|photos?|photographs?)\\b",
+            "\\b(logo|logos|icon|icons|poster|posters|wallpaper|avatar|banner|sticker|cartoon|comic|mascot)\\b",
+            "\\b(render|generate|create|make)\\s+(me\\s+)?(an?\\s+)?(visual|graphic|graphics)\\b");
 
     private static final List<Pattern> GITHUB_HINTS = patterns(
             "github",
@@ -61,7 +89,15 @@ public final class ToolRouter {
     }
 
     public static Set<Group> select(List<String> userMessages) {
+        return select(userMessages, false);
+    }
+
+    public static Set<Group> select(List<String> userMessages, boolean hasUploadedPdf) {
         Set<Group> groups = EnumSet.of(Group.LOCAL, Group.CONTEXT7);
+        if (hasUploadedPdf) {
+            groups.add(Group.UPLOADED_PDF);
+            groups.add(Group.DOCUMENTS);
+        }
         int from = Math.max(0, userMessages.size() - RECENT_USER_MESSAGES);
         for (String message : userMessages.subList(from, userMessages.size())) {
             if (message == null) {
@@ -72,6 +108,12 @@ public final class ToolRouter {
             }
             if (anyMatch(TRELLO_HINTS, message)) {
                 groups.add(Group.TRELLO);
+            }
+            if (anyMatch(DOCUMENT_HINTS, message)) {
+                groups.add(Group.DOCUMENTS);
+            }
+            if (anyMatch(IMAGE_HINTS, message)) {
+                groups.add(Group.IMAGE);
             }
         }
         return groups;
