@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -51,5 +52,11 @@ public class PaddleController {
         return eventRepository.findByStatusOrderByOccurredAtAsc(status).stream()
                 .map(PaddleEventResponse::from)
                 .toList();
+    }
+
+    @PostMapping("/admin/events/{eventId}/retry")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void retry(@PathVariable String eventId) {
+        paddleWebhookService.retry(eventId);
     }
 }
