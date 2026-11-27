@@ -11,11 +11,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -71,6 +77,35 @@ class PaddleWebhookServiceTest {
         when(eventRepository.existsById("evt_1")).thenReturn(true);
 
         assertTrue(service.receive(BODY, "good"));
+        verify(eventRepository, never()).save(any());
+    }
+
+    @Test
+    void deadEventIsResetForRetry() {
+        PaddleWebhookEvent event = new PaddleWebhookEvent();
+        event.setEventId("evt_1");
+        event.setStatus(WebhookEventStatus.DEAD);
+        event.setAttempts(10);
+        when(eventRepository.findById("evt_1")).thenReturn(Optional.of(event));
+
+        service.retry("evt_1");
+
+        assertEquals(WebhookEventStatus.RECEIVED, event.getStatus());
+        assertEquals(0, event.getAttempts());
+        assertNull(event.getNextAttemptAt());
+        verify(eventRepository).save(event);
+    }
+
+    @Test
+    void processedEventCannotBeRetried() {
+        PaddleWebhookEvent event = new PaddleWebhookEvent();
+        event.setEventId("evt_1");
+        event.setStatus(WebhookEventStatus.PROCESSED);
+        when(eventRepository.findById("evt_1")).thenReturn(Optional.of(event));
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> service.retry("evt_1"));
+
+        assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
         verify(eventRepository, never()).save(any());
     }
 }

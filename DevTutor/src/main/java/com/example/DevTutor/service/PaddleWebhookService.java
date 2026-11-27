@@ -1,6 +1,7 @@
 package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.PaddleWebhookEvent;
+import com.example.DevTutor.enums.WebhookEventStatus;
 import com.example.DevTutor.repository.PaddleWebhookEventRepository;
 import com.example.DevTutor.security.PaddleSignatureVerifier;
 import org.springframework.http.HttpStatus;
@@ -59,5 +60,17 @@ public class PaddleWebhookService {
         event.setPayload(payload);
         eventRepository.save(event);
         return true;
+    }
+
+    public void retry(String eventId) {
+        PaddleWebhookEvent event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        if (event.getStatus() != WebhookEventStatus.DEAD) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only DEAD events can be retried");
+        }
+        event.setStatus(WebhookEventStatus.RECEIVED);
+        event.setAttempts(0);
+        event.setNextAttemptAt(null);
+        eventRepository.save(event);
     }
 }
