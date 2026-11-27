@@ -43,4 +43,13 @@ public class PaddleClient {
         }
         return transactionId;
     }
+
+    public void cancelSubscription(String subscriptionId) {
+        restClient.post()
+                .uri("/subscriptions/{id}/cancel", subscriptionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("effective_from", "next_billing_period"))
+                .retrieve()
+                .toBodilessEntity();
+    }
 }
