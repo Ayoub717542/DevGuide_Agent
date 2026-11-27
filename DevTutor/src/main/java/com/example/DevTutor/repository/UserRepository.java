@@ -16,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByVerificationTokenHash(String verificationTokenHash);
 
     Optional<User> findByResetTokenHash(String resetTokenHash);
+
+    Optional<User> findByPaddleSubscriptionId(String paddleSubscriptionId);
 }
