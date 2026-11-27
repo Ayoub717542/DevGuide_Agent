@@ -37,6 +37,12 @@ public class PaddleController {
         return Map.of("transactionId", paddleCheckoutService.startCheckout(authentication.getName()));
     }
 
+    @PostMapping("/cancel")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public void cancel(Authentication authentication) {
+        paddleCheckoutService.cancel(authentication.getName());
+    }
+
     @PostMapping("/webhook")
     public ResponseEntity<Void> webhook(@RequestBody byte[] body,
                                         @RequestHeader(value = "Paddle-Signature", required = false) String signature) {
