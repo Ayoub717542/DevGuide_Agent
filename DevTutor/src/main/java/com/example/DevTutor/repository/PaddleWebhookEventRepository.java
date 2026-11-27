@@ -21,4 +21,6 @@ public interface PaddleWebhookEventRepository extends JpaRepository<PaddleWebhoo
             ORDER BY e.occurredAt ASC
             """)
     List<PaddleWebhookEvent> findDue(Collection<WebhookEventStatus> statuses, Instant now, Pageable pageable);
+
+    List<PaddleWebhookEvent> findByStatusOrderByOccurredAtAsc(WebhookEventStatus status);
 }
