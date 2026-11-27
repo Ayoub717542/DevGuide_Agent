@@ -2,6 +2,7 @@ package com.example.DevTutor.service;
 
 import com.example.DevTutor.entity.PaddleCheckout;
 import com.example.DevTutor.entity.User;
+import com.example.DevTutor.enums.SubscriptionStatus;
 import com.example.DevTutor.repository.PaddleCheckoutRepository;
 import com.example.DevTutor.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -38,5 +39,21 @@ public class PaddleCheckoutService {
         checkoutRepository.saveAndFlush(checkout);
 
         return transactionId;
+    }
+
+    public void cancel(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.getPaddleSubscriptionId() == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No subscription to cancel");
+        }
+        if (user.getSubscriptionStatus() == SubscriptionStatus.CANCELED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Subscription already canceled");
+        }
+        if (user.getCancelEffectiveAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cancel already scheduled");
+        }
+
+        paddleClient.cancelSubscription(user.getPaddleSubscriptionId());
     }
 }
